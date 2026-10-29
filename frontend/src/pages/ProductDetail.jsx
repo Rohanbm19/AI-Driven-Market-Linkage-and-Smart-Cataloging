@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -13,7 +13,7 @@ import {
   Wand2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { MOCK_PRODUCTS } from '../services/api.js';
+import { api, MOCK_PRODUCTS } from '../services/api.js';
 import Badge from '../components/Badge.jsx';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import { useLanguage } from '../i18n/index.js';
@@ -21,13 +21,36 @@ import { useLanguage } from '../i18n/index.js';
 export default function ProductDetail() {
   const { id } = useParams();
   const { t } = useLanguage();
-  const product = MOCK_PRODUCTS.find((p) => p.id === id) || MOCK_PRODUCTS[0];
+  const [product, setProduct] = useState(
+    () => MOCK_PRODUCTS.find((p) => p.id === id) || MOCK_PRODUCTS[0]
+  );
+  const [loading, setLoading] = useState(true);
 
   const [showSlider, setShowSlider] = useState(false);
   const [enquirySent, setEnquirySent] = useState(false);
   const [enquiryMsg, setEnquiryMsg] = useState('');
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadItem() {
+      try {
+        const item = await api.getProductById(id);
+        if (isMounted && item) {
+          setProduct(item);
+        }
+      } catch (err) {
+        console.error('Error fetching product by id:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadItem();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const handleSendEnquiry = (e) => {
     e.preventDefault();
@@ -40,6 +63,20 @@ export default function ProductDetail() {
       origin: { y: 0.7 }
     });
   };
+
+  const parsedMaterials = Array.isArray(product.materials)
+    ? product.materials
+    : typeof product.materials === 'string'
+    ? product.materials.split(',').map((m) => m.trim()).filter(Boolean)
+    : [];
+
+  const parsedTags = Array.isArray(product.tags)
+    ? product.tags
+    : typeof product.tags === 'string'
+    ? product.tags.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean)
+    : ['Handmade'];
+
+  const formattedPrice = Number(product.price || 0).toLocaleString('en-IN');
 
   return (
     <div>
@@ -70,7 +107,7 @@ export default function ProductDetail() {
       >
         {/* Left: Product Images & Studio Enhancement Toggle */}
         <div>
-          {showSlider ? (
+          {showSlider && product.enhanced_image_url ? (
             <BeforeAfterSlider
               beforeImage={product.image_url}
               afterImage={product.enhanced_image_url}
@@ -122,8 +159,10 @@ export default function ProductDetail() {
         {/* Right: Craft Details & Enquiry */}
         <div>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-            {product.tags.map((tag) => (
-              <Badge key={tag} type="craft">{tag}</Badge>
+            {parsedTags.map((tag) => (
+              <Badge key={tag} type="craft">
+                {tag}
+              </Badge>
             ))}
             {product.fair_trade && <Badge type="verified">Fair Trade Certified</Badge>}
           </div>
@@ -136,7 +175,9 @@ export default function ProductDetail() {
             <MapPin size={16} color="var(--primary)" />
             <span style={{ fontWeight: 500 }}>{product.region}</span>
             <span>•</span>
-            <span>Crafted by <strong>{product.artisan_name}</strong></span>
+            <span>
+              Crafted by <strong>{product.artisan_name || 'Master Artisan'}</strong>
+            </span>
           </div>
 
           <div
@@ -156,12 +197,12 @@ export default function ProductDetail() {
                 Fair Trade Direct Price
               </span>
               <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary)' }}>
-                ₹{product.price.toLocaleString('en-IN')}
+                ₹{formattedPrice}
               </span>
             </div>
             <div style={{ textAlign: 'right' }}>
               <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 600, display: 'block' }}>
-                ✓ In Stock ({product.stock} available)
+                ✓ In Stock ({product.stock || 1} available)
               </span>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 Ships directly from artisan cluster
@@ -174,27 +215,29 @@ export default function ProductDetail() {
             <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>
               Craft Heritage & Technique
             </h3>
-            <p style={{ color: '#4b5563', lineHeight: 1.6, marginBottom: '1rem' }}>
+            <p style={{ color: '#4b5563', lineHeight: 1.6, marginBottom: '1rem', whiteSpace: 'pre-line' }}>
               {product.description}
             </p>
 
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <strong style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>Materials:</strong>
-              {product.materials.map((m) => (
-                <span
-                  key={m}
-                  style={{
-                    background: 'var(--bg-subtle)',
-                    padding: '0.2rem 0.6rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.82rem',
-                    color: '#374151'
-                  }}
-                >
-                  {m}
-                </span>
-              ))}
-            </div>
+            {parsedMaterials.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <strong style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>Materials:</strong>
+                {parsedMaterials.map((m) => (
+                  <span
+                    key={m}
+                    style={{
+                      background: 'var(--bg-subtle)',
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.82rem',
+                      color: '#374151'
+                    }}
+                  >
+                    {m}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Direct Artisan Enquiry Form */}
@@ -204,7 +247,7 @@ export default function ProductDetail() {
               <span>Contact Artisan / Send Bulk Enquiry</span>
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Direct message to {product.artisan_name}. Responses will be received in your preferred language.
+              Direct message to {product.artisan_name || 'Artisan'}. Responses will be received in your preferred language.
             </p>
 
             {enquirySent ? (
@@ -224,7 +267,7 @@ export default function ProductDetail() {
                 <div>
                   <strong>Enquiry Dispatched!</strong>
                   <p style={{ fontSize: '0.85rem', margin: 0 }}>
-                    {product.artisan_name} has been notified via KalaSetu WhatsApp & SMS gateway.
+                    {product.artisan_name || 'Artisan'} has been notified via KalaSetu WhatsApp & SMS gateway.
                   </p>
                 </div>
               </div>

@@ -1,16 +1,38 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Mic, Sparkles, Filter, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
-import { MOCK_PRODUCTS } from '../services/api.js';
+import { api, MOCK_PRODUCTS } from '../services/api.js';
 import { useLanguage } from '../i18n/index.js';
 import { useVoiceInput } from '../hooks/useVoiceInput.js';
 
 export default function Marketplace() {
   const { t, lang } = useLanguage();
+  const [products, setProducts] = useState(MOCK_PRODUCTS);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchCatalog() {
+      try {
+        const data = await api.getProducts();
+        if (isMounted && data && data.length > 0) {
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error('Error fetching marketplace catalog:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    fetchCatalog();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const { isListening, toggleListening } = useVoiceInput({
     currentLang: lang,
@@ -20,21 +42,26 @@ export default function Marketplace() {
   });
 
   const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((p) => {
+    return products.filter((p) => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch =
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.artisan_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase());
+        !searchQuery ||
+        (p.title && p.title.toLowerCase().includes(q)) ||
+        (p.region && p.region.toLowerCase().includes(q)) ||
+        (p.artisan_name && p.artisan_name.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        (Array.isArray(p.tags) && p.tags.some((tag) => tag.toLowerCase().includes(q)));
 
       const matchesCategory =
-        selectedCategory === 'all' || p.category === selectedCategory;
+        selectedCategory === 'all' ||
+        p.category === selectedCategory ||
+        (selectedCategory === 'pottery' && (p.category === 'ceramics' || p.category === 'pottery'));
 
       const matchesVerified = !verifiedOnly || p.is_verified;
 
       return matchesSearch && matchesCategory && matchesVerified;
     });
-  }, [searchQuery, selectedCategory, verifiedOnly]);
+  }, [products, searchQuery, selectedCategory, verifiedOnly]);
 
   return (
     <div>

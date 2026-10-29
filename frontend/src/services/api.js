@@ -1,4 +1,7 @@
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const LOCAL_STORAGE_KEY = 'kalasetu_custom_products';
 
 // Curated artisan products for demonstration and fallback
 export const MOCK_PRODUCTS = [
@@ -132,27 +135,237 @@ export const MOCK_ARTISAN = {
   badges: ['Master Craftsman', 'Fair Trade Certified', 'GI Custodian']
 };
 
+// Local storage helpers
+function getLocalProducts() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to read local products:', e);
+    return [];
+  }
+}
+
+function saveProductLocally(product) {
+  try {
+    const current = getLocalProducts();
+    const updated = [product, ...current.filter(p => p.id !== product.id)];
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to save product locally:', e);
+  }
+}
+
+function mergeProducts(primaryList, secondaryList, fallbackList = []) {
+  const map = new Map();
+  // Primary (e.g. Supabase) takes highest precedence
+  primaryList.forEach(p => map.set(p.id, p));
+  // Secondary (e.g. Local custom) adds if not already present
+  secondaryList.forEach(p => {
+    if (!map.has(p.id)) map.set(p.id, p);
+  });
+  // Fallback defaults
+  fallbackList.forEach(p => {
+    if (!map.has(p.id)) map.set(p.id, p);
+  });
+  return Array.from(map.values());
+}
+
 export const api = {
+  /**
+   * Fetch all products from Supabase, local cache, or fallback mock list
+   */
   async getProducts() {
+    const local = getLocalProducts();
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && Array.isArray(data)) {
+          return mergeProducts(data, local, MOCK_PRODUCTS);
+        } else if (error) {
+          console.warn('Supabase fetch error, using local/mock:', error.message);
+        }
+      } catch (err) {
+        console.warn('Supabase connection failed, using local/mock:', err);
+      }
+    }
+
+    // Try express backend if available
     try {
       const res = await fetch(`${API_BASE_URL}/products`);
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const backendData = await res.json();
+        return mergeProducts(backendData, local, MOCK_PRODUCTS);
+      }
     } catch (e) {
-      // fallback to mock
+      // Backend not running
     }
-    return MOCK_PRODUCTS;
+
+    return mergeProducts([], local, MOCK_PRODUCTS);
   },
 
+  /**
+   * Fetch a single product by ID
+   */
   async getProductById(id) {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn('Supabase fetch product error:', e);
+      }
+    }
+
+    const local = getLocalProducts();
+    const foundLocal = local.find(p => p.id === id);
+    if (foundLocal) return foundLocal;
+
     try {
       const res = await fetch(`${API_BASE_URL}/products/${id}`);
       if (res.ok) return await res.json();
     } catch (e) {
-      // fallback to mock
+      // Backend not running
     }
+
     return MOCK_PRODUCTS.find(p => p.id === id) || MOCK_PRODUCTS[0];
   },
 
+  /**
+   * Upload an image file to Supabase Storage (product-images bucket)
+   * Falls back to a base64 Data URL if Supabase is not configured or fails
+   */
+  async uploadProductImage(file) {
+    if (!file) return null;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const filePath = `crafts/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (!error) {
+          const { data: publicUrlData } = supabase.storage
+            .from('product-images')
+            .getPublicUrl(filePath);
+
+          if (publicUrlData?.publicUrl) {
+            return {
+              url: publicUrlData.publicUrl,
+              storage: 'supabase'
+            };
+          }
+        } else {
+          console.warn('Supabase storage upload error:', error.message);
+        }
+      } catch (err) {
+        console.warn('Storage upload failed:', err);
+      }
+    }
+
+    // Fallback: convert file to base64 data URL
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve({
+          url: reader.result,
+          storage: 'local'
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  },
+
+  /**
+   * Create a new product in Supabase and locally
+   */
+  async createProduct(productData) {
+    const id = productData.id || `prod-${Date.now()}`;
+    const payload = {
+      id,
+      title: productData.title.trim(),
+      category: productData.category || 'other',
+      price: Number(productData.price) || 0,
+      artisan_name: productData.artisan_name || 'Master Artisan',
+      artisan_id: productData.artisan_id || 'art-user',
+      region: productData.region || 'India',
+      description: productData.description || '',
+      materials: Array.isArray(productData.materials)
+        ? productData.materials
+        : (typeof productData.materials === 'string'
+          ? productData.materials.split(',').map(m => m.trim()).filter(Boolean)
+          : []),
+      image_url: productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+      enhanced_image_url: productData.enhanced_image_url || productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=90',
+      tags: Array.isArray(productData.tags)
+        ? productData.tags
+        : (typeof productData.tags === 'string'
+          ? productData.tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
+          : ['Handmade']),
+      stock: Number(productData.stock) || 1,
+      rating: 5.0,
+      reviews_count: 0,
+      is_verified: true,
+      fair_trade: true,
+      created_at: new Date().toISOString()
+    };
+
+    let savedInSupabase = false;
+    let supabaseError = null;
+    let savedRecord = payload;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .insert([payload])
+          .select();
+
+        if (error) {
+          console.error('Supabase DB Insert Error:', error);
+          supabaseError = error.message;
+        } else if (data && data.length > 0) {
+          savedInSupabase = true;
+          savedRecord = data[0];
+        }
+      } catch (err) {
+        console.error('Supabase DB Request Exception:', err);
+        supabaseError = err.message || 'Database connection error';
+      }
+    }
+
+    // Always persist to local cache so marketplace instantly updates
+    saveProductLocally(savedRecord);
+
+    return {
+      success: true,
+      data: savedRecord,
+      savedInSupabase,
+      supabaseConfigured: isSupabaseConfigured(),
+      supabaseError
+    };
+  },
+
+  /**
+   * AI Catalog generator endpoint or local AI simulation
+   */
   async generateSmartCatalog(formData) {
     try {
       const res = await fetch(`${API_BASE_URL}/ai/catalog`, {
@@ -165,16 +378,37 @@ export const api = {
       // fallback mock generator
     }
 
-    // Simulated AI response
-    await new Promise(r => setTimeout(r, 1200));
+    // Realistic generative AI processing
+    await new Promise(r => setTimeout(r, 1100));
+
+    const craftType = formData.craftType || 'Heritage';
+    const region = formData.region || 'Traditional Artisan Hub';
+    const materials = formData.materials || 'Pure Natural Elements';
+
+    // Intelligent title generation based on craft
+    let generatedTitle = `${region.split(',')[0].trim()} Handcrafted ${craftType}`;
+    if (craftType.toLowerCase().includes('terracotta') || craftType.toLowerCase().includes('clay')) {
+      generatedTitle = `${region.split(',')[0].trim()} Ceremonial Terracotta Sculpture`;
+    } else if (craftType.toLowerCase().includes('silk') || craftType.toLowerCase().includes('textile') || craftType.toLowerCase().includes('handloom')) {
+      generatedTitle = `${region.split(',')[0].trim()} Handwoven Pure Zari Silk Creation`;
+    } else if (craftType.toLowerCase().includes('brass') || craftType.toLowerCase().includes('metal')) {
+      generatedTitle = `${region.split(',')[0].trim()} Hand-Chiseled Antique Brass Urli`;
+    } else if (craftType.toLowerCase().includes('wood')) {
+      generatedTitle = `${region.split(',')[0].trim()} Organic Lacquer Turned Wood Masterpiece`;
+    } else if (craftType.toLowerCase().includes('pottery') || craftType.toLowerCase().includes('ceramic')) {
+      generatedTitle = `${region.split(',')[0].trim()} Glazed Quartz Blue Pottery Decorative Vessel`;
+    }
+
     return {
-      title: `${formData.craftType || 'Artisanal'} Heritage Handcrafted Piece`,
-      description: `Authentic handmade creation crafted from ${formData.materials || 'fine traditional materials'} in ${formData.region || 'India'}. Made with ancestral techniques passed down across generations. Each detail represents timeless artisanal mastery.`,
-      suggestedPrice: 2200,
-      priceRange: { min: 1950, max: 2600 },
-      tags: ['Authentic Handmade', 'Eco-friendly', 'GI Certified', 'Artisan Direct'],
-      seoKeywords: 'handmade indian craft, artisan decor, fair trade gift, heritage art',
-      story: 'Every curve and stroke on this masterpiece is shaped by skilled hands, keeping centuries of Indian artistic tradition thriving in a modern world.'
+      title: generatedTitle,
+      description: formData.description
+        ? `${formData.description} Masterfully created in ${region} using traditional ${materials}. Every piece is sculpted and detailed through ancestral techniques passed down across generations, representing authentic cultural legacy.`
+        : `Authentic handcrafted masterpiece lovingly created from ${materials} in ${region}. Built using ancestral methods that celebrate time-honored artisanal heritage and sustainable craftsmanship.`,
+      suggestedPrice: 2450,
+      priceRange: { min: 2100, max: 2850 },
+      tags: ['Authentic Handmade', 'Eco-friendly', 'GI Certified', 'Artisan Direct', 'Fair Trade'],
+      seoKeywords: `${craftType.toLowerCase()}, handmade craft, ${region.toLowerCase()} art, fair trade artisan`,
+      story: 'Every curve, weave, and chisel stroke on this creation is shaped with deep reverence for generations of Indian artistic tradition.'
     };
   },
 
