@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/api.js';
 import {
   MessageSquare,
   CheckCircle,
@@ -54,6 +55,30 @@ export default function Enquiries() {
   const [filter, setFilter] = useState('all');
   const [replyText, setReplyText] = useState({});
   const [activeReplyId, setActiveReplyId] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const live = await api.getEnquiries();
+        if (isMounted && Array.isArray(live) && live.length > 0) {
+          // Merge unique by id
+          const map = new Map();
+          live.forEach(e => map.set(e.id, e));
+          INITIAL_ENQUIRIES.forEach(e => {
+            if (!map.has(e.id)) map.set(e.id, e);
+          });
+          setEnquiries(Array.from(map.values()));
+        }
+      } catch (err) {
+        console.warn('Enquiries fetch error:', err);
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filtered = enquiries.filter((e) => {
     if (filter === 'pending') return e.status === 'pending';

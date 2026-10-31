@@ -1,8 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Sparkles,
-  Mic,
   Upload,
   CheckCircle,
   Tag,
@@ -18,54 +17,43 @@ import {
   Package,
   MapPin,
   User,
-  ExternalLink
+  Calculator,
+  ArrowLeft,
+  Clock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { useLanguage } from '../i18n/index.js';
-import { useVoiceInput } from '../hooks/useVoiceInput.js';
 import { api } from '../services/api.js';
+import { useLanguage } from '../i18n/index.js';
 import { isSupabaseConfigured } from '../lib/supabaseClient.js';
-
-// Pre-curated sample photos so artisans/evaluators can quickly test with 1 click if they don't have an image ready
-const SAMPLE_PHOTOS = [
-  {
-    name: 'Terracotta Pottery',
-    url: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    name: 'Handloom Silk',
-    url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    name: 'Brass Urli',
-    url: 'https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    name: 'Carved Woodwork',
-    url: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    name: 'Blue Pottery',
-    url: 'https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?auto=format&fit=crop&w=800&q=80'
-  }
-];
+import VoiceTextInput from '../components/VoiceTextInput.jsx';
+import { detectLanguage } from '../utils/detectLanguage.js';
 
 export default function AddProduct() {
-  const { t, lang } = useLanguage();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t, lang } = useLanguage();
   const fileInputRef = useRef(null);
 
-  // Form input states - initialized EMPTY so user enters their own values
+  const cf = t?.catalogForm || {};
+
+  // Form state
   const [title, setTitle] = useState('');
   const [craftType, setCraftType] = useState('pottery');
   const [customCraftType, setCustomCraftType] = useState('');
-  const [artisanName, setArtisanName] = useState('');
+  const [artisanName, setArtisanName] = useState('Shankar Das');
   const [region, setRegion] = useState('');
   const [materials, setMaterials] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('5');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
+
+  // Cost & Fair Pricing State
+  const [materialCost, setMaterialCost] = useState('');
+  const [laborHours, setLaborHours] = useState('');
+  const [hourlyWage, setHourlyWage] = useState('150');
+  const [packagingCost, setPackagingCost] = useState('80');
 
   // Image upload state
   const [photoUrl, setPhotoUrl] = useState('');
@@ -79,18 +67,45 @@ export default function AddProduct() {
   const [aiGenerated, setAiGenerated] = useState(false);
   const [aiPriceRange, setAiPriceRange] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null); // { success: boolean, savedInSupabase: boolean, id: string, message: string }
+  const [saveStatus, setSaveStatus] = useState(null);
   const [formError, setFormError] = useState('');
+  const [loadingExisting, setLoadingExisting] = useState(isEditMode);
 
   const supabaseConnected = isSupabaseConfigured();
 
-  // Voice Input hook
-  const { isListening, toggleListening } = useVoiceInput({
-    currentLang: lang,
-    onResult: (text) => {
-      setDescription((prev) => (prev ? `${prev} ${text}` : text));
+  // Load existing product if in edit mode
+  useEffect(() => {
+    if (!id) return;
+    let isMounted = true;
+
+    async function loadItem() {
+      setLoadingExisting(true);
+      try {
+        const item = await api.getProductById(id);
+        if (isMounted && item) {
+          setTitle(item.title || '');
+          setCraftType(item.category || 'pottery');
+          setArtisanName(item.artisan_name || 'Shankar Das');
+          setRegion(item.region || '');
+          setMaterials(Array.isArray(item.materials) ? item.materials.join(', ') : (item.materials || ''));
+          setPrice(String(item.price || ''));
+          setStock(String(item.stock || '1'));
+          setDescription(item.description || '');
+          setTags(Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''));
+          setPhotoUrl(item.image_url || '');
+        }
+      } catch (err) {
+        console.error('Failed to load craft for editing:', err);
+      } finally {
+        if (isMounted) setLoadingExisting(false);
+      }
     }
-  });
+
+    loadItem();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   // Handle image file selection
   const handleFileChange = async (e) => {
@@ -107,7 +122,6 @@ export default function AddProduct() {
       }
     } catch (err) {
       console.error('Image upload failed:', err);
-      // Fallback local reader
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoUrl(reader.result);
@@ -135,6 +149,22 @@ export default function AddProduct() {
     }
   };
 
+  // Cost calculations
+  const matNum = Number(materialCost) || 0;
+  const hoursNum = Number(laborHours) || 0;
+  const wageNum = Number(hourlyWage) || 150;
+  const pkgNum = Number(packagingCost) || 0;
+  const computedLaborCost = hoursNum * wageNum;
+  const computedTotalCost = matNum + computedLaborCost + pkgNum;
+  const computedArtisanMargin = Math.round(computedTotalCost * 0.30);
+  const computedFairSellingPrice = Math.round(computedTotalCost + computedArtisanMargin);
+
+  const handleApplyFairPrice = () => {
+    if (computedFairSellingPrice > 0) {
+      setPrice(String(computedFairSellingPrice));
+    }
+  };
+
   // AI Smart Catalog Generator
   const handleGenerateAi = async () => {
     setFormError('');
@@ -152,22 +182,11 @@ export default function AddProduct() {
       });
 
       if (result) {
-        // Auto-fill or polish the fields, but keep them totally editable by the user
-        if (!title.trim() || title === '') {
-          setTitle(result.title);
-        }
-        if (result.description) {
-          setDescription(result.description);
-        }
-        if (!price || Number(price) === 0) {
-          setPrice(String(result.suggestedPrice));
-        }
-        if (result.tags && (!tags || tags.trim() === '')) {
-          setTags(result.tags.join(', '));
-        }
-        if (result.priceRange) {
-          setAiPriceRange(result.priceRange);
-        }
+        if (!title.trim()) setTitle(result.title);
+        if (result.description) setDescription(result.description);
+        if (!price || Number(price) === 0) setPrice(String(result.suggestedPrice));
+        if (result.tags && (!tags || tags.trim() === '')) setTags(result.tags.join(', '));
+        if (result.priceRange) setAiPriceRange(result.priceRange);
         setAiGenerated(true);
       }
     } catch (err) {
@@ -211,8 +230,8 @@ export default function AddProduct() {
         title: title.trim(),
         category: effectiveCategory,
         price: Number(price),
-        artisan_name: artisanName.trim() || 'Master Artisan',
-        artisan_id: `art-${Date.now()}`,
+        artisan_name: artisanName.trim() || (cf.defaultArtisan || 'Master Artisan'),
+        artisan_id: 'art-1',
         region: region.trim(),
         description: description.trim(),
         materials: materials.trim()
@@ -226,23 +245,26 @@ export default function AddProduct() {
         stock: Number(stock) || 1
       };
 
-      const res = await api.createProduct(productPayload);
+      let res;
+      if (isEditMode) {
+        res = await api.updateProduct(id, productPayload);
+      } else {
+        res = await api.createProduct(productPayload);
+      }
 
       if (res.success) {
         setSaveStatus({
           success: true,
           savedInSupabase: res.savedInSupabase,
           id: res.data.id,
-          message: res.savedInSupabase
-            ? 'Successfully saved and published to Supabase database!'
-            : (res.supabaseError
-              ? `Saved to local catalog (Supabase error: ${res.supabaseError})`
-              : 'Saved to local catalog! Configure VITE_SUPABASE_URL in .env to sync to Supabase cloud.')
+          message: isEditMode
+            ? (res.savedInSupabase ? 'Craft listing successfully updated in Supabase cloud!' : 'Craft updated locally!')
+            : (res.savedInSupabase ? 'Successfully saved and published to Supabase database!' : 'Saved to local catalog!')
         });
 
         confetti({
-          particleCount: 110,
-          spread: 75,
+          particleCount: 100,
+          spread: 70,
           origin: { y: 0.6 }
         });
       } else {
@@ -256,11 +278,21 @@ export default function AddProduct() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this craft?')) return;
+    try {
+      await api.deleteProduct(id);
+      navigate('/artisan-profile');
+    } catch (err) {
+      alert('Failed to delete: ' + err.message);
+    }
+  };
+
   const handleResetForm = () => {
     setTitle('');
     setCraftType('pottery');
     setCustomCraftType('');
-    setArtisanName('');
+    setArtisanName('Shankar Das');
     setRegion('');
     setMaterials('');
     setPrice('');
@@ -269,20 +301,52 @@ export default function AddProduct() {
     setTags('');
     setPhotoUrl('');
     setPhotoFile(null);
+    setMaterialCost('');
+    setLaborHours('');
+    setPackagingCost('80');
     setAiGenerated(false);
     setAiPriceRange(null);
     setSaveStatus(null);
     setFormError('');
   };
 
+  if (loadingExisting) {
+    return (
+      <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+        <div className="spinner" style={{ margin: '0 auto 1rem auto' }} />
+        <p style={{ color: 'var(--text-muted)' }}>Loading craft details...</p>
+      </div>
+    );
+  }
+
+  const categoryOptions = [
+    { id: 'pottery', label: cf.categories?.pottery || 'Terracotta & Pottery' },
+    { id: 'textiles', label: cf.categories?.textiles || 'Handloom & Silk' },
+    { id: 'metal', label: cf.categories?.metal || 'Brass & Bell Metal' },
+    { id: 'woodwork', label: cf.categories?.woodwork || 'Channapatna Wood' },
+    { id: 'painting', label: cf.categories?.painting || 'Pattachitra Art' },
+    { id: 'other', label: cf.categories?.other || 'Other Heritage Craft' }
+  ];
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Page Header with Supabase Connection Status */}
+      {/* Top Header */}
       <div className="page-header" style={{ alignItems: 'center' }}>
         <div>
-          <h1 className="page-title">{t.hero.listBtn || 'List Your Craft'}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+            {isEditMode && (
+              <Link to="/artisan-profile" style={{ color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }}>
+                <ArrowLeft size={18} />
+              </Link>
+            )}
+            <h1 className="page-title">
+              {isEditMode ? (cf.editTitle || 'Edit Craft Listing') : (cf.title || 'List Your Craft')}
+            </h1>
+          </div>
           <p className="page-subtitle">
-            Enter your craft details, use AI to generate fair pricing & heritage stories, and save directly to the Supabase database.
+            {isEditMode
+              ? (cf.editSubtitle || 'Update your craft specifications, materials, pricing, and heritage story.')
+              : (cf.subtitle || 'Enter your craft details, calculate fair wages, speak your heritage story, and publish directly.')}
           </p>
         </div>
 
@@ -297,228 +361,200 @@ export default function AddProduct() {
             fontSize: '0.82rem',
             fontWeight: 600,
             background: supabaseConnected ? '#ecfdf5' : '#fffbeb',
-            color: supabaseConnected ? '#065f46' : '#92400e',
+            color: supabaseConnected ? '#059669' : '#d97706',
             border: `1px solid ${supabaseConnected ? '#a7f3d0' : '#fde68a'}`
           }}
-          title={
-            supabaseConnected
-              ? 'Connected to live Supabase database'
-              : 'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in frontend/.env to save directly to Supabase cloud'
-          }
         >
-          <Database size={15} color={supabaseConnected ? '#059669' : '#d97706'} />
-          <span>{supabaseConnected ? 'Supabase Connected' : 'Supabase Demo Mode'}</span>
+          <Database size={14} />
+          <span>{supabaseConnected ? (cf.dbOnline || 'Supabase Database: Online') : (cf.dbLocal || 'Local Storage Mode')}</span>
         </div>
       </div>
 
-      {/* Success Celebration View */}
-      {saveStatus?.success ? (
+      {/* Success Notification */}
+      {saveStatus && saveStatus.success && (
         <div
-          className="card"
           style={{
-            maxWidth: '720px',
-            margin: '2rem auto',
-            textAlign: 'center',
-            padding: '3rem 2rem',
-            border: '2px solid #10b981',
-            background: 'linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%)'
+            background: '#ecfdf5',
+            border: '1px solid #a7f3d0',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem',
+            marginBottom: '1.75rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            boxShadow: 'var(--shadow-sm)'
           }}
         >
-          <div
-            style={{
-              width: '72px',
-              height: '72px',
-              borderRadius: '50%',
-              background: '#d1fae5',
-              color: '#059669',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1.5rem',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
-            }}
-          >
-            <CheckCircle size={40} />
-          </div>
-
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#065f46', marginBottom: '0.5rem' }}>
-            Craft Listed Successfully!
-          </h2>
-          <p style={{ color: '#374151', fontSize: '1.05rem', marginBottom: '1.5rem', maxWidth: '520px', margin: '0 auto 1.5rem' }}>
-            {saveStatus.message}
-          </p>
-
-          {/* Product Preview Snippet */}
-          <div
-            style={{
-              background: 'white',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              padding: '1.25rem',
-              display: 'flex',
-              gap: '1.25rem',
-              alignItems: 'center',
-              textAlign: 'left',
-              maxWidth: '520px',
-              margin: '0 auto 2rem',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <img
-              src={photoUrl || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=400&q=80'}
-              alt={title}
-              style={{ width: '80px', height: '80px', borderRadius: 'var(--radius-sm)', objectFit: 'cover' }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {title}
-              </h4>
-              <p style={{ margin: '0.2rem 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                {artisanName || 'Artisan'} • {region}
-              </p>
-              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-                ₹{price}
-              </span>
+          <CheckCircle size={28} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div style={{ flex: 1 }}>
+            <h3 style={{ margin: '0 0 0.25rem 0', color: '#065f46', fontSize: '1.1rem' }}>
+              {isEditMode ? (cf.successUpdatedTitle || 'Craft Listing Updated!') : (cf.successCreatedTitle || 'Craft Successfully Published!')}
+            </h3>
+            <p style={{ margin: '0 0 0.75rem 0', color: '#047857', fontSize: '0.9rem' }}>
+              {saveStatus.message}
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <Link
+                to={`/product/${saveStatus.id}`}
+                className="btn btn-sm btn-primary"
+                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <span>{cf.viewLiveListing || 'View Live Listing'}</span>
+                <ArrowRight size={14} />
+              </Link>
+              {!isEditMode && (
+                <button
+                  type="button"
+                  onClick={handleResetForm}
+                  className="btn btn-sm btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <RefreshCw size={14} />
+                  <span>{cf.listAnother || 'List Another Craft'}</span>
+                </button>
+              )}
             </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to={`/product/${saveStatus.id}`} className="btn btn-primary">
-              <Eye size={18} />
-              <span>View Product Detail</span>
-            </Link>
-            <Link to="/" className="btn btn-secondary">
-              <span>Go to Marketplace</span>
-              <ArrowRight size={16} />
-            </Link>
-            <button
-              type="button"
-              onClick={handleResetForm}
-              className="btn btn-secondary"
-            >
-              <RefreshCw size={16} />
-              <span>List Another Craft</span>
-            </button>
           </div>
         </div>
-      ) : (
-        /* The Input Form Grid */
+      )}
+
+      {/* Error Alert */}
+      {formError && (
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '2rem'
+            background: '#fef2f2',
+            border: '1px solid #fee2e2',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            color: '#b91c1c',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            fontSize: '0.9rem'
           }}
         >
-          {/* Left Column: Form Details */}
-          <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1.35rem', margin: 0 }}>
-                1. Craft & Artisan Details
-              </h2>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                * Required fields
-              </span>
-            </div>
+          <AlertCircle size={20} style={{ flexShrink: 0 }} />
+          <span>{formError}</span>
+        </div>
+      )}
 
-            {formError && (
+      {/* Main Two-Column Layout */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1.4fr) minmax(320px, 1fr)',
+          gap: '2rem',
+          alignItems: 'start'
+        }}
+      >
+        {/* Left Column: Form Fields */}
+        <div>
+          <form onSubmit={handleSubmit}>
+            <div className="card" style={{ marginBottom: '1.5rem' }}>
               <div
                 style={{
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  color: '#991b1b',
-                  padding: '0.75rem 1rem',
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: '1.25rem',
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.9rem'
+                  marginBottom: '1.25rem',
+                  borderBottom: '1px solid var(--border-color)',
+                  paddingBottom: '0.75rem'
                 }}
               >
-                <AlertCircle size={18} />
-                <span>{formError}</span>
+                <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>
+                  {cf.craftIdentity || 'Craft & Artisan Identity'}
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleGenerateAi}
+                  disabled={loadingAi}
+                  className="btn btn-sm btn-primary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: 'linear-gradient(135deg, var(--primary) 0%, #b83d22 100%)'
+                  }}
+                >
+                  <Sparkles size={14} />
+                  <span>{loadingAi ? (cf.generatingAi || 'Generating AI Details...') : (cf.autoGenAi || 'Auto-Generate AI Story & Title')}</span>
+                </button>
               </div>
-            )}
 
-            <form onSubmit={handleSubmit}>
-              {/* Product Title */}
+              {/* Craft Category */}
               <div className="form-group">
-                <label className="form-label">
-                  Craft Title / Name *
-                </label>
+                <label className="form-label">{cf.categoryLabel || 'Craft Category'} *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  {categoryOptions.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setCraftType(cat.id)}
+                      style={{
+                        padding: '0.55rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: craftType === cat.id ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                        background: craftType === cat.id ? 'var(--primary-light)' : '#ffffff',
+                        color: craftType === cat.id ? 'var(--primary)' : 'var(--text-main)',
+                        fontWeight: craftType === cat.id ? 700 : 500,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        transition: 'var(--transition)'
+                      }}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+
+                {craftType === 'other' && (
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={customCraftType}
+                    onChange={(e) => setCustomCraftType(e.target.value)}
+                    placeholder={cf.customCategoryPlaceholder || 'Enter custom craft name (e.g. Dokra Casting, Bidriware, Blue Pottery)'}
+                    style={{ marginTop: '0.5rem' }}
+                  />
+                )}
+              </div>
+
+              {/* Craft Title */}
+              <div className="form-group">
+                <label className="form-label">{cf.productTitleLabel || 'Product / Craft Title'} *</label>
                 <input
                   type="text"
                   className="form-input"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Bankura Terracotta Sacred Horse, Kanjivaram Silk Saree"
+                  placeholder={cf.productTitlePlaceholder || 'e.g. Bankura Terracotta Sacred Horse, Kanjivaram Pure Silk Saree'}
                   required
                 />
-              </div>
-
-              {/* Craft Category & Custom Category */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: craftType === 'other' ? '1fr 1fr' : '1fr',
-                  gap: '1rem'
-                }}
-              >
-                <div className="form-group">
-                  <label className="form-label">Craft Category *</label>
-                  <select
-                    className="form-select"
-                    value={craftType}
-                    onChange={(e) => setCraftType(e.target.value)}
-                  >
-                    <option value="pottery">Terracotta & Clay Art</option>
-                    <option value="textiles">Handloom & Silk Textiles</option>
-                    <option value="metal">Brass & Metalware</option>
-                    <option value="woodwork">Carved Woodwork & Lacquer</option>
-                    <option value="ceramics">Blue Pottery & Ceramics</option>
-                    <option value="stone">Stone & Marble Carving</option>
-                    <option value="leather">Shantiniketan Leather Craft</option>
-                    <option value="other">Other / Custom Craft</option>
-                  </select>
-                </div>
-
-                {craftType === 'other' && (
-                  <div className="form-group">
-                    <label className="form-label">Specify Craft Technique *</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={customCraftType}
-                      onChange={(e) => setCustomCraftType(e.target.value)}
-                      placeholder="e.g. Dhokra casting, Madhubani"
-                      required
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Artisan Name & Region */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Artisan / Maker Name</label>
+                  <label className="form-label">{cf.artisanNameLabel || 'Artisan / Maker Name'}</label>
                   <input
                     type="text"
                     className="form-input"
                     value={artisanName}
                     onChange={(e) => setArtisanName(e.target.value)}
-                    placeholder="e.g. Shankar Das, Meenakshi S."
+                    placeholder={cf.artisanNamePlaceholder || 'e.g. Shankar Das, Meenakshi S.'}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Artisan Region / Village *</label>
+                  <label className="form-label">{cf.regionLabel || 'Artisan Region / Village'} *</label>
                   <input
                     type="text"
                     className="form-input"
                     value={region}
                     onChange={(e) => setRegion(e.target.value)}
-                    placeholder="e.g. Bishnupur, West Bengal"
+                    placeholder={cf.regionPlaceholder || 'e.g. Bishnupur, West Bengal'}
                     required
                   />
                 </div>
@@ -526,58 +562,176 @@ export default function AddProduct() {
 
               {/* Materials Used */}
               <div className="form-group">
-                <label className="form-label">Raw Materials Used</label>
+                <label className="form-label">{cf.materialsLabel || 'Raw Materials Used'}</label>
                 <input
                   type="text"
                   className="form-input"
                   value={materials}
                   onChange={(e) => setMaterials(e.target.value)}
-                  placeholder="e.g. Natural River Clay, Mineral Slip, Pure Mulberry Silk"
+                  placeholder={cf.materialsPlaceholder || 'e.g. Natural River Clay, Mineral Slip, Pure Mulberry Silk, Gold Zari'}
                 />
               </div>
 
-              {/* Craft Story (Voice or Text) */}
-              <div className="form-group">
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '0.45rem'
-                  }}
-                >
-                  <label className="form-label" style={{ margin: 0 }}>
-                    Craft Story & Heritage Description *
-                  </label>
-                  <button
-                    type="button"
-                    className={`voice-btn ${isListening ? 'listening' : ''}`}
-                    onClick={toggleListening}
-                    style={{ width: '34px', height: '34px' }}
-                    title="Speak in your native language"
-                  >
-                    <Mic size={16} />
-                  </button>
-                </div>
-
-                <textarea
-                  className="form-textarea"
-                  rows={4}
-                  placeholder="Describe how this piece is created, ancestral tradition, inspiration, or unique techniques... (You can also speak in Hindi, Tamil, Kannada, Bengali, or English)"
+              {/* Craft Heritage Story with Multilingual Voice Dictation */}
+              <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                <VoiceTextInput
+                  id="product-desc"
+                  label={cf.storyLabel || 'Craft Story & Heritage Description (Speak in Your Native Language)'}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(newText) => setDescription(newText)}
+                  rows={4}
                   required
+                  defaultLang={lang}
+                  placeholder={cf.storyPlaceholder || 'Speak in Hindi, Tamil, Kannada, Telugu, Malayalam, Bengali, or English...'}
                 />
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  {isListening
-                    ? '🎙️ Listening... speak in your native mother tongue'
-                    : 'Tip: Tap the mic icon to dictate, or click "Generate AI Details" below to generate a story.'}
+              </div>
+            </div>
+
+            {/* Fair Trade Cost & Pricing Calculator Card */}
+            <div className="card" style={{ marginBottom: '1.5rem', background: '#fdfbf7', border: '1px solid #f3ebd8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calculator size={18} color="var(--primary)" />
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
+                    {cf.calculatorTitle || 'Fair Trade Wage & Cost Calculator'}
+                  </h3>
+                </div>
+                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
+                  {cf.calculatorBadge || '✓ Prevents Artisan Undervaluation'}
                 </span>
               </div>
 
-              {/* Photo Upload Section */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.82rem' }}>{cf.materialCostLabel || 'Material Cost (₹)'}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-input"
+                    value={materialCost}
+                    onChange={(e) => setMaterialCost(e.target.value)}
+                    placeholder="e.g. 450"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.82rem' }}>{cf.laborHoursLabel || 'Labor Hours (hrs)'}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    className="form-input"
+                    value={laborHours}
+                    onChange={(e) => setLaborHours(e.target.value)}
+                    placeholder="e.g. 6"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.82rem' }}>{cf.wageLabel || 'Artisan Wage (₹/hr)'}</label>
+                  <input
+                    type="number"
+                    min="50"
+                    className="form-input"
+                    value={hourlyWage}
+                    onChange={(e) => setHourlyWage(e.target.value)}
+                    placeholder="150"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.82rem' }}>{cf.packagingLabel || 'Packaging (₹)'}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-input"
+                    value={packagingCost}
+                    onChange={(e) => setPackagingCost(e.target.value)}
+                    placeholder="80"
+                  />
+                </div>
+              </div>
+
+              {/* Total Production Cost Breakdown */}
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.85rem 1rem',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem'
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    {cf.totalProductionCost || 'Total Production Cost:'} <strong>₹{computedTotalCost}</strong> (₹{matNum} + ₹{computedLaborCost} + ₹{pkgNum})
+                  </div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--primary)', marginTop: '2px' }}>
+                    {cf.suggestedFairPrice || 'Suggested Fair Price:'} ₹{computedFairSellingPrice} {cf.artisanProfitMargin || '(+30% Artisan Profit)'}
+                  </div>
+                </div>
+
+                {computedFairSellingPrice > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleApplyFairPrice}
+                    className="btn btn-sm btn-secondary"
+                    style={{ fontWeight: 600 }}
+                  >
+                    {cf.applyFairPrice || 'Apply Fair Price'} (₹{computedFairSellingPrice})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Price, Stock & Tags */}
+            <div className="card" style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">{cf.sellingPriceLabel || 'Selling Price (₹)'} *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="form-input"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="e.g. 1850"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{cf.stockLabel || 'Available Stock (Units)'} *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="form-input"
+                    value={stock}
+                    onChange={(e) => setStock(e.target.value)}
+                    placeholder="e.g. 5"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="form-group">
-                <label className="form-label">Craft Photograph</label>
+                <label className="form-label">{cf.tagsLabel || 'Tags / Keywords (comma separated)'}</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder={cf.tagsPlaceholder || 'GI Tagged, Terracotta, Handmade, Natural Clay, Festive Decor'}
+                />
+              </div>
+
+              {/* Photo Upload Section */}
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">{cf.photoLabel || 'Craft Photograph'}</label>
 
                 {photoUrl ? (
                   <div
@@ -606,7 +760,7 @@ export default function AddProduct() {
                         Image Loaded
                       </span>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        {photoFile ? photoFile.name : 'Image URL applied'}
+                        {photoFile ? photoFile.name : 'Photo preview ready'}
                       </span>
                     </div>
                     <button
@@ -646,24 +800,17 @@ export default function AddProduct() {
                         background: '#ffffff',
                         transition: 'var(--transition)'
                       }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (e.dataTransfer.files?.[0]) {
-                          handleFileChange({ target: { files: e.dataTransfer.files } });
-                        }
-                      }}
                     >
-                      <Upload size={28} color="var(--primary)" style={{ margin: '0 auto 0.5rem' }} />
-                      <strong style={{ display: 'block', fontSize: '0.95rem' }}>
-                        {isUploadingImage ? 'Uploading image...' : 'Click or Drag to Upload Craft Photo'}
-                      </strong>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        Supports PNG, JPG, WebP from your phone or computer
+                      <Upload size={24} style={{ color: 'var(--primary)', margin: '0 auto 0.5rem auto' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.92rem' }}>
+                        {isUploadingImage ? 'Uploading Image...' : (cf.uploadPrompt || 'Click to Upload Craft Photo')}
+                      </div>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        {cf.uploadHint || 'PNG, JPG or WebP up to 10MB'}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                    <div style={{ marginTop: '0.5rem', textAlign: 'right' }}>
                       <button
                         type="button"
                         onClick={() => setShowUrlInput(!showUrlInput)}
@@ -671,17 +818,13 @@ export default function AddProduct() {
                           background: 'none',
                           border: 'none',
                           color: 'var(--primary)',
-                          fontSize: '0.82rem',
+                          fontSize: '0.8rem',
                           cursor: 'pointer',
                           textDecoration: 'underline'
                         }}
                       >
-                        {showUrlInput ? 'Hide URL input' : 'Or paste image URL instead'}
+                        {showUrlInput ? (cf.hideUrl || 'Hide Image URL option') : (cf.pasteUrl || 'Or paste an Image URL')}
                       </button>
-
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        Sample quick picks below ↓
-                      </span>
                     </div>
 
                     {showUrlInput && (
@@ -689,346 +832,180 @@ export default function AddProduct() {
                         <input
                           type="url"
                           className="form-input"
-                          style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+                          placeholder="https://images.unsplash.com/photo-..."
                           value={imageUrlInput}
                           onChange={(e) => setImageUrlInput(e.target.value)}
-                          placeholder="Paste image web URL (https://...)"
                         />
-                        <button
-                          type="button"
-                          onClick={handleApplyUrl}
-                          className="btn btn-secondary btn-sm"
-                        >
+                        <button type="button" onClick={handleApplyUrl} className="btn btn-secondary btn-sm">
                           Apply
                         </button>
                       </div>
                     )}
-
-                    {/* Quick Sample Photos */}
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                      {SAMPLE_PHOTOS.map((sample) => (
-                        <button
-                          key={sample.name}
-                          type="button"
-                          onClick={() => setPhotoUrl(sample.url)}
-                          style={{
-                            background: 'white',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: 'var(--radius-sm)',
-                            padding: '0.25rem 0.5rem',
-                            fontSize: '0.75rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          <img
-                            src={sample.url}
-                            alt=""
-                            style={{ width: '18px', height: '18px', borderRadius: '3px', objectFit: 'cover' }}
-                          />
-                          <span>{sample.name}</span>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Price & Stock */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Selling Price (INR ₹) *</label>
-                  <div style={{ position: 'relative' }}>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        left: '0.85rem',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        fontWeight: 700,
-                        color: 'var(--primary)',
-                        fontSize: '1.1rem'
-                      }}
-                    >
-                      ₹
-                    </span>
-                    <input
-                      type="number"
-                      min="1"
-                      className="form-input"
-                      style={{ paddingLeft: '2.2rem' }}
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      placeholder="e.g. 1850"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Stock Units</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className="form-input"
-                    value={stock}
-                    onChange={(e) => setStock(e.target.value)}
-                    placeholder="1"
-                  />
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="form-group">
-                <label className="form-label">Tags & Search Keywords</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="e.g. GI Tagged, Handmade, Organic Dyes, Pure Silk"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={handleGenerateAi}
-                  className="btn btn-secondary"
-                  style={{ flex: 1, minWidth: '180px' }}
-                  disabled={loadingAi}
-                >
-                  {loadingAi ? (
-                    <>
-                      <RefreshCw size={16} className="animate-spin" />
-                      <span>{t.aiCatalog.generating}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={16} color="#7c3aed" />
-                      <span>Generate AI Details</span>
-                    </>
-                  )}
-                </button>
-
+            {/* Form Actions */}
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1rem' }}>
                 <button
                   type="submit"
-                  className="btn btn-primary"
-                  style={{ flex: 1.5, minWidth: '220px' }}
                   disabled={submitting}
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', minWidth: '180px' }}
                 >
                   {submitting ? (
                     <>
-                      <RefreshCw size={16} className="animate-spin" />
-                      <span>Saving to Database...</span>
+                      <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                      <span>{isEditMode ? (cf.updating || 'Updating Listing...') : (cf.publishing || 'Publishing Craft...')}</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle size={18} />
-                      <span>Save & Publish to Supabase</span>
+                      <Check size={18} />
+                      <span>{isEditMode ? (cf.updateBtn || 'Update & Publish Changes') : (cf.publishBtn || 'Publish Craft to Marketplace')}</span>
                     </>
                   )}
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleResetForm}
+                  className="btn btn-secondary"
+                  disabled={submitting}
+                >
+                  {cf.clearForm || 'Clear Form'}
+                </button>
               </div>
-            </form>
+
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="btn btn-sm"
+                  style={{
+                    background: '#fee2e2',
+                    color: '#b91c1c',
+                    border: '1px solid #fecaca',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <Trash2 size={15} />
+                  <span>{cf.deleteCraft || 'Delete This Craft'}</span>
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+
+        {/* Right Column: Live Craft Preview Card */}
+        <div style={{ position: 'sticky', top: '100px' }}>
+          <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {cf.livePreview || 'Live Buyer Preview'}
+            </span>
+            <span style={{ fontSize: '0.75rem', background: '#ecfdf5', color: '#059669', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+              {cf.liveSync || 'Live Sync'}
+            </span>
           </div>
 
-          {/* Right Column: Live Interactive Card Preview */}
-          <div>
-            <div
-              className="card"
-              style={{
-                border: '1.5px solid #d8b4fe',
-                background: 'linear-gradient(180deg, #faf5ff 0%, #ffffff 100%)',
-                position: 'sticky',
-                top: '5.5rem'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem',
-                  borderBottom: '1px solid #f3e8ff',
-                  paddingBottom: '0.75rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b21a8' }}>
-                  <Sparkles size={20} />
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
-                    Live Listing & AI Catalog Preview
-                  </h3>
-                </div>
-
-                <span
-                  style={{
-                    background: '#ede9fe',
-                    color: '#6b21a8',
-                    padding: '0.2rem 0.6rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700
-                  }}
-                >
-                  Real-time
-                </span>
-              </div>
-
-              {/* Product Visual Card Preview */}
-              <div
-                style={{
-                  background: 'white',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid #e9d5ff',
-                  overflow: 'hidden',
-                  marginBottom: '1.25rem',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              >
-                <div style={{ position: 'relative', height: '220px', background: '#f3f4f6' }}>
-                  <img
-                    src={photoUrl || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80'}
-                    alt="Craft visual"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '0.75rem',
-                      left: '0.75rem',
-                      background: 'rgba(0, 0, 0, 0.7)',
-                      color: 'white',
-                      backdropFilter: 'blur(4px)',
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      textTransform: 'capitalize'
-                    }}
-                  >
-                    {craftType === 'other' ? (customCraftType || 'Craft') : craftType}
-                  </div>
-                </div>
-
-                <div style={{ padding: '1.25rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.4rem', color: '#111827' }}>
-                    {title || 'Your Craft Title Will Appear Here'}
-                  </h3>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                    <MapPin size={14} color="var(--primary)" />
-                    <span>{region || 'Origin Region / Village'}</span>
-                    <span>•</span>
-                    <User size={14} />
-                    <span>{artisanName || 'Artisan Name'}</span>
-                  </div>
-
-                  <p
-                    style={{
-                      fontSize: '0.88rem',
-                      color: '#4b5563',
-                      lineHeight: 1.5,
-                      marginBottom: '1rem',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {description || 'Craft story and ancestral technique description will be shown here. Type on the left or tap the microphone to dictate.'}
-                  </p>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      justifyContent: 'space-between',
-                      borderTop: '1px solid #f3f4f6',
-                      paddingTop: '0.75rem'
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>
-                        DIRECT ARTISAN PRICE
-                      </span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
-                        ₹{price || '0'}
-                      </span>
-                    </div>
-
-                    <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
-                      ✓ Fair Trade Direct
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Price Benchmark & Tags info */}
-              {aiPriceRange && (
+          <div
+            className="product-card"
+            style={{
+              background: '#ffffff',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--border-color)'
+            }}
+          >
+            <div style={{ height: '220px', position: 'relative', background: '#f3f4f6' }}>
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt={title || 'Craft preview'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
                 <div
                   style={{
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '0.85rem 1rem',
-                    marginBottom: '1rem'
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#9ca3af'
                   }}
                 >
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>
-                    AI Fair Trade Benchmark
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.2rem' }}>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#15803d' }}>
-                      ₹{aiPriceRange.min} – ₹{aiPriceRange.max}
-                    </span>
-                    <span style={{ fontSize: '0.78rem', color: '#4b5563' }}>
-                      (Estimated based on materials & region)
-                    </span>
-                  </div>
+                  <ImageIcon size={40} style={{ opacity: 0.5, marginBottom: '0.5rem' }} />
+                  <span style={{ fontSize: '0.82rem' }}>{cf.noPhotoAdded || 'No photo added yet'}</span>
                 </div>
               )}
 
-              {/* Tags Preview */}
-              <div>
+              <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
                 <span
                   style={{
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    padding: '0.25rem 0.65rem',
+                    borderRadius: 'var(--radius-full)',
                     fontSize: '0.75rem',
                     fontWeight: 700,
-                    color: '#6b21a8',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    marginBottom: '0.4rem'
+                    color: 'var(--primary)',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
                   }}
                 >
-                  SEO Keywords & Tags
+                  {craftType.toUpperCase()}
                 </span>
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  {(tags ? tags.split(',') : ['Handmade', 'Artisan Direct', 'Fair Trade']).map((t) => (
-                    <span
-                      key={t}
-                      style={{
-                        background: '#f3e8ff',
-                        color: '#6b21a8',
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600
-                      }}
-                    >
-                      #{t.trim().replace(/^#/, '')}
-                    </span>
-                  ))}
+              </div>
+            </div>
+
+            <div style={{ padding: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 0.35rem 0', lineHeight: 1.3 }}>
+                {title || (cf.untitledCraft || 'Untitled Craft Item')}
+              </h3>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
+                <MapPin size={13} color="var(--primary)" />
+                <span>{region || (cf.defaultRegion || 'Artisan Village, India')}</span>
+                <span>•</span>
+                <span>{artisanName || (cf.defaultArtisan || 'Master Artisan')}</span>
+              </div>
+
+              <p
+                style={{
+                  color: '#4b5563',
+                  fontSize: '0.86rem',
+                  lineHeight: 1.5,
+                  margin: '0 0 1rem 0',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
+                }}
+              >
+                {description || (cf.storyPlaceholder || 'Craft heritage description will appear here as you speak or write...')}
+              </p>
+
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>
+                    {cf.directPrice || 'Direct Artisan Price'}
+                  </span>
+                  <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--primary)' }}>
+                    ₹{price ? Number(price).toLocaleString('en-IN') : '0'}
+                  </span>
                 </div>
+                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>
+                  ✓ {stock || 1} {cf.available || 'available'}
+                </span>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

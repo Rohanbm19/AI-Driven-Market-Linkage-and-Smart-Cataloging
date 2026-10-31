@@ -1,7 +1,9 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const LOCAL_STORAGE_KEY = 'kalasetu_custom_products';
+const LOCAL_STORAGE_PRODUCTS_KEY = 'kalasetu_custom_products';
+const LOCAL_STORAGE_ARTISAN_KEY = 'kalasetu_artisan_profile';
+const LOCAL_STORAGE_ENQUIRIES_KEY = 'kalasetu_enquiries';
 
 // Curated artisan products for demonstration and fallback
 export const MOCK_PRODUCTS = [
@@ -138,7 +140,7 @@ export const MOCK_ARTISAN = {
 // Local storage helpers
 function getLocalProducts() {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const raw = localStorage.getItem(LOCAL_STORAGE_PRODUCTS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Failed to read local products:', e);
@@ -149,23 +151,51 @@ function getLocalProducts() {
 function saveProductLocally(product) {
   try {
     const current = getLocalProducts();
-    const updated = [product, ...current.filter(p => p.id !== product.id)];
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+    const updated = [product, ...current.filter((p) => p.id !== product.id)];
+    localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(updated));
   } catch (e) {
     console.error('Failed to save product locally:', e);
+  }
+}
+
+function removeProductLocally(productId) {
+  try {
+    const current = getLocalProducts();
+    const updated = current.filter((p) => p.id !== productId);
+    localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to remove product locally:', e);
+  }
+}
+
+function getLocalArtisan() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_ARTISAN_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.error('Failed to read local artisan:', e);
+    return null;
+  }
+}
+
+function saveLocalArtisan(artisan) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_ARTISAN_KEY, JSON.stringify(artisan));
+  } catch (e) {
+    console.error('Failed to save artisan locally:', e);
   }
 }
 
 function mergeProducts(primaryList, secondaryList, fallbackList = []) {
   const map = new Map();
   // Primary (e.g. Supabase) takes highest precedence
-  primaryList.forEach(p => map.set(p.id, p));
+  primaryList.forEach((p) => map.set(p.id, p));
   // Secondary (e.g. Local custom) adds if not already present
-  secondaryList.forEach(p => {
+  secondaryList.forEach((p) => {
     if (!map.has(p.id)) map.set(p.id, p);
   });
   // Fallback defaults
-  fallbackList.forEach(p => {
+  fallbackList.forEach((p) => {
     if (!map.has(p.id)) map.set(p.id, p);
   });
   return Array.from(map.values());
@@ -195,7 +225,6 @@ export const api = {
       }
     }
 
-    // Try express backend if available
     try {
       const res = await fetch(`${API_BASE_URL}/products`);
       if (res.ok) {
@@ -228,7 +257,7 @@ export const api = {
     }
 
     const local = getLocalProducts();
-    const foundLocal = local.find(p => p.id === id);
+    const foundLocal = local.find((p) => p.id === id);
     if (foundLocal) return foundLocal;
 
     try {
@@ -238,12 +267,11 @@ export const api = {
       // Backend not running
     }
 
-    return MOCK_PRODUCTS.find(p => p.id === id) || MOCK_PRODUCTS[0];
+    return MOCK_PRODUCTS.find((p) => p.id === id) || MOCK_PRODUCTS[0];
   },
 
   /**
    * Upload an image file to Supabase Storage (product-images bucket)
-   * Falls back to a base64 Data URL if Supabase is not configured or fails
    */
   async uploadProductImage(file) {
     if (!file) return null;
@@ -254,7 +282,7 @@ export const api = {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
         const filePath = `crafts/${fileName}`;
 
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('product-images')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -272,8 +300,6 @@ export const api = {
               storage: 'supabase'
             };
           }
-        } else {
-          console.warn('Supabase storage upload error:', error.message);
         }
       } catch (err) {
         console.warn('Storage upload failed:', err);
@@ -304,20 +330,20 @@ export const api = {
       category: productData.category || 'other',
       price: Number(productData.price) || 0,
       artisan_name: productData.artisan_name || 'Master Artisan',
-      artisan_id: productData.artisan_id || 'art-user',
+      artisan_id: productData.artisan_id || 'art-1',
       region: productData.region || 'India',
       description: productData.description || '',
       materials: Array.isArray(productData.materials)
         ? productData.materials
         : (typeof productData.materials === 'string'
-          ? productData.materials.split(',').map(m => m.trim()).filter(Boolean)
+          ? productData.materials.split(',').map((m) => m.trim()).filter(Boolean)
           : []),
       image_url: productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
       enhanced_image_url: productData.enhanced_image_url || productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=90',
       tags: Array.isArray(productData.tags)
         ? productData.tags
         : (typeof productData.tags === 'string'
-          ? productData.tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
+          ? productData.tags.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean)
           : ['Handmade']),
       stock: Number(productData.stock) || 1,
       rating: 5.0,
@@ -346,12 +372,20 @@ export const api = {
           savedRecord = data[0];
         }
       } catch (err) {
-        console.error('Supabase DB Request Exception:', err);
         supabaseError = err.message || 'Database connection error';
       }
     }
 
-    // Always persist to local cache so marketplace instantly updates
+    try {
+      await fetch(`${API_BASE_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch {
+      // Backend optional
+    }
+
     saveProductLocally(savedRecord);
 
     return {
@@ -361,6 +395,272 @@ export const api = {
       supabaseConfigured: isSupabaseConfigured(),
       supabaseError
     };
+  },
+
+  /**
+   * Update an existing product
+   */
+  async updateProduct(id, productData) {
+    const updates = { ...productData };
+    if (updates.price) updates.price = Number(updates.price);
+    if (updates.stock) updates.stock = Number(updates.stock);
+    if (typeof updates.materials === 'string') {
+      updates.materials = updates.materials.split(',').map((m) => m.trim()).filter(Boolean);
+    }
+    if (typeof updates.tags === 'string') {
+      updates.tags = updates.tags.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean);
+    }
+
+    let savedInSupabase = false;
+    let supabaseError = null;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase
+          .from('products')
+          .update(updates)
+          .eq('id', id);
+
+        if (!error) {
+          savedInSupabase = true;
+        } else {
+          supabaseError = error.message;
+        }
+      } catch (err) {
+        supabaseError = err.message;
+      }
+    }
+
+    try {
+      await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+    } catch {
+      // Backend optional
+    }
+
+    // Update in local cache
+    const existing = await this.getProductById(id);
+    const updatedRecord = { ...existing, ...updates, id };
+    saveProductLocally(updatedRecord);
+
+    return {
+      success: true,
+      data: updatedRecord,
+      savedInSupabase,
+      supabaseError
+    };
+  },
+
+  /**
+   * Delete a product
+   */
+  async deleteProduct(id) {
+    let deletedInSupabase = false;
+    let supabaseError = null;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', id);
+
+        if (!error) {
+          deletedInSupabase = true;
+        } else {
+          supabaseError = error.message;
+        }
+      } catch (err) {
+        supabaseError = err.message;
+      }
+    }
+
+    try {
+      await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: 'DELETE'
+      });
+    } catch {
+      // Backend optional
+    }
+
+    removeProductLocally(id);
+
+    return {
+      success: true,
+      id,
+      deletedInSupabase,
+      supabaseError
+    };
+  },
+
+  /**
+   * Get artisan profile
+   */
+  async getArtisanProfile(id = 'art-1') {
+    const local = getLocalArtisan();
+    if (local && (!id || local.id === id)) {
+      return local;
+    }
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('artisans')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (!error && data) {
+          return { ...MOCK_ARTISAN, ...data };
+        }
+      } catch (e) {
+        console.warn('Supabase getArtisan error:', e);
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/artisans/${id}`);
+      if (res.ok) {
+        const backendArtisan = await res.json();
+        return { ...MOCK_ARTISAN, ...backendArtisan };
+      }
+    } catch {
+      // Backend optional
+    }
+
+    return MOCK_ARTISAN;
+  },
+
+  /**
+   * Update artisan profile
+   */
+  async updateArtisanProfile(id, updatedData) {
+    const existing = (await this.getArtisanProfile(id)) || MOCK_ARTISAN;
+    const merged = { ...existing, ...updatedData, id };
+
+    let savedInSupabase = false;
+    let supabaseError = null;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase
+          .from('artisans')
+          .update(updatedData)
+          .eq('id', id);
+
+        if (!error) {
+          savedInSupabase = true;
+        } else {
+          supabaseError = error.message;
+        }
+      } catch (err) {
+        supabaseError = err.message;
+      }
+    }
+
+    try {
+      await fetch(`${API_BASE_URL}/artisans/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+      });
+    } catch {
+      // Backend optional
+    }
+
+    saveLocalArtisan(merged);
+
+    return {
+      success: true,
+      data: merged,
+      savedInSupabase,
+      supabaseError
+    };
+  },
+
+  /**
+   * Fetch enquiries
+   */
+  async getEnquiries() {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('enquiries')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          return data;
+        }
+      } catch (e) {
+        console.warn('Supabase fetch enquiries error:', e);
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/enquiries`);
+      if (res.ok) return await res.json();
+    } catch {
+      // Backend optional
+    }
+
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_ENQUIRIES_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch {
+      // fallback
+    }
+
+    return [];
+  },
+
+  /**
+   * Submit an enquiry
+   */
+  async submitEnquiry(enquiryData) {
+    const id = enquiryData.id || `enq-${Date.now()}`;
+    const payload = {
+      ...enquiryData,
+      id,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    let savedInSupabase = false;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase
+          .from('enquiries')
+          .insert([payload]);
+
+        if (!error) savedInSupabase = true;
+      } catch (e) {
+        console.warn('Supabase enquiry error:', e);
+      }
+    }
+
+    try {
+      await fetch(`${API_BASE_URL}/enquiries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch {
+      // Backend optional
+    }
+
+    try {
+      const current = await this.getEnquiries();
+      localStorage.setItem(LOCAL_STORAGE_ENQUIRIES_KEY, JSON.stringify([payload, ...current]));
+    } catch (e) {
+      console.warn('Local enquiry cache error:', e);
+    }
+
+    return { success: true, data: payload, savedInSupabase };
   },
 
   /**
@@ -374,18 +674,16 @@ export const api = {
         body: JSON.stringify(formData)
       });
       if (res.ok) return await res.json();
-    } catch (e) {
+    } catch {
       // fallback mock generator
     }
 
-    // Realistic generative AI processing
-    await new Promise(r => setTimeout(r, 1100));
+    await new Promise((r) => setTimeout(r, 800));
 
     const craftType = formData.craftType || 'Heritage';
     const region = formData.region || 'Traditional Artisan Hub';
     const materials = formData.materials || 'Pure Natural Elements';
 
-    // Intelligent title generation based on craft
     let generatedTitle = `${region.split(',')[0].trim()} Handcrafted ${craftType}`;
     if (craftType.toLowerCase().includes('terracotta') || craftType.toLowerCase().includes('clay')) {
       generatedTitle = `${region.split(',')[0].trim()} Ceremonial Terracotta Sculpture`;
@@ -412,6 +710,45 @@ export const api = {
     };
   },
 
+  /**
+   * Fair price calculator based on materials and labor
+   */
+  async calculateFairPrice(costData) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/market/fair-price`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(costData)
+      });
+      if (res.ok) return await res.json();
+    } catch {
+      // fallback local calculation
+    }
+
+    const mat = Number(costData.materialCost) || 0;
+    const hours = Number(costData.laborHours) || 0;
+    const wage = Number(costData.hourlyWage) || 150;
+    const pkg = Number(costData.packagingCost) || 0;
+
+    const laborCost = hours * wage;
+    const totalProductionCost = mat + laborCost + pkg;
+    const artisanMargin = Math.round(totalProductionCost * 0.30);
+    const suggestedSellingPrice = Math.round(totalProductionCost + artisanMargin);
+
+    return {
+      materialCost: mat,
+      laborCost,
+      packagingCost: pkg,
+      totalProductionCost,
+      artisanMargin,
+      suggestedSellingPrice: Math.max(suggestedSellingPrice, 100),
+      priceRange: {
+        min: Math.max(Math.round(totalProductionCost * 1.15), 80),
+        max: Math.max(Math.round(totalProductionCost * 1.55), 150)
+      }
+    };
+  },
+
   async askAssistant(message, language = 'en') {
     try {
       const res = await fetch(`${API_BASE_URL}/ai/chat`, {
@@ -420,11 +757,11 @@ export const api = {
         body: JSON.stringify({ message, language })
       });
       if (res.ok) return await res.json();
-    } catch (e) {
+    } catch {
       // mock response
     }
 
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 600));
     return {
       reply: `Namaste! I am your KalaSetu craft advisor. How can I help you today? I can help you price your craft, write descriptions in multiple languages, find buyer trends, or enhance your product photos.`
     };
@@ -438,11 +775,11 @@ export const api = {
         body: JSON.stringify({ imageData })
       });
       if (res.ok) return await res.json();
-    } catch (e) {
+    } catch {
       // fallback mock
     }
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1200));
     return {
       success: true,
       enhancedUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=95'

@@ -3,15 +3,19 @@ import en from './en.js';
 import hi from './hi.js';
 import kn from './kn.js';
 import ta from './ta.js';
+import te from './te.js';
+import ml from './ml.js';
 import bn from './bn.js';
 
-const translations = { en, hi, kn, ta, bn };
+const translations = { en, hi, kn, ta, te, ml, bn };
 
 export const languageList = [
   { code: 'en', label: 'English', native: 'English' },
   { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
   { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
   { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'te', label: 'Telugu', native: 'తెలుగు' },
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
   { code: 'bn', label: 'Bengali', native: 'বাংলা' }
 ];
 

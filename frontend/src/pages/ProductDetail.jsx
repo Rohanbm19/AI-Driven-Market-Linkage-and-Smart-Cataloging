@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
   MapPin,
@@ -10,7 +10,10 @@ import {
   Send,
   CheckCircle2,
   Layers,
-  Wand2
+  Wand2,
+  Edit3,
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api, MOCK_PRODUCTS } from '../services/api.js';
@@ -20,6 +23,7 @@ import { useLanguage } from '../i18n/index.js';
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const [product, setProduct] = useState(
     () => MOCK_PRODUCTS.find((p) => p.id === id) || MOCK_PRODUCTS[0]
@@ -28,9 +32,11 @@ export default function ProductDetail() {
 
   const [showSlider, setShowSlider] = useState(false);
   const [enquirySent, setEnquirySent] = useState(false);
+  const [enquirySubmitting, setEnquirySubmitting] = useState(false);
   const [enquiryMsg, setEnquiryMsg] = useState('');
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,16 +58,44 @@ export default function ProductDetail() {
     };
   }, [id]);
 
-  const handleSendEnquiry = (e) => {
+  const handleSendEnquiry = async (e) => {
     e.preventDefault();
-    if (!enquiryMsg.trim()) return;
+    if (!enquiryMsg.trim() || !buyerName.trim() || !buyerEmail.trim()) return;
 
-    setEnquirySent(true);
-    confetti({
-      particleCount: 70,
-      spread: 60,
-      origin: { y: 0.7 }
-    });
+    setEnquirySubmitting(true);
+    try {
+      await api.submitEnquiry({
+        product_id: product.id,
+        product_title: product.title,
+        buyer_name: buyerName.trim(),
+        buyer_email: buyerEmail.trim(),
+        message: enquiryMsg.trim()
+      });
+
+      setEnquirySent(true);
+      confetti({
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+    } catch (err) {
+      console.error('Failed to submit enquiry:', err);
+    } finally {
+      setEnquirySubmitting(false);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!window.confirm(`Are you sure you want to delete "${product.title}"?`)) return;
+
+    setDeleting(true);
+    try {
+      await api.deleteProduct(product.id);
+      navigate('/');
+    } catch (err) {
+      alert('Could not delete product: ' + err.message);
+      setDeleting(false);
+    }
   };
 
   const parsedMaterials = Array.isArray(product.materials)
@@ -80,22 +114,54 @@ export default function ProductDetail() {
 
   return (
     <div>
-      <Link
-        to="/"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          color: 'var(--text-muted)',
-          textDecoration: 'none',
-          marginBottom: '1.5rem',
-          fontWeight: 500,
-          fontSize: '0.92rem'
-        }}
-      >
-        <ArrowLeft size={16} />
-        <span>Back to Marketplace</span>
-      </Link>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <Link
+          to="/"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            color: 'var(--text-muted)',
+            textDecoration: 'none',
+            fontWeight: 500,
+            fontSize: '0.92rem'
+          }}
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Marketplace</span>
+        </Link>
+
+        {/* Artisan Actions: Edit & Delete */}
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <Link
+            to={`/edit-product/${product.id}`}
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
+          >
+            <Edit3 size={15} />
+            <span>Edit Craft Listing</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleDeleteProduct}
+            disabled={deleting}
+            className="btn btn-sm"
+            style={{
+              background: '#fee2e2',
+              color: '#b91c1c',
+              border: '1px solid #fecaca',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              cursor: 'pointer'
+            }}
+          >
+            <Trash2 size={15} />
+            <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+          </button>
+        </div>
+      </div>
 
       <div
         style={{
@@ -176,7 +242,10 @@ export default function ProductDetail() {
             <span style={{ fontWeight: 500 }}>{product.region}</span>
             <span>•</span>
             <span>
-              Crafted by <strong>{product.artisan_name || 'Master Artisan'}</strong>
+              Crafted by{' '}
+              <Link to="/artisan-profile" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                {product.artisan_name || 'Master Artisan'}
+              </Link>
             </span>
           </div>
 
@@ -265,9 +334,9 @@ export default function ProductDetail() {
               >
                 <CheckCircle2 size={24} color="#059669" />
                 <div>
-                  <strong>Enquiry Dispatched!</strong>
+                  <strong>Enquiry Dispatched & Saved!</strong>
                   <p style={{ fontSize: '0.85rem', margin: 0 }}>
-                    {product.artisan_name || 'Artisan'} has been notified via KalaSetu WhatsApp & SMS gateway.
+                    {product.artisan_name || 'Artisan'} has been notified and can view your enquiry on their dashboard.
                   </p>
                 </div>
               </div>
@@ -301,9 +370,9 @@ export default function ProductDetail() {
                     onChange={(e) => setEnquiryMsg(e.target.value)}
                   />
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                <button type="submit" disabled={enquirySubmitting} className="btn btn-primary" style={{ width: '100%' }}>
                   <Send size={16} />
-                  <span>Send Direct Enquiry</span>
+                  <span>{enquirySubmitting ? 'Sending...' : 'Send Direct Enquiry'}</span>
                 </button>
               </form>
             )}

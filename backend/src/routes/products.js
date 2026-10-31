@@ -167,4 +167,95 @@ router.post('/', async (req, res) => {
   }
 });
 
+// 4. PUT /api/products/:id - Update product
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const updates = { ...req.body };
+
+  if (updates.price) updates.price = Number(updates.price);
+  if (updates.stock) updates.stock = Number(updates.stock);
+  if (typeof updates.materials === 'string') {
+    updates.materials = updates.materials.split(',').map(m => m.trim()).filter(Boolean);
+  }
+  if (typeof updates.tags === 'string') {
+    updates.tags = updates.tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+  }
+
+  try {
+    let savedInSupabase = false;
+    let dbError = null;
+
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase
+        .from('products')
+        .update(updates)
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        console.error('Supabase DB Update Error:', error);
+        dbError = error.message;
+      } else if (data && data.length > 0) {
+        savedInSupabase = true;
+      }
+    }
+
+    const index = localProductStore.findIndex((p) => p.id === id);
+    if (index >= 0) {
+      localProductStore[index] = { ...localProductStore[index], ...updates };
+    } else {
+      localProductStore.unshift({ id, ...updates });
+    }
+
+    const updated = localProductStore.find((p) => p.id === id) || { id, ...updates };
+
+    return res.json({
+      success: true,
+      data: updated,
+      savedInSupabase,
+      dbError,
+      message: 'Product successfully updated.'
+    });
+  } catch (err) {
+    console.error('Product update failed:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. DELETE /api/products/:id - Delete product
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    let deletedInSupabase = false;
+    let dbError = null;
+
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        dbError = error.message;
+      } else {
+        deletedInSupabase = true;
+      }
+    }
+
+    localProductStore = localProductStore.filter((p) => p.id !== id);
+
+    return res.json({
+      success: true,
+      deletedId: id,
+      deletedInSupabase,
+      dbError,
+      message: 'Product successfully deleted.'
+    });
+  } catch (err) {
+    console.error('Product deletion failed:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

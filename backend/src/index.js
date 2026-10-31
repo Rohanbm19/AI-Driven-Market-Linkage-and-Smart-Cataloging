@@ -5,6 +5,7 @@ import productsRouter from './routes/products.js';
 import artisansRouter from './routes/artisans.js';
 import enquiriesRouter from './routes/enquiries.js';
 import aiRouter from './routes/ai.js';
+import marketRouter from './routes/market.js';
 import { isSupabaseConfigured } from './config/supabase.js';
 
 dotenv.config();
@@ -36,17 +37,19 @@ app.use('/api/products', productsRouter);
 app.use('/api/artisans', artisansRouter);
 app.use('/api/enquiries', enquiriesRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/market', marketRouter);
 
 // Start Server
 app.listen(PORT, () => {
   console.log(`\n🚀 KalaSetu API Server running at: http://localhost:${PORT}`);
   console.log(`📡 Supabase Cloud Status: ${isSupabaseConfigured() ? 'Connected ✅' : 'Waiting for keys in .env 🟡'}`);
   console.log(`📦 Endpoints:`);
-  console.log(`   - GET  /api/products`);
-  console.log(`   - POST /api/products  (Saves craft to Supabase)`);
-  console.log(`   - GET  /api/artisans`);
-  console.log(`   - POST /api/enquiries`);
-  console.log(`   - POST /api/ai/catalog\n`);
+  console.log(`   - GET/POST/PUT/DELETE /api/products`);
+  console.log(`   - GET/POST/PUT        /api/artisans`);
+  console.log(`   - GET/POST/PATCH      /api/enquiries`);
+  console.log(`   - POST                /api/ai/catalog`);
+  console.log(`   - POST                /api/ai/pricing`);
+  console.log(`   - GET                 /api/market/trends\n`);
 });
 
 export default app;
