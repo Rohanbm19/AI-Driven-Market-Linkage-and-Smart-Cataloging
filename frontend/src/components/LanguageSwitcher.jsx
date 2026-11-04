@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/index.js';
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ variant = 'header', label }) {
   const { lang, setLang, languages } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const currentLanguage = languages.find(l => l.code === lang) || languages[0];
+  const currentLanguage = languages.find((l) => l.code === lang) || languages[0];
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -20,20 +20,29 @@ export default function LanguageSwitcher() {
   }, []);
 
   return (
-    <div className="lang-switcher" ref={dropdownRef}>
+    <div
+      className={`lang-switcher ${variant === 'card' ? 'is-card-variant' : ''}`}
+      ref={dropdownRef}
+    >
       <button
         type="button"
-        className="lang-btn"
+        className={`lang-btn ${variant === 'card' ? 'lang-btn-card' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Select Language"
+        title="Change application & speech language"
       >
-        <Globe size={16} />
-        <span>{currentLanguage.native}</span>
-        <ChevronDown size={14} />
+        <Globe size={15} className="lang-icon" />
+        <span className="lang-label">
+          {label ? `${label}: ` : ''}
+          <strong>{currentLanguage.native}</strong>
+          <span className="lang-subcode"> ({currentLanguage.label})</span>
+        </span>
+        <ChevronDown size={14} className={`lang-chevron ${isOpen ? 'is-open' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="lang-dropdown">
+        <div className={`lang-dropdown ${variant === 'card' ? 'lang-dropdown-card' : ''}`}>
+          <div className="lang-dropdown-header">Select Language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</div>
           {languages.map((item) => (
             <button
               key={item.code}
@@ -44,8 +53,11 @@ export default function LanguageSwitcher() {
                 setIsOpen(false);
               }}
             >
-              <span>{item.native}</span>
-              {item.code === lang && <Check size={14} />}
+              <div className="lang-option-text">
+                <span className="lang-native">{item.native}</span>
+                <span className="lang-english">{item.label}</span>
+              </div>
+              {item.code === lang && <Check size={14} className="lang-check" />}
             </button>
           ))}
         </div>

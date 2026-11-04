@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, Phone, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Phone, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
+import Logo from '../components/Logo.jsx';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -53,7 +54,6 @@ export default function Login() {
         setLoading(false);
       }
     } else {
-      // Safe fallback demo login
       setTimeout(() => {
         setLoading(false);
         localStorage.setItem('kalasetu_user', JSON.stringify({ email, role: 'buyer' }));
@@ -63,26 +63,14 @@ export default function Login() {
   };
 
   return (
-    <div style={{ maxWidth: '440px', margin: '2rem auto' }}>
-      <div className="card">
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--primary-light)',
-              color: 'var(--primary)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '0.75rem'
-            }}
-          >
-            <Sparkles size={24} />
+    <div style={{ maxWidth: '440px', margin: '2.5rem auto' }}>
+      <div className="card" style={{ padding: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
+            <Logo size={52} />
           </div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.35rem' }}>
-            Welcome to KalaSetu
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, marginBottom: '0.35rem', color: '#1a1b1e' }}>
+            Artisan & Buyer Portal
           </h1>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
             Sign in to access your artisan studio or buyer catalogue
@@ -107,7 +95,7 @@ export default function Login() {
             }}
             style={{
               flex: 1,
-              padding: '0.5rem',
+              padding: '0.55rem',
               border: 'none',
               borderRadius: 'var(--radius-sm)',
               background: authMode === 'otp' ? 'white' : 'transparent',
@@ -128,7 +116,7 @@ export default function Login() {
             }}
             style={{
               flex: 1,
-              padding: '0.5rem',
+              padding: '0.55rem',
               border: 'none',
               borderRadius: 'var(--radius-sm)',
               background: authMode === 'email' ? 'white' : 'transparent',
@@ -292,9 +280,14 @@ export default function Login() {
             borderTop: '1px solid var(--border-color)',
             textAlign: 'center',
             fontSize: '0.82rem',
-            color: 'var(--text-muted)'
+            color: 'var(--text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.35rem'
           }}
         >
+          <ShieldCheck size={14} color="#059669" />
           <span>Protected with 256-bit SSL encryption & Fair Trade verification.</span>
         </div>
       </div>

@@ -1,0 +1,20 @@
+CREATE TABLE products (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'other',
+    price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
+    artisan_name TEXT NOT NULL,
+    artisan_id TEXT REFERENCES artisans(id) ON DELETE SET NULL,
+    region TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    materials TEXT[] NOT NULL DEFAULT '{}',
+    image_url TEXT NOT NULL DEFAULT '',
+    enhanced_image_url TEXT,
+    tags TEXT[] NOT NULL DEFAULT '{}',
+    stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+    rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+    reviews_count INTEGER NOT NULL DEFAULT 0,
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    fair_trade BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
