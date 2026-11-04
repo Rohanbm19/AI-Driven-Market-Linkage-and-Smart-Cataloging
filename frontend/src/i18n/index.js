@@ -11,12 +11,11 @@ const translations = { en, hi, kn, ta, te, ml, bn };
 
 export const languageList = [
   { code: 'en', label: 'English', native: 'English' },
-  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
   { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
   { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
   { code: 'te', label: 'Telugu', native: 'తెలుగు' },
-  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
-  { code: 'bn', label: 'Bengali', native: 'বাংলা' }
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' }
 ];
 
 const LanguageContext = createContext(null);

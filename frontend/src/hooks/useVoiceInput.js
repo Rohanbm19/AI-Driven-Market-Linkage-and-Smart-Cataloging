@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 export const VOICE_LANGUAGES = [
-  { code: 'en', bcp47: 'en-IN', name: 'English (India)' },
-  { code: 'kn', bcp47: 'kn-IN', name: 'ಕನ್ನಡ (Kannada)' },
-  { code: 'hi', bcp47: 'hi-IN', name: 'हिन्दी (Hindi)' },
-  { code: 'ta', bcp47: 'ta-IN', name: 'தமிழ் (Tamil)' },
-  { code: 'te', bcp47: 'te-IN', name: 'తెలుగు (Telugu)' },
-  { code: 'ml', bcp47: 'ml-IN', name: 'മലയാളം (Malayalam)' },
-  { code: 'bn', bcp47: 'bn-IN', name: 'বাংলা (Bengali)' }
+  { code: 'en', bcp47: 'en-IN', name: 'English (India)', native: 'English' },
+  { code: 'kn', bcp47: 'kn-IN', name: 'ಕನ್ನಡ (Kannada)', native: 'ಕನ್ನಡ' },
+  { code: 'hi', bcp47: 'hi-IN', name: 'हिन्दी (Hindi)', native: 'हिन्दी' },
+  { code: 'ta', bcp47: 'ta-IN', name: 'தமிழ் (Tamil)', native: 'தமிழ்' },
+  { code: 'te', bcp47: 'te-IN', name: 'తెలుగు (Telugu)', native: 'తెలుగు' },
+  { code: 'ml', bcp47: 'ml-IN', name: 'മലയാളം (Malayalam)', native: 'മലയാളം' }
 ];
 
 export const langMap = {
@@ -22,9 +21,7 @@ export const langMap = {
   te: 'te-IN',
   'te-IN': 'te-IN',
   ml: 'ml-IN',
-  'ml-IN': 'ml-IN',
-  bn: 'bn-IN',
-  'bn-IN': 'bn-IN'
+  'ml-IN': 'ml-IN'
 };
 
 export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
@@ -53,7 +50,7 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
 
     if (!SpeechRecognition) {
       setIsSupported(false);
-      setError('Speech recognition is unavailable in this browser. For best results, use Google Chrome.');
+      setError('Speech recognition is unavailable in this browser. Please use Chrome or Edge for voice input.');
       return;
     }
 
@@ -82,20 +79,19 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
 
     recognition.onerror = (event) => {
       const errorMap = {
-        'not-allowed': 'Microphone permission denied. Please click the lock icon in your address bar and allow microphone access.',
-        'service-not-allowed': 'Speech recognition service is blocked by your browser.',
-        'no-speech': 'No speech detected. Please speak closer to your microphone.',
-        'audio-capture': 'No microphone detected. Please check your audio input hardware.',
-        'network': 'Network error while contacting speech service. Please verify your connection.',
-        'language-not-supported': 'The selected language is not supported by your browser speech engine.'
+        'not-allowed': 'Microphone permission was denied. Please allow microphone access in your browser settings.',
+        'service-not-allowed': 'Speech recognition service is currently unavailable in this browser.',
+        'no-speech': 'No speech was detected. Please try speaking closer to your microphone.',
+        'audio-capture': 'No microphone found. Please connect an audio input device.',
+        'network': 'Network error contacting speech service. Please check your internet connection.',
+        'language-not-supported': 'The selected language speech model is not installed on this browser engine.'
       };
 
-      // no-speech during continuous recording is non-fatal unless silence ended it
       if (event.error === 'no-speech') {
         return;
       }
 
-      setError(errorMap[event.error] || `Speech recognition error: ${event.error}`);
+      setError(errorMap[event.error] || `Voice error: ${event.error}`);
       listeningRef.current = false;
       setIsListening(false);
     };
@@ -122,7 +118,16 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
 
   const startListening = useCallback((language) => {
     const recognition = recognitionRef.current;
-    if (!recognition || listeningRef.current) return;
+    if (!recognition) return;
+
+    // If already running, abort and re-start with new language
+    if (listeningRef.current) {
+      try {
+        recognition.abort();
+      } catch {
+        // ignore
+      }
+    }
 
     const langToUse = language || currentLangRef.current || 'en';
     recognition.lang = langMap[langToUse] || 'en-IN';
@@ -136,7 +141,13 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
       console.warn('Recognition start caught error:', err);
       try {
         recognition.stop();
-        setTimeout(() => recognition.start(), 150);
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (innerErr) {
+            setError('Could not start microphone. Please try again.');
+          }
+        }, 150);
       } catch (retryErr) {
         setError('Could not start microphone. Please try again.');
       }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Mic, Sparkles, Filter, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Search, Mic, ArrowRight, Sparkles, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
 import { api, MOCK_PRODUCTS } from '../services/api.js';
@@ -41,11 +41,21 @@ export default function Marketplace() {
     }
   });
 
+  const categoryList = [
+    { id: 'all', label: t.market?.allCategories || 'All Crafts' },
+    { id: 'pottery', label: t.catalogForm?.categories?.pottery || 'Terracotta & Pottery' },
+    { id: 'textiles', label: t.catalogForm?.categories?.textiles || 'Handloom & Silk' },
+    { id: 'metal', label: t.catalogForm?.categories?.metal || 'Brass & Bell Metal' },
+    { id: 'woodwork', label: t.catalogForm?.categories?.woodwork || 'Channapatna Wood' },
+    { id: 'painting', label: t.catalogForm?.categories?.painting || 'Pattachitra Art' },
+    { id: 'other', label: t.catalogForm?.categories?.other || 'Other Heritage Craft' }
+  ];
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        !searchQuery ||
+        !q ||
         (p.title && p.title.toLowerCase().includes(q)) ||
         (p.region && p.region.toLowerCase().includes(q)) ||
         (p.artisan_name && p.artisan_name.toLowerCase().includes(q)) ||
@@ -55,7 +65,8 @@ export default function Marketplace() {
       const matchesCategory =
         selectedCategory === 'all' ||
         p.category === selectedCategory ||
-        (selectedCategory === 'pottery' && (p.category === 'ceramics' || p.category === 'pottery'));
+        (selectedCategory === 'pottery' && (p.category === 'pottery' || p.category === 'ceramics')) ||
+        (selectedCategory === 'textiles' && (p.category === 'textiles' || p.category === 'silk'));
 
       const matchesVerified = !verifiedOnly || p.is_verified;
 
@@ -64,168 +75,157 @@ export default function Marketplace() {
   }, [products, searchQuery, selectedCategory, verifiedOnly]);
 
   return (
-    <div>
-      {/* Hero Banner */}
+    <div className="marketplace-page">
+      {/* 4. HOMEPAGE DESIGN / HERO SECTION */}
+      {/* Unwanted blue-marked text/badge above heading has been removed as requested */}
       <section className="hero-banner">
+        <div className="hero-pattern-overlay" aria-hidden="true" />
         <div className="hero-content">
-          <div className="hero-tag">
-            <Sparkles size={14} />
-            <span>{t.hero.badge}</span>
-          </div>
-          <h1 className="hero-title">{t.hero.title}</h1>
-          <p className="hero-desc">{t.hero.subtitle}</p>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <a href="#marketplace-grid" className="btn btn-primary">
-              <span>{t.hero.exploreBtn}</span>
-              <ArrowRight size={16} />
+          <h1 className="hero-title">
+            Preserving Heritage. Unlocking Global Markets.
+          </h1>
+          <p className="hero-desc">
+            Empowering master craftsmen with instant AI catalog generation, studio-grade image enhancement, voice-driven localization, and fair trade pricing.
+          </p>
+          <div className="hero-cta-group">
+            <a href="#marketplace-grid" className="btn btn-hero-explore">
+              <span>Explore Marketplace</span>
+              <ArrowRight size={17} />
             </a>
-            <Link to="/add-product" className="btn btn-secondary">
-              <Sparkles size={16} />
-              <span>{t.hero.listBtn}</span>
+            <Link to="/add-product" className="btn btn-hero-list">
+              <Sparkles size={17} />
+              <span>List Your Craft</span>
             </Link>
+          </div>
+        </div>
+
+        {/* Visual Showcase collage featuring traditional Indian crafts */}
+        <div className="hero-visual-showcase" aria-hidden="true">
+          <div className="hero-craft-card hero-craft-card-1">
+            <img
+              src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=480&q=80"
+              alt="Indian Terracotta Sacred Craft"
+              className="hero-craft-img"
+            />
+            <div className="hero-craft-badge">Terracotta Pottery</div>
+          </div>
+          <div className="hero-craft-card hero-craft-card-2">
+            <img
+              src="https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=480&q=80"
+              alt="Moradabad Engraved Brass Craft"
+              className="hero-craft-img"
+            />
+            <div className="hero-craft-badge">Brass & Bell Metal</div>
+          </div>
+          <div className="hero-craft-card hero-craft-card-3">
+            <img
+              src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=480&q=80"
+              alt="Handloom Silk Craft"
+              className="hero-craft-img"
+            />
+            <div className="hero-craft-badge">Kanjivaram Silk</div>
           </div>
         </div>
       </section>
 
       {/* Search & Voice Filter Bar */}
-      <div
-        style={{
-          background: 'white',
-          padding: '1.25rem',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-color)',
-          boxShadow: 'var(--shadow-sm)',
-          marginBottom: '2rem'
-        }}
-      >
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
-            <Search
-              size={18}
-              style={{
-                position: 'absolute',
-                left: '1rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-muted)'
-              }}
-            />
+      <div className="market-filter-card">
+        <div className="market-search-row">
+          <div className="market-search-input-wrapper">
+            <Search size={18} className="search-icon" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.market.searchPlaceholder}
-              className="form-input"
-              style={{ paddingLeft: '2.75rem' }}
+              placeholder={t.market?.searchPlaceholder || 'Search handmade pottery, handloom sarees, brass craft, artisan name or village...'}
+              className="form-input search-input"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+              >
+                ×
+              </button>
+            )}
           </div>
 
-          {/* Voice Input Button */}
+          {/* Voice Search Button */}
           <button
             type="button"
-            className={`voice-btn ${isListening ? 'listening' : ''}`}
+            className={`voice-search-btn ${isListening ? 'listening' : ''}`}
             onClick={toggleListening}
-            title={t.market.voiceHint}
+            title={isListening ? 'Listening... click to stop' : 'Click to search with your voice'}
+            aria-label="Voice Search"
           >
             <Mic size={18} />
+            <span className="voice-btn-text">
+              {isListening ? 'Listening...' : 'Voice Search'}
+            </span>
           </button>
         </div>
 
         {/* Categories Bar */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.5rem',
-            marginTop: '1rem',
-            flexWrap: 'wrap',
-            alignItems: 'center'
-          }}
-        >
-          {[
-            { id: 'all', label: t.market.allCategories },
-            { id: 'pottery', label: t.market.pottery },
-            { id: 'textiles', label: t.market.textiles },
-            { id: 'metal', label: t.market.metal },
-            { id: 'woodwork', label: t.market.woodwork }
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`btn btn-sm ${
-                selectedCategory === cat.id ? 'btn-primary' : 'btn-secondary'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <div className="market-categories-row">
+          <div className="category-scroll-container">
+            {categoryList.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`category-pill ${selectedCategory === cat.id ? 'active' : ''}`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
 
-          <label
-            style={{
-              marginLeft: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              fontSize: '0.88rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              color: 'var(--text-muted)'
-            }}
-          >
+          <label className="verified-filter-toggle">
             <input
               type="checkbox"
               checked={verifiedOnly}
               onChange={(e) => setVerifiedOnly(e.target.checked)}
-              style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+              className="verified-checkbox"
             />
-            <span>{t.market.verifiedOnly}</span>
+            <ShieldCheck size={16} color="var(--primary)" />
+            <span>{t.market?.verifiedOnly || 'Verified Artisans Only'}</span>
           </label>
         </div>
       </div>
 
-      {/* Product Grid */}
-      <div id="marketplace-grid">
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.25rem'
-          }}
-        >
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-            Curated Artisan Collection ({filteredProducts.length})
-          </h2>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--primary)',
-                cursor: 'pointer',
-                fontSize: '0.88rem',
-                fontWeight: 600
-              }}
-            >
-              Clear Search
-            </button>
-          )}
+      {/* Product Grid Section */}
+      <div id="marketplace-grid" className="marketplace-grid-section">
+        <div className="market-grid-header">
+          <div>
+            <h2 className="market-grid-title">
+              {t.market?.curatedTitle || 'Curated Artisan Collection'}
+            </h2>
+            <p className="market-grid-subtitle">
+              Authentic handcrafted treasures directly sourced from GI-registered artisan clusters across India.
+            </p>
+          </div>
+          <span className="market-count-badge">
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'Craft' : 'Crafts'} Available
+          </span>
         </div>
 
         {filteredProducts.length === 0 ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '4rem 1rem',
-              background: 'white',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-color)'
-            }}
-          >
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
-              No crafts matched your search. Try a different term or category.
-            </p>
+          <div className="empty-market-state">
+            <p className="empty-title">No crafts matched your filter or search query.</p>
+            <p className="empty-subtitle">Try searching for pottery, silk sarees, brassware, or clear the search filters.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+                setVerifiedOnly(false);
+              }}
+              className="btn btn-secondary"
+            >
+              Reset Filters
+            </button>
           </div>
         ) : (
           <div className="product-grid">
