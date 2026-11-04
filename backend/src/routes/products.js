@@ -107,6 +107,14 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Title and price are required fields.' });
     }
 
+    if (!isSupabaseConfigured()) {
+      return res.status(503).json({
+        success: false,
+        savedInSupabase: false,
+        error: 'Supabase is not configured on the backend.'
+      });
+    }
+
     const newProduct = {
       id: req.body.id || `prod-${Date.now()}`,
       title: title.trim(),
@@ -132,34 +140,28 @@ router.post('/', async (req, res) => {
       created_at: new Date().toISOString()
     };
 
-    let savedInSupabase = false;
-    let dbError = null;
+    const { data, error } = await supabase
+      .from('products')
+      .insert([newProduct])
+      .select()
+      .single();
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('products')
-        .insert([newProduct])
-        .select();
-
-      if (error) {
-        console.error('Supabase DB Insert Error:', error);
-        dbError = error.message;
-      } else if (data && data.length > 0) {
-        savedInSupabase = true;
-      }
+    if (error) {
+      console.error('Supabase DB Insert Error:', error);
+      return res.status(error.code === '23503' ? 400 : 500).json({
+        success: false,
+        savedInSupabase: false,
+        error: error.message
+      });
     }
 
-    // Also keep in-memory backup
-    localProductStore = [newProduct, ...localProductStore.filter(p => p.id !== newProduct.id)];
+    localProductStore = [data, ...localProductStore.filter(p => p.id !== data.id)];
 
     return res.status(201).json({
       success: true,
-      data: newProduct,
-      savedInSupabase,
-      dbError,
-      message: savedInSupabase
-        ? 'Successfully stored in Supabase products table!'
-        : 'Saved locally in server memory (Configure SUPABASE_URL in backend/.env to persist in cloud).'
+      data,
+      savedInSupabase: true,
+      message: 'Successfully stored in Supabase products table.'
     });
   } catch (err) {
     console.error('Product creation failed:', err);

@@ -320,7 +320,7 @@ export const api = {
   },
 
   /**
-   * Create a new product in Supabase and locally
+   * Create a product through the backend and cache it after the database confirms the insert.
    */
   async createProduct(productData) {
     const id = productData.id || `prod-${Date.now()}`;
@@ -353,47 +353,26 @@ export const api = {
       created_at: new Date().toISOString()
     };
 
-    let savedInSupabase = false;
-    let supabaseError = null;
-    let savedRecord = payload;
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
 
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .insert([payload])
-          .select();
-
-        if (error) {
-          console.error('Supabase DB Insert Error:', error);
-          supabaseError = error.message;
-        } else if (data && data.length > 0) {
-          savedInSupabase = true;
-          savedRecord = data[0];
-        }
-      } catch (err) {
-        supabaseError = err.message || 'Database connection error';
-      }
+    if (!response.ok || !result.success || !result.savedInSupabase) {
+      throw new Error(
+        result.dbError || result.error || result.message || 'The product was not saved to Supabase.'
+      );
     }
 
-    try {
-      await fetch(`${API_BASE_URL}/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch {
-      // Backend optional
-    }
-
+    const savedRecord = result.data;
     saveProductLocally(savedRecord);
 
     return {
       success: true,
       data: savedRecord,
-      savedInSupabase,
-      supabaseConfigured: isSupabaseConfigured(),
-      supabaseError
+      savedInSupabase: true
     };
   },
 

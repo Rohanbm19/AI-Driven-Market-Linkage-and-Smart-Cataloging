@@ -2,7 +2,8 @@
 -- Seed data for KalaSetu artisan marketplace
 
 INSERT INTO public.artisans (id, name, craft, region, experience, bio, avatar, is_verified, rating, total_sales, badges)
-VALUES (
+VALUES
+(
     'art-1',
     'Shankar Das',
     'Terracotta & Alluvial Clay Sculpting',
@@ -14,7 +15,12 @@ VALUES (
     4.9,
     342,
     ARRAY['Master Craftsman', 'Fair Trade Certified', 'GI Custodian']
-)
+),
+('art-2', 'Meenakshi Sundaram', 'Silk weaving', 'Kanchipuram, Tamil Nadu', '20 years', '', '', true, 5.0, 0, ARRAY['Handloom']),
+('art-3', 'Mohammad Rais', 'Brass engraving', 'Moradabad, Uttar Pradesh', '18 years', '', '', true, 4.8, 0, ARRAY['Heritage']),
+('art-4', 'Gowramma & Venkatesh', 'Woodwork', 'Channapatna, Karnataka', '15 years', '', '', true, 4.9, 0, ARRAY['Eco-friendly']),
+('art-5', 'Ramkishan Kumhar', 'Blue pottery', 'Jaipur, Rajasthan', '22 years', '', '', true, 4.7, 0, ARRAY['GI Tagged']),
+('art-6', 'Yadagiri Chary', 'Ikat weaving', 'Bhoodan Pochampally, Telangana', '16 years', '', '', true, 4.85, 0, ARRAY['Handloom'])
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.products (
