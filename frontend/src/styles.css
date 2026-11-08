@@ -2282,6 +2282,30 @@ h1, h2, h3, h4, .serif-font {
   margin: 0 0 1rem;
 }
 
+.image-background-field {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--text-main);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.image-background-select {
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-main);
+  font: inherit;
+}
+
+.image-enhancer-upload:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .image-enhancer-upload {
   display: flex;
   width: 100%;

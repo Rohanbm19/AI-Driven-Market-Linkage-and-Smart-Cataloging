@@ -81,7 +81,9 @@ $env:IMAGE_ENHANCER_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:51
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The service accepts multipart image uploads at `POST http://localhost:8000/api/enhance`, limited to JPEG, PNG, and WebP files up to 10 MB. It returns the enhanced image bytes in the original format. `GET http://localhost:8000/health` checks service availability. Images are processed in an automatically cleaned temporary directory; the submitted file is never overwritten.
+The service accepts multipart image uploads at `POST http://localhost:8000/api/enhance`, limited to JPEG, PNG, and WebP files up to 10 MB. It returns the enhanced image bytes in the original format. Set the optional `background_preset` field to `clean_white`, `warm_sand`, or `soft_sage` to replace the original background, or send an optional `background_file` image to use a custom background. Omit the background fields or use `none` to keep the current background. Background removal works best when the product is centered and clearly separated from a simple background. `GET http://localhost:8000/health` checks service availability. Images are processed in an automatically cleaned temporary directory; the submitted file is never overwritten.
+
+The Add Product form and standalone image enhancer let users choose a studio preset or upload a custom background before processing. Review the result before accepting it; the original photo remains unchanged.
 
 Copy `frontend/.env.example` to `frontend/.env` and set `VITE_IMAGE_ENHANCER_URL=http://localhost:8000` if the service is hosted elsewhere. Restart Vite after changing frontend environment variables. The browser sends the file directly to this service; configure `IMAGE_ENHANCER_ALLOWED_ORIGINS` to include the frontend origin when deploying.
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
@@ -21,6 +21,11 @@ FORMATS = {
     ".webp": ("image/webp", ".webp"),
 }
 ALLOWED_MIME_TYPES = {mime for mime, _ in FORMATS.values()}
+BACKGROUND_PRESETS = {
+    "clean_white": (244, 247, 250),
+    "warm_sand": (205, 225, 242),
+    "soft_sage": (198, 218, 204),
+}
 
 allowed_origins = [
     origin.strip()
@@ -131,7 +136,114 @@ def _resize_within_limit(image: np.ndarray) -> np.ndarray:
     return cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
 
 
-def process_image_bytes(image_bytes: bytes, suffix: str) -> bytes:
+def _studio_background(width: int, height: int, preset: str) -> np.ndarray:
+    if preset not in BACKGROUND_PRESETS:
+        raise ValueError("Choose a valid studio background.")
+
+    base_color = np.array(BACKGROUND_PRESETS[preset], dtype=np.float32)
+    y, x = np.ogrid[:height, :width]
+    distance = np.sqrt(
+        ((x - width * 0.5) / max(width, 1)) ** 2
+        + ((y - height * 0.42) / max(height, 1)) ** 2
+    )
+    light = np.clip(1.0 - distance * 1.5, 0.0, 1.0) * 10.0
+    background = np.clip(base_color + light[:, :, np.newaxis], 0, 255)
+    return np.broadcast_to(background, (height, width, 3)).astype(np.uint8).copy()
+
+
+def _uploaded_background(image_bytes: bytes, suffix: str, width: int, height: int) -> np.ndarray:
+    if suffix not in FORMATS:
+        raise ValueError("Use a JPEG, PNG, or WebP background image.")
+    image = cv2.imdecode(np.frombuffer(image_bytes, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+    if image is None or image.size == 0:
+        raise ValueError("The uploaded background is not a readable image.")
+    if image.ndim == 2:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    elif image.ndim == 3 and image.shape[2] == 4:
+        alpha = image[:, :, 3].astype(np.float32)[:, :, np.newaxis] / 255.0
+        image = np.clip(
+            image[:, :, :3].astype(np.float32) * alpha + 255 * (1.0 - alpha),
+            0,
+            255,
+        ).astype(np.uint8)
+    elif image.ndim != 3 or image.shape[2] != 3:
+        raise ValueError("The uploaded background has an unsupported color format.")
+
+    bg_height, bg_width = image.shape[:2]
+    if bg_height * bg_width > MAX_IMAGE_PIXELS:
+        raise ImageTooLargeError("The background dimensions are too large to process.")
+
+    scale = max(width / bg_width, height / bg_height)
+    resized = cv2.resize(
+        image,
+        (max(width, round(bg_width * scale)), max(height, round(bg_height * scale))),
+        interpolation=cv2.INTER_AREA if scale < 1 else cv2.INTER_LINEAR,
+    )
+    top = (resized.shape[0] - height) // 2
+    left = (resized.shape[1] - width) // 2
+    return resized[top:top + height, left:left + width]
+
+
+def _foreground_alpha(image: np.ndarray, existing_alpha: np.ndarray | None) -> np.ndarray:
+    if existing_alpha is not None:
+        return existing_alpha
+
+    height, width = image.shape[:2]
+    scale = min(1.0, 1200 / max(height, width))
+    if scale < 1:
+        image = cv2.resize(
+            image,
+            (max(1, round(width * scale)), max(1, round(height * scale))),
+            interpolation=cv2.INTER_AREA,
+        )
+
+    small_height, small_width = image.shape[:2]
+    if small_width < 3 or small_height < 3:
+        raise ValueError("The image is too small for background replacement.")
+
+    margin_x = max(1, round(small_width * 0.02))
+    margin_y = max(1, round(small_height * 0.02))
+    grabcut_mask = np.full((small_height, small_width), cv2.GC_BGD, dtype=np.uint8)
+    rectangle = (
+        margin_x,
+        margin_y,
+        max(1, small_width - 2 * margin_x),
+        max(1, small_height - 2 * margin_y),
+    )
+    cv2.grabCut(
+        image,
+        grabcut_mask,
+        rectangle,
+        np.zeros((1, 65), dtype=np.float64),
+        np.zeros((1, 65), dtype=np.float64),
+        5,
+        cv2.GC_INIT_WITH_RECT,
+    )
+    foreground = np.where(
+        (grabcut_mask == cv2.GC_FGD) | (grabcut_mask == cv2.GC_PR_FGD),
+        255,
+        0,
+    ).astype(np.uint8)
+    if np.count_nonzero(foreground) < foreground.size * 0.01:
+        raise ValueError("Could not separate the product from its background.")
+
+    if scale < 1:
+        foreground = cv2.resize(foreground, (width, height), interpolation=cv2.INTER_LINEAR)
+    return cv2.GaussianBlur(foreground, (0, 0), sigmaX=1.2)
+
+
+def process_image_bytes(
+    image_bytes: bytes,
+    suffix: str,
+    background_preset: str = "none",
+    background_bytes: bytes | None = None,
+    background_suffix: str = ".png",
+) -> bytes:
+    if background_preset != "none" and background_preset not in BACKGROUND_PRESETS:
+        raise ValueError("Choose a valid studio background.")
+    if background_preset != "none" and background_bytes:
+        raise ValueError("Choose either a studio preset or a custom background.")
+
     with tempfile.TemporaryDirectory(prefix="kalasetu-image-") as temp_dir:
         input_path = Path(temp_dir) / f"original{suffix}"
         output_path = Path(temp_dir) / f"enhanced{suffix}"
@@ -156,10 +268,30 @@ def process_image_bytes(image_bytes: bytes, suffix: str) -> bytes:
             image = image[:, :, :3]
 
         image = _resize_within_limit(image)
-        enhanced = _enhance_bgr(image)
-
         if alpha is not None:
             alpha = _resize_within_limit(alpha)
+        enhanced = _enhance_bgr(image)
+
+        if background_preset != "none" or background_bytes:
+            foreground = _foreground_alpha(enhanced, alpha)
+            if background_bytes:
+                background = _uploaded_background(
+                    background_bytes, background_suffix, enhanced.shape[1], enhanced.shape[0]
+                )
+            else:
+                background = _studio_background(
+                    enhanced.shape[1], enhanced.shape[0], background_preset
+                )
+            opacity = foreground.astype(np.float32)[:, :, np.newaxis] / 255.0
+            enhanced = np.clip(
+                enhanced.astype(np.float32) * opacity
+                + background.astype(np.float32) * (1.0 - opacity),
+                0,
+                255,
+            ).astype(np.uint8)
+            alpha = None
+
+        if alpha is not None:
             enhanced = cv2.cvtColor(enhanced, cv2.COLOR_BGR2BGRA)
             enhanced[:, :, 3] = alpha
 
@@ -187,7 +319,11 @@ async def health_check() -> dict[str, str]:
 
 
 @app.post("/api/enhance")
-async def enhance_image(file: UploadFile = File(...)) -> Response:
+async def enhance_image(
+    file: UploadFile = File(...),
+    background_preset: str = Form("none"),
+    background_file: UploadFile | None = File(None),
+) -> Response:
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in FORMATS:
         raise HTTPException(
@@ -206,8 +342,29 @@ async def enhance_image(file: UploadFile = File(...)) -> Response:
     if len(image_bytes) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="Image files must be 10 MB or smaller.")
 
+    background_bytes = None
+    background_suffix = ".png"
+    if background_file is not None:
+        background_suffix = Path(background_file.filename or "").suffix.lower()
+        if background_suffix not in FORMATS:
+            await background_file.close()
+            raise HTTPException(status_code=415, detail="Use a JPEG, PNG, or WebP background image.")
+        if background_file.content_type and background_file.content_type not in (
+            ALLOWED_MIME_TYPES | {"application/octet-stream"}
+        ):
+            await background_file.close()
+            raise HTTPException(status_code=415, detail="The uploaded background is not an image.")
+        background_bytes = await background_file.read(MAX_UPLOAD_BYTES + 1)
+        await background_file.close()
+        if not background_bytes:
+            raise HTTPException(status_code=400, detail="The uploaded background is empty.")
+        if len(background_bytes) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="Background images must be 10 MB or smaller.")
+
     try:
-        enhanced_bytes = process_image_bytes(image_bytes, suffix)
+        enhanced_bytes = process_image_bytes(
+            image_bytes, suffix, background_preset, background_bytes, background_suffix
+        )
     except ImageTooLargeError as error:
         raise HTTPException(status_code=413, detail=str(error)) from error
     except ValueError as error:

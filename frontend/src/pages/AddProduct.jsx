@@ -20,7 +20,11 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../services/api.js';
-import { enhanceProductImage, validateImageFile } from '../services/imageEnhancer.js';
+import {
+  enhanceProductImage,
+  IMAGE_BACKGROUND_PRESETS,
+  validateImageFile
+} from '../services/imageEnhancer.js';
 import { useLanguage } from '../i18n/index.js';
 import { isSupabaseConfigured } from '../lib/supabaseClient.js';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
@@ -33,6 +37,7 @@ export default function AddProduct() {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
   const fileInputRef = useRef(null);
+  const backgroundInputRef = useRef(null);
 
   const cf = t?.catalogForm || {};
 
@@ -59,6 +64,8 @@ export default function AddProduct() {
   const [enhancedPhotoUrl, setEnhancedPhotoUrl] = useState('');
   const [enhancedPhotoFile, setEnhancedPhotoFile] = useState(null);
   const [enhancedImageAccepted, setEnhancedImageAccepted] = useState(false);
+  const [imageBackgroundPreset, setImageBackgroundPreset] = useState('none');
+  const [imageBackgroundFile, setImageBackgroundFile] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isEnhancingImage, setIsEnhancingImage] = useState(false);
@@ -152,6 +159,8 @@ export default function AddProduct() {
     setEnhancedPhotoUrl('');
     setEnhancedPhotoFile(null);
     setEnhancedImageAccepted(false);
+    setImageBackgroundPreset('none');
+    setImageBackgroundFile(null);
     setEnhancementError('');
     setIsUploadingImage(true);
 
@@ -178,7 +187,11 @@ export default function AddProduct() {
     setEnhancementError('');
     setIsEnhancingImage(true);
     try {
-      const enhancedFile = await enhanceProductImage(photoFile);
+      const enhancedFile = await enhanceProductImage(
+        photoFile,
+        imageBackgroundPreset,
+        imageBackgroundFile
+      );
       setEnhancedPhotoFile(enhancedFile);
       setEnhancedPhotoUrl(URL.createObjectURL(enhancedFile));
       setEnhancedImageAccepted(false);
@@ -242,11 +255,18 @@ export default function AddProduct() {
     setEnhancedPhotoUrl('');
     setEnhancedPhotoFile(null);
     setEnhancedImageAccepted(false);
+    setImageBackgroundPreset('none');
+    setImageBackgroundFile(null);
     setPhotoFile(null);
     setEnhancementError('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleTryAgain = () => {
+    handleRemovePhoto();
+    fileInputRef.current?.click();
   };
 
   // Cost & Fair Price Calculations
@@ -780,18 +800,74 @@ export default function AddProduct() {
 
                     {originalPhotoUrl && photoFile && !enhancedPhotoUrl && (
                       <div className="image-enhancement-controls">
+                        <label className="image-background-field" htmlFor="product-image-background">
+                          <span>Background option</span>
+                          <select
+                            id="product-image-background"
+                            className="image-background-select"
+                            value={imageBackgroundPreset}
+                            onChange={(event) => {
+                              setImageBackgroundPreset(event.target.value);
+                              setEnhancementError('');
+                            }}
+                            disabled={isUploadingImage || isEnhancingImage}
+                          >
+                            {IMAGE_BACKGROUND_PRESETS.map((preset) => (
+                              <option key={preset.value} value={preset.value}>{preset.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                        {imageBackgroundPreset === 'custom' && (
+                          <>
+                            <input
+                              ref={backgroundInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              onChange={(event) => {
+                                const file = event.target.files?.[0] || null;
+                                try {
+                                  if (file) validateImageFile(file);
+                                  setImageBackgroundFile(file);
+                                  setEnhancementError('');
+                                } catch (error) {
+                                  setEnhancementError(error.message);
+                                  event.target.value = '';
+                                }
+                              }}
+                              hidden
+                            />
+                            <button
+                              type="button"
+                              className="image-enhancer-upload"
+                              onClick={() => backgroundInputRef.current?.click()}
+                              disabled={isUploadingImage || isEnhancingImage}
+                            >
+                              <Upload size={16} />
+                              <span>
+                                {imageBackgroundFile?.name || 'Select a JPEG, PNG, or WebP background'}
+                              </span>
+                            </button>
+                          </>
+                        )}
                         <button
                           type="button"
                           className="btn btn-primary btn-sm"
                           onClick={handleEnhanceImage}
-                          disabled={isUploadingImage || isEnhancingImage}
+                          disabled={isUploadingImage || isEnhancingImage
+                            || (imageBackgroundPreset === 'custom' && !imageBackgroundFile)}
                         >
                           {isEnhancingImage ? (
                             <RefreshCw size={16} className="animate-spin" />
                           ) : (
                             <Sparkles size={16} />
                           )}
-                          <span>{isEnhancingImage ? 'Enhancing image...' : 'Enhance Image'}</span>
+                          <span>
+                            {isEnhancingImage
+                              ? 'Enhancing image...'
+                              : imageBackgroundPreset === 'none'
+                                ? 'Enhance Image'
+                                : 'Enhance & Replace Background'}
+                          </span>
                         </button>
                         <span className="image-enhancement-note">
                           Your original stays unchanged; review before choosing what to publish.
@@ -830,11 +906,11 @@ export default function AddProduct() {
                             <button
                               type="button"
                               className="btn btn-secondary btn-sm"
-                              onClick={handleEnhanceImage}
+                              onClick={handleTryAgain}
                               disabled={isUploadingImage || isEnhancingImage}
                             >
-                              <RefreshCw size={16} className={isEnhancingImage ? 'animate-spin' : ''} />
-                              <span>Try Again</span>
+                              <Upload size={16} />
+                              <span>Try Again — Upload New Photo</span>
                             </button>
                           )}
                         </div>

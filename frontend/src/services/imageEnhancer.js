@@ -4,6 +4,13 @@ const IMAGE_ENHANCER_URL = (
 
 const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+export const IMAGE_BACKGROUND_PRESETS = [
+  { value: 'none', label: 'Keep original background' },
+  { value: 'clean_white', label: 'Clean white' },
+  { value: 'warm_sand', label: 'Warm sand' },
+  { value: 'soft_sage', label: 'Soft sage' },
+  { value: 'custom', label: 'Upload a background image' }
+];
 
 export function validateImageFile(file) {
   if (!file) {
@@ -17,11 +24,17 @@ export function validateImageFile(file) {
   }
 }
 
-export async function enhanceProductImage(file) {
+export async function enhanceProductImage(file, backgroundPreset = 'none', backgroundFile = null) {
   validateImageFile(file);
+  if (backgroundFile) validateImageFile(backgroundFile);
+  if (backgroundPreset === 'custom' && !backgroundFile) {
+    throw new Error('Choose a background image or select a studio preset.');
+  }
 
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('background_preset', backgroundPreset === 'custom' ? 'none' : backgroundPreset);
+  if (backgroundFile) formData.append('background_file', backgroundFile);
 
   let response;
   try {

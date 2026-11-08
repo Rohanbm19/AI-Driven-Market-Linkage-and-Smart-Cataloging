@@ -2,15 +2,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, Download, RefreshCw, Sparkles, Upload } from 'lucide-react';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import { useLanguage } from '../i18n/index.js';
-import { enhanceProductImage, validateImageFile } from '../services/imageEnhancer.js';
+import {
+  enhanceProductImage,
+  IMAGE_BACKGROUND_PRESETS,
+  validateImageFile
+} from '../services/imageEnhancer.js';
 
 export default function ImageEnhancer() {
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
+  const backgroundInputRef = useRef(null);
   const [originalFile, setOriginalFile] = useState(null);
   const [originalImage, setOriginalImage] = useState('');
   const [enhancedFile, setEnhancedFile] = useState(null);
   const [enhancedImage, setEnhancedImage] = useState('');
+  const [backgroundPreset, setBackgroundPreset] = useState('none');
+  const [backgroundFile, setBackgroundFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,7 +54,7 @@ export default function ImageEnhancer() {
     setIsProcessing(true);
     setError('');
     try {
-      const result = await enhanceProductImage(originalFile);
+      const result = await enhanceProductImage(originalFile, backgroundPreset, backgroundFile);
       setEnhancedFile(result);
       setEnhancedImage(URL.createObjectURL(result));
     } catch (processingError) {
@@ -77,7 +84,7 @@ export default function ImageEnhancer() {
               beforeImage={originalImage}
               afterImage={enhancedImage}
               beforeLabel="Original Photo"
-              afterLabel="OpenCV Enhanced"
+              afterLabel={backgroundPreset === 'none' ? 'OpenCV Enhanced' : 'New Background'}
             />
           ) : originalImage ? (
             <div className="image-enhancer-single-preview">
@@ -100,8 +107,8 @@ export default function ImageEnhancer() {
         <section className="card image-enhancer-controls">
           <h2 className="image-enhancer-section-title">Enhance a Product Photo</h2>
           <p className="image-enhancer-copy">
-            OpenCV makes restrained lighting, noise, color-balance, and detail adjustments.
-            It does not generate or replace product details.
+            OpenCV improves lighting, color, and detail. Optionally replace the background
+            with a studio preset; the product itself is not regenerated.
           </p>
 
           <input
@@ -121,18 +128,86 @@ export default function ImageEnhancer() {
           </button>
           <p className="image-enhancer-hint">Maximum file size: 10 MB.</p>
 
+          <label className="image-background-field" htmlFor="image-background-preset">
+            <span>Background option</span>
+            <select
+              id="image-background-preset"
+              className="image-background-select"
+              value={backgroundPreset}
+              onChange={(event) => {
+                setBackgroundPreset(event.target.value);
+                setError('');
+              }}
+              disabled={isProcessing}
+            >
+              {IMAGE_BACKGROUND_PRESETS.map((preset) => (
+                <option key={preset.value} value={preset.value}>{preset.label}</option>
+              ))}
+            </select>
+          </label>
+
+          {backgroundPreset === 'custom' && (
+            <>
+              <input
+                ref={backgroundInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] || null;
+                  try {
+                    if (file) validateImageFile(file);
+                    setBackgroundFile(file);
+                    setError('');
+                  } catch (validationError) {
+                    setError(validationError.message);
+                    event.target.value = '';
+                  }
+                }}
+                hidden
+              />
+              <button
+                type="button"
+                className="image-enhancer-upload"
+                onClick={() => backgroundInputRef.current?.click()}
+                disabled={isProcessing}
+              >
+                <Upload size={18} />
+                <span>{backgroundFile?.name || 'Select a JPEG, PNG, or WebP background'}</span>
+              </button>
+            </>
+          )}
+
+          <label className="image-background-field" htmlFor="image-background-preset">
+            <span>Studio background</span>
+            <select
+              id="image-background-preset"
+              className="image-background-select"
+              value={backgroundPreset}
+              onChange={(event) => setBackgroundPreset(event.target.value)}
+              disabled={isProcessing}
+            >
+              {IMAGE_BACKGROUND_PRESETS.map((preset) => (
+                <option key={preset.value} value={preset.value}>{preset.label}</option>
+              ))}
+            </select>
+          </label>
+
           <button
             type="button"
             className="btn btn-primary image-enhancer-submit"
             onClick={handleEnhance}
-            disabled={!originalFile || isProcessing}
+            disabled={!originalFile || isProcessing || (backgroundPreset === 'custom' && !backgroundFile)}
           >
             {isProcessing ? (
               <RefreshCw size={17} className="animate-spin" />
             ) : (
               <Sparkles size={17} />
             )}
-            <span>{isProcessing ? t.enhancer.processing : 'Enhance Image'}</span>
+            <span>
+              {isProcessing
+                ? t.enhancer.processing
+                : backgroundPreset === 'none' ? 'Enhance Image' : 'Enhance & Replace Background'}
+            </span>
           </button>
 
           {error && (
