@@ -28,6 +28,7 @@ CREATE TABLE public.products (
     description TEXT NOT NULL DEFAULT '',
     materials TEXT[] NOT NULL DEFAULT '{}',
     image_url TEXT NOT NULL DEFAULT '',
+    original_image_url TEXT,
     enhanced_image_url TEXT,
     tags TEXT[] NOT NULL DEFAULT '{}',
     stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),

@@ -20,8 +20,10 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../services/api.js';
+import { enhanceProductImage, validateImageFile } from '../services/imageEnhancer.js';
 import { useLanguage } from '../i18n/index.js';
 import { isSupabaseConfigured } from '../lib/supabaseClient.js';
+import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import VoiceInputField from '../components/VoiceInputField.jsx';
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx';
 
@@ -53,8 +55,14 @@ export default function AddProduct() {
 
   // Photo State
   const [photoUrl, setPhotoUrl] = useState('');
+  const [originalPhotoUrl, setOriginalPhotoUrl] = useState('');
+  const [enhancedPhotoUrl, setEnhancedPhotoUrl] = useState('');
+  const [enhancedPhotoFile, setEnhancedPhotoFile] = useState(null);
+  const [enhancedImageAccepted, setEnhancedImageAccepted] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isEnhancingImage, setIsEnhancingImage] = useState(false);
+  const [enhancementError, setEnhancementError] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
 
@@ -67,6 +75,11 @@ export default function AddProduct() {
   const [loadingExisting, setLoadingExisting] = useState(isEditMode);
 
   const supabaseConnected = isSupabaseConfigured();
+
+  useEffect(() => () => {
+    if (originalPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(originalPhotoUrl);
+    if (enhancedPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(enhancedPhotoUrl);
+  }, [originalPhotoUrl, enhancedPhotoUrl]);
 
   // Load existing craft if in edit mode
   useEffect(() => {
@@ -96,6 +109,14 @@ export default function AddProduct() {
           setDescription(item.description || '');
           setTags(Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''));
           setPhotoUrl(item.image_url || '');
+          setOriginalPhotoUrl(item.original_image_url || item.image_url || '');
+          setEnhancedPhotoUrl(item.enhanced_image_url || '');
+          setEnhancedImageAccepted(Boolean(
+            item.original_image_url &&
+            item.enhanced_image_url &&
+            item.image_url === item.enhanced_image_url &&
+            item.original_image_url !== item.image_url
+          ));
         }
       } catch (err) {
         console.error('Failed to load craft for editing:', err);
@@ -110,35 +131,106 @@ export default function AddProduct() {
     };
   }, [id]);
 
-  // Handle Photo selection & upload
+  // Keep the original upload intact until the artisan accepts an enhanced copy.
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
 
+    try {
+      validateImageFile(file);
+    } catch (error) {
+      setEnhancementError(error.message);
+      e.target.value = '';
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
     setPhotoFile(file);
+    setPhotoUrl(previewUrl);
+    setOriginalPhotoUrl(previewUrl);
+    setEnhancedPhotoUrl('');
+    setEnhancedPhotoFile(null);
+    setEnhancedImageAccepted(false);
+    setEnhancementError('');
     setIsUploadingImage(true);
 
     try {
       const uploadResult = await api.uploadProductImage(file);
       if (uploadResult?.url) {
         setPhotoUrl(uploadResult.url);
+        setOriginalPhotoUrl(uploadResult.url);
+        URL.revokeObjectURL(previewUrl);
       }
     } catch (err) {
-      console.warn('Image storage upload fallback to local data URL:', err);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setEnhancementError(err.message || 'The original image could not be uploaded.');
     } finally {
       setIsUploadingImage(false);
     }
   };
 
+  const handleEnhanceImage = async () => {
+    if (!photoFile) {
+      setEnhancementError('Choose an image file before enhancing it.');
+      return;
+    }
+
+    setEnhancementError('');
+    setIsEnhancingImage(true);
+    try {
+      const enhancedFile = await enhanceProductImage(photoFile);
+      setEnhancedPhotoFile(enhancedFile);
+      setEnhancedPhotoUrl(URL.createObjectURL(enhancedFile));
+      setEnhancedImageAccepted(false);
+    } catch (error) {
+      setEnhancementError(error.message || 'Image enhancement failed. Please try again.');
+    } finally {
+      setIsEnhancingImage(false);
+    }
+  };
+
+  const handleAcceptEnhancedImage = async () => {
+    if (!enhancedPhotoUrl) return;
+
+    setEnhancementError('');
+    if (!enhancedPhotoFile) {
+      setPhotoUrl(enhancedPhotoUrl);
+      setEnhancedImageAccepted(true);
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const uploadResult = await api.uploadProductImage(enhancedPhotoFile);
+      if (!uploadResult?.url) {
+        throw new Error('The enhanced image could not be saved.');
+      }
+      if (enhancedPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(enhancedPhotoUrl);
+      setEnhancedPhotoUrl(uploadResult.url);
+      setPhotoUrl(uploadResult.url);
+      setEnhancedImageAccepted(true);
+    } catch (error) {
+      setEnhancementError(error.message || 'The enhanced image could not be saved.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleKeepOriginalImage = () => {
+    setPhotoUrl(originalPhotoUrl);
+    setEnhancedImageAccepted(false);
+  };
+
   const handleApplyUrl = () => {
     if (imageUrlInput.trim()) {
-      setPhotoUrl(imageUrlInput.trim());
+      const url = imageUrlInput.trim();
+      setPhotoUrl(url);
+      setOriginalPhotoUrl(url);
+      setEnhancedPhotoUrl('');
+      setEnhancedPhotoFile(null);
+      setEnhancedImageAccepted(false);
       setPhotoFile(null);
+      setEnhancementError('');
       setImageUrlInput('');
       setShowUrlInput(false);
     }
@@ -146,7 +238,12 @@ export default function AddProduct() {
 
   const handleRemovePhoto = () => {
     setPhotoUrl('');
+    setOriginalPhotoUrl('');
+    setEnhancedPhotoUrl('');
+    setEnhancedPhotoFile(null);
+    setEnhancedImageAccepted(false);
     setPhotoFile(null);
+    setEnhancementError('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -243,7 +340,8 @@ export default function AddProduct() {
           ? materials.split(',').map((m) => m.trim()).filter(Boolean)
           : ['Traditional Raw Materials'],
         image_url: finalPhoto,
-        enhanced_image_url: finalPhoto,
+        original_image_url: originalPhotoUrl || finalPhoto,
+        enhanced_image_url: enhancedImageAccepted ? enhancedPhotoUrl : null,
         tags: tags.trim()
           ? tags.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean)
           : ['GI Certified', 'Handmade', 'KalaSetu Direct'],
@@ -638,38 +736,120 @@ export default function AddProduct() {
                   Product Image Upload
                 </label>
 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                />
+
                 {photoUrl ? (
-                  <div className="uploaded-photo-preview">
-                    <img
-                      src={photoUrl}
-                      alt="Craft preview"
-                      className="photo-thumb"
-                    />
-                    <div className="photo-info">
-                      <span className="photo-title">Craft Photo Ready</span>
-                      <span className="photo-subtitle">
-                        {photoFile ? photoFile.name : 'Image URL loaded successfully'}
-                      </span>
+                  <>
+                    <div className="uploaded-photo-preview">
+                      <img
+                        src={photoUrl}
+                        alt="Selected craft photo"
+                        className="photo-thumb"
+                      />
+                      <div className="photo-info">
+                        <span className="photo-title">
+                          {enhancedImageAccepted ? 'Enhanced Photo Selected' : 'Original Photo Selected'}
+                        </span>
+                        <span className="photo-subtitle">
+                          {photoFile ? photoFile.name : 'Image URL loaded successfully'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="btn btn-secondary btn-sm"
+                        disabled={isUploadingImage || isEnhancingImage}
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="photo-remove-btn"
+                        title="Remove Photo"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleRemovePhoto}
-                      className="photo-remove-btn"
-                      title="Remove Photo"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+
+                    {originalPhotoUrl && photoFile && !enhancedPhotoUrl && (
+                      <div className="image-enhancement-controls">
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          onClick={handleEnhanceImage}
+                          disabled={isUploadingImage || isEnhancingImage}
+                        >
+                          {isEnhancingImage ? (
+                            <RefreshCw size={16} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={16} />
+                          )}
+                          <span>{isEnhancingImage ? 'Enhancing image...' : 'Enhance Image'}</span>
+                        </button>
+                        <span className="image-enhancement-note">
+                          Your original stays unchanged; review before choosing what to publish.
+                        </span>
+                      </div>
+                    )}
+
+                    {originalPhotoUrl && enhancedPhotoUrl && originalPhotoUrl !== enhancedPhotoUrl && (
+                      <div className="image-enhancement-review">
+                        <BeforeAfterSlider
+                          beforeImage={originalPhotoUrl}
+                          afterImage={enhancedPhotoUrl}
+                          beforeLabel="Original"
+                          afterLabel="Enhanced"
+                        />
+                        <div className="image-enhancement-actions">
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${enhancedImageAccepted ? 'btn-primary' : 'btn-secondary'}`}
+                            onClick={handleAcceptEnhancedImage}
+                            disabled={isUploadingImage || isEnhancingImage || enhancedImageAccepted}
+                          >
+                            <Check size={16} />
+                            <span>{enhancedImageAccepted ? 'Enhanced Image Accepted' : 'Accept Enhanced Image'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${enhancedImageAccepted ? 'btn-secondary' : 'btn-primary'}`}
+                            onClick={handleKeepOriginalImage}
+                            disabled={isUploadingImage || isEnhancingImage}
+                          >
+                            <ImageIcon size={16} />
+                            <span>Keep Original Image</span>
+                          </button>
+                          {photoFile && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={handleEnhanceImage}
+                              disabled={isUploadingImage || isEnhancingImage}
+                            >
+                              <RefreshCw size={16} className={isEnhancingImage ? 'animate-spin' : ''} />
+                              <span>Try Again</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {enhancementError && (
+                      <p className="image-enhancement-error" role="alert">
+                        <AlertCircle size={16} />
+                        <span>{enhancementError}</span>
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <div className="upload-dropzone-wrapper">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                    />
-
                     <div
                       onClick={() => fileInputRef.current?.click()}
                       className="upload-dropzone"
@@ -682,6 +862,13 @@ export default function AddProduct() {
                         PNG, JPG, or WebP up to 10MB
                       </span>
                     </div>
+
+                    {enhancementError && (
+                      <p className="image-enhancement-error" role="alert">
+                        <AlertCircle size={16} />
+                        <span>{enhancementError}</span>
+                      </p>
+                    )}
 
                     <div className="url-toggle-row">
                       <button

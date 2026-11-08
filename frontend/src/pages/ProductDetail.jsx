@@ -175,10 +175,10 @@ export default function ProductDetail() {
         <div>
           {showSlider && product.enhanced_image_url ? (
             <BeforeAfterSlider
-              beforeImage={product.image_url}
+              beforeImage={product.original_image_url || product.image_url}
               afterImage={product.enhanced_image_url}
-              beforeLabel="Workshop Photo"
-              afterLabel="AI Studio Render"
+              beforeLabel="Original Photo"
+              afterLabel="OpenCV Enhanced"
             />
           ) : (
             <div

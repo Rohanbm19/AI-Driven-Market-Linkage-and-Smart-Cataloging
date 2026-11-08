@@ -149,7 +149,7 @@ export default {
   },
   enhancer: {
     title: "Studio AI Image Enhancer",
-    desc: "Transform simple mobile photos taken in rural workshops into crisp, professional studio showcase images with background isolation and lighting correction.",
+    desc: "Carefully improve product-photo lighting, noise, color balance, and detail while preserving the original craft and its colors.",
     compareTitle: "Before & After AI Studio Enhancement",
     uploadBtn: "Upload Photo to Enhance",
     processing: "Enhancing details and lighting..."
