@@ -19,7 +19,7 @@ import confetti from 'canvas-confetti';
 import { api, MOCK_PRODUCTS } from '../services/api.js';
 import Badge from '../components/Badge.jsx';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -175,10 +175,10 @@ export default function ProductDetail() {
         <div>
           {showSlider && product.enhanced_image_url ? (
             <BeforeAfterSlider
-              beforeImage={product.image_url}
+              beforeImage={product.original_image_url || product.image_url}
               afterImage={product.enhanced_image_url}
-              beforeLabel="Workshop Photo"
-              afterLabel="AI Studio Render"
+              beforeLabel="Original Photo"
+              afterLabel="OpenCV Enhanced"
             />
           ) : (
             <div

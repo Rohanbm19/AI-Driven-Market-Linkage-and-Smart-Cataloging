@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, MapPin, Sparkles } from 'lucide-react';
 import Badge from './Badge.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function ProductCard({ product }) {
   const { t } = useLanguage();
@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
         <div className="product-artisan">
           <MapPin size={13} />
           <span>{region}</span>
-          {is_verified && <ShieldCheck size={14} color="#059669" title="Verified Artisan" />}
+          {is_verified && <ShieldCheck size={14} color="#059669" title={t?.product?.verified || "Verified Artisan"} />}
         </div>
 
         <h3 className="product-title">

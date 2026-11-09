@@ -149,9 +149,24 @@ export default {
   },
   enhancer: {
     title: "Studio AI Image Enhancer",
-    desc: "Transform simple mobile photos taken in rural workshops into crisp, professional studio showcase images with background isolation and lighting correction.",
+    desc: "Carefully improve product-photo lighting, noise, color balance, and detail while preserving the original craft and its colors.",
     compareTitle: "Before & After AI Studio Enhancement",
     uploadBtn: "Upload Photo to Enhance",
     processing: "Enhancing details and lighting..."
+  }
+,
+  enquiries: {
+    templateDispatch: "Template: 3-Week Dispatch",
+    templateSamples: "Template: Send Samples",
+    product: "Product",
+    subtitle: "Manage incoming purchase enquiries from retail boutiques, export houses, and individual collectors.",
+    respondToBuyer: "Respond to Buyer",
+    send: "Send",
+    all: "All",
+    responded: "Responded",
+    placeholder: "Type your response or choose a quick template...",
+    pending: "Pending",
+    requested: "Requested",
+    title: "Direct Buyer Enquiries \u0026 Orders"
   }
 };

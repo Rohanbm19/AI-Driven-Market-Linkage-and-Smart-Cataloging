@@ -339,7 +339,10 @@ export const api = {
           ? productData.materials.split(',').map((m) => m.trim()).filter(Boolean)
           : []),
       image_url: productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-      enhanced_image_url: productData.enhanced_image_url || productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=90',
+      original_image_url: productData.original_image_url || productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+      enhanced_image_url: productData.enhanced_image_url === undefined
+        ? (productData.image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=90')
+        : productData.enhanced_image_url,
       tags: Array.isArray(productData.tags)
         ? productData.tags
         : (typeof productData.tags === 'string'

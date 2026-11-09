@@ -3,7 +3,7 @@ import { Search, Mic, ArrowRight, Sparkles, CheckCircle2, ShieldCheck } from 'lu
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
 import { api, MOCK_PRODUCTS } from '../services/api.js';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { useVoiceInput } from '../hooks/useVoiceInput.js';
 
 export default function Marketplace() {
@@ -82,19 +82,19 @@ export default function Marketplace() {
         <div className="hero-pattern-overlay" aria-hidden="true" />
         <div className="hero-content">
           <h1 className="hero-title">
-            Preserving Heritage. Unlocking Global Markets.
+            {t.hero.title}
           </h1>
           <p className="hero-desc">
-            Empowering master craftsmen with instant AI catalog generation, studio-grade image enhancement, voice-driven localization, and fair trade pricing.
+            {t.hero.subtitle}
           </p>
           <div className="hero-cta-group">
             <a href="#marketplace-grid" className="btn btn-hero-explore">
-              <span>Explore Marketplace</span>
+              <span>{t.hero.exploreBtn}</span>
               <ArrowRight size={17} />
             </a>
             <Link to="/add-product" className="btn btn-hero-list">
               <Sparkles size={17} />
-              <span>List Your Craft</span>
+              <span>{t.hero.listBtn}</span>
             </Link>
           </div>
         </div>
@@ -207,13 +207,13 @@ export default function Marketplace() {
             </p>
           </div>
           <span className="market-count-badge">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'Craft' : 'Crafts'} Available
+            {filteredProducts.length} {filteredProducts.length === 1 ? (t.market?.craft || "Craft") : (t.market?.crafts || "Crafts")} {t.market?.available || "Available"}
           </span>
         </div>
 
         {filteredProducts.length === 0 ? (
           <div className="empty-market-state">
-            <p className="empty-title">No crafts matched your filter or search query.</p>
+            <p className="empty-title">{t.market?.emptyTitle || "No crafts matched your filter or search query."}</p>
             <p className="empty-subtitle">Try searching for pottery, silk sarees, brassware, or clear the search filters.</p>
             <button
               type="button"

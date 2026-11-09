@@ -20,8 +20,14 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../services/api.js';
-import { useLanguage } from '../i18n/index.js';
+import {
+  enhanceProductImage,
+  IMAGE_BACKGROUND_PRESETS,
+  validateImageFile
+} from '../services/imageEnhancer.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { isSupabaseConfigured } from '../lib/supabaseClient.js';
+import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import VoiceInputField from '../components/VoiceInputField.jsx';
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx';
 
@@ -31,6 +37,7 @@ export default function AddProduct() {
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
   const fileInputRef = useRef(null);
+  const backgroundInputRef = useRef(null);
 
   const cf = t?.catalogForm || {};
 
@@ -53,8 +60,16 @@ export default function AddProduct() {
 
   // Photo State
   const [photoUrl, setPhotoUrl] = useState('');
+  const [originalPhotoUrl, setOriginalPhotoUrl] = useState('');
+  const [enhancedPhotoUrl, setEnhancedPhotoUrl] = useState('');
+  const [enhancedPhotoFile, setEnhancedPhotoFile] = useState(null);
+  const [enhancedImageAccepted, setEnhancedImageAccepted] = useState(false);
+  const [imageBackgroundPreset, setImageBackgroundPreset] = useState('none');
+  const [imageBackgroundFile, setImageBackgroundFile] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isEnhancingImage, setIsEnhancingImage] = useState(false);
+  const [enhancementError, setEnhancementError] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
 
@@ -67,6 +82,11 @@ export default function AddProduct() {
   const [loadingExisting, setLoadingExisting] = useState(isEditMode);
 
   const supabaseConnected = isSupabaseConfigured();
+
+  useEffect(() => () => {
+    if (originalPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(originalPhotoUrl);
+    if (enhancedPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(enhancedPhotoUrl);
+  }, [originalPhotoUrl, enhancedPhotoUrl]);
 
   // Load existing craft if in edit mode
   useEffect(() => {
@@ -96,6 +116,14 @@ export default function AddProduct() {
           setDescription(item.description || '');
           setTags(Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''));
           setPhotoUrl(item.image_url || '');
+          setOriginalPhotoUrl(item.original_image_url || item.image_url || '');
+          setEnhancedPhotoUrl(item.enhanced_image_url || '');
+          setEnhancedImageAccepted(Boolean(
+            item.original_image_url &&
+            item.enhanced_image_url &&
+            item.image_url === item.enhanced_image_url &&
+            item.original_image_url !== item.image_url
+          ));
         }
       } catch (err) {
         console.error('Failed to load craft for editing:', err);
@@ -110,35 +138,112 @@ export default function AddProduct() {
     };
   }, [id]);
 
-  // Handle Photo selection & upload
+  // Keep the original upload intact until the artisan accepts an enhanced copy.
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
 
+    try {
+      validateImageFile(file);
+    } catch (error) {
+      setEnhancementError(error.message);
+      e.target.value = '';
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
     setPhotoFile(file);
+    setPhotoUrl(previewUrl);
+    setOriginalPhotoUrl(previewUrl);
+    setEnhancedPhotoUrl('');
+    setEnhancedPhotoFile(null);
+    setEnhancedImageAccepted(false);
+    setImageBackgroundPreset('none');
+    setImageBackgroundFile(null);
+    setEnhancementError('');
     setIsUploadingImage(true);
 
     try {
       const uploadResult = await api.uploadProductImage(file);
       if (uploadResult?.url) {
         setPhotoUrl(uploadResult.url);
+        setOriginalPhotoUrl(uploadResult.url);
+        URL.revokeObjectURL(previewUrl);
       }
     } catch (err) {
-      console.warn('Image storage upload fallback to local data URL:', err);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setEnhancementError(err.message || 'The original image could not be uploaded.');
     } finally {
       setIsUploadingImage(false);
     }
   };
 
+  const handleEnhanceImage = async () => {
+    if (!photoFile) {
+      setEnhancementError('Choose an image file before enhancing it.');
+      return;
+    }
+
+    setEnhancementError('');
+    setIsEnhancingImage(true);
+    try {
+      const enhancedFile = await enhanceProductImage(
+        photoFile,
+        imageBackgroundPreset,
+        imageBackgroundFile
+      );
+      setEnhancedPhotoFile(enhancedFile);
+      setEnhancedPhotoUrl(URL.createObjectURL(enhancedFile));
+      setEnhancedImageAccepted(false);
+    } catch (error) {
+      setEnhancementError(error.message || 'Image enhancement failed. Please try again.');
+    } finally {
+      setIsEnhancingImage(false);
+    }
+  };
+
+  const handleAcceptEnhancedImage = async () => {
+    if (!enhancedPhotoUrl) return;
+
+    setEnhancementError('');
+    if (!enhancedPhotoFile) {
+      setPhotoUrl(enhancedPhotoUrl);
+      setEnhancedImageAccepted(true);
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const uploadResult = await api.uploadProductImage(enhancedPhotoFile);
+      if (!uploadResult?.url) {
+        throw new Error('The enhanced image could not be saved.');
+      }
+      if (enhancedPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(enhancedPhotoUrl);
+      setEnhancedPhotoUrl(uploadResult.url);
+      setPhotoUrl(uploadResult.url);
+      setEnhancedImageAccepted(true);
+    } catch (error) {
+      setEnhancementError(error.message || 'The enhanced image could not be saved.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleKeepOriginalImage = () => {
+    setPhotoUrl(originalPhotoUrl);
+    setEnhancedImageAccepted(false);
+  };
+
   const handleApplyUrl = () => {
     if (imageUrlInput.trim()) {
-      setPhotoUrl(imageUrlInput.trim());
+      const url = imageUrlInput.trim();
+      setPhotoUrl(url);
+      setOriginalPhotoUrl(url);
+      setEnhancedPhotoUrl('');
+      setEnhancedPhotoFile(null);
+      setEnhancedImageAccepted(false);
       setPhotoFile(null);
+      setEnhancementError('');
       setImageUrlInput('');
       setShowUrlInput(false);
     }
@@ -146,10 +251,22 @@ export default function AddProduct() {
 
   const handleRemovePhoto = () => {
     setPhotoUrl('');
+    setOriginalPhotoUrl('');
+    setEnhancedPhotoUrl('');
+    setEnhancedPhotoFile(null);
+    setEnhancedImageAccepted(false);
+    setImageBackgroundPreset('none');
+    setImageBackgroundFile(null);
     setPhotoFile(null);
+    setEnhancementError('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleTryAgain = () => {
+    handleRemovePhoto();
+    fileInputRef.current?.click();
   };
 
   // Cost & Fair Price Calculations
@@ -179,18 +296,23 @@ export default function AddProduct() {
     try {
       const result = await api.generateSmartCatalog({
         craftType: effectiveCategory,
-        region: region || 'Heritage Village, India',
+        region: region || '{t.catalogForm.defaultRegion}',
         materials: materials || 'Organic raw materials',
         description: description,
         language: lang
       });
 
       if (result) {
-        if (!title.trim() && result.title) setTitle(result.title);
+        // Generated values are placed into the normal form controls, so the seller
+        // can review and edit every field before publishing.
+        if (result.title) setTitle(result.title);
+        if (result.category) setCraftCategory(result.category);
+        if (result.region) setRegion(result.region);
+        if (result.materials) setMaterials(result.materials);
         if (result.description) setDescription(result.description);
-        if (!price || Number(price) === 0) setPrice(String(result.suggestedPrice));
-        if (result.tags && (!tags || tags.trim() === '')) setTags(result.tags.join(', '));
-        setAiSuccessMessage('AI Smart Catalog generated with authentic heritage description and market tags!');
+        if (result.suggestedPrice) setPrice(String(result.suggestedPrice));
+        if (result.tags) setTags(Array.isArray(result.tags) ? result.tags.join(', ') : result.tags);
+        setAiSuccessMessage('Product details generated. Review and edit every field before publishing.');
       }
     } catch (err) {
       console.error('AI generation error:', err);
@@ -218,7 +340,7 @@ export default function AddProduct() {
       return;
     }
     if (!price || Number(price) <= 0) {
-      setFormError('Please enter a valid price in ₹.');
+      setFormError('Please enter a valid price in â‚¹.');
       return;
     }
     if (!description.trim()) {
@@ -243,7 +365,8 @@ export default function AddProduct() {
           ? materials.split(',').map((m) => m.trim()).filter(Boolean)
           : ['Traditional Raw Materials'],
         image_url: finalPhoto,
-        enhanced_image_url: finalPhoto,
+        original_image_url: originalPhotoUrl || finalPhoto,
+        enhanced_image_url: enhancedImageAccepted ? enhancedPhotoUrl : null,
         tags: tags.trim()
           ? tags.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean)
           : ['GI Certified', 'Handmade', 'KalaSetu Direct'],
@@ -409,12 +532,12 @@ export default function AddProduct() {
               <div className="catalog-card-header">
                 <div className="catalog-card-header-left">
                   <h2 className="catalog-card-title">
-                    Craft & Artisan Details
+                    {t.catalogForm.craftIdentity}
                   </h2>
                   <span className="card-title-sub">Universal Voice Dictation Enabled</span>
                 </div>
 
-                {/* LANGUAGE SELECTOR: Inside Craft & Artisan Details card at top-right */}
+                {/* LANGUAGE SELECTOR: Inside {t.catalogForm.craftIdentity} card at top-right */}
                 <div className="catalog-card-header-right">
                   <LanguageSwitcher variant="card" />
                 </div>
@@ -427,7 +550,7 @@ export default function AddProduct() {
               <div className="form-group">
                 <VoiceInputField
                   id="craft-category"
-                  label="Craft Category"
+                  label={t.catalogForm.categoryLabel}
                   value={craftCategory}
                   onChange={setCraftCategory}
                   placeholder="e.g. Terracotta Pottery, Wood Carving, Blue Pottery, Handloom Weaving"
@@ -441,10 +564,10 @@ export default function AddProduct() {
               <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                 <VoiceInputField
                   id="craft-title"
-                  label="Product / Craft Title"
+                  label={t.catalogForm.productTitleLabel}
                   value={title}
                   onChange={(val) => setTitle(val)}
-                  placeholder="e.g. Bankura Terracotta Sacred Horse, Kanjivaram Pure Silk Saree"
+                  placeholder={t.catalogForm.productTitlePlaceholder}
                   required
                   currentLang={lang}
                   hint="Speak or type the traditional product name."
@@ -459,7 +582,7 @@ export default function AddProduct() {
                 <div className="form-group">
                   <VoiceInputField
                     id="artisan-name"
-                    label="Artisan / Maker Name"
+                    label={t.catalogForm.artisanNameLabel}
                     value={artisanName}
                     onChange={(val) => setArtisanName(val)}
                     placeholder="e.g. Shankar Das, Meenakshi S."
@@ -470,10 +593,10 @@ export default function AddProduct() {
                 <div className="form-group">
                   <VoiceInputField
                     id="artisan-region"
-                    label="Artisan Region / Village"
+                    label={t.catalogForm.regionLabel}
                     value={region}
                     onChange={(val) => setRegion(val)}
-                    placeholder="e.g. Bishnupur, West Bengal"
+                    placeholder={t.catalogForm.regionPlaceholder}
                     required
                     currentLang={lang}
                   />
@@ -484,10 +607,10 @@ export default function AddProduct() {
               <div className="form-group">
                 <VoiceInputField
                   id="raw-materials"
-                  label="Raw Materials Used"
+                  label={t.catalogForm.materialsLabel}
                   value={materials}
                   onChange={(val) => setMaterials(val)}
-                  placeholder="e.g. Natural Alluvial Clay, Pure Mulberry Silk, Virgin Brass, Vegetable Dyes"
+                  placeholder={t.catalogForm.materialsPlaceholder}
                   currentLang={lang}
                   hint="Comma-separated materials used in creation."
                 />
@@ -499,13 +622,13 @@ export default function AddProduct() {
                   id="craft-story"
                   type="textarea"
                   rows={4}
-                  label="Craft Story & Heritage Description"
+                  label={t.catalogForm.storyLabel}
                   value={description}
                   onChange={(val) => setDescription(val)}
-                  placeholder="Speak in English, Kannada, Hindi, Tamil, Telugu, or Malayalam to describe your creation process, cultural history, ancestry, or firing techniques..."
+                  placeholder={t.catalogForm.storyPlaceholder}
                   required
                   currentLang={lang}
-                  hint="Artisans can speak freely in their native tongue. AI preserves and translates this for global collectors."
+                  hint="Enter your product story, then use Auto-fill details from description. Generated values appear in the fields above and remain editable."
                 />
               </div>
             </div>
@@ -529,7 +652,7 @@ export default function AddProduct() {
                 <VoiceInputField
                   id="calc-material-cost"
                   type="number"
-                  label="Material Cost (₹)"
+                  label={t.catalogForm.materialCostLabel}
                   value={materialCost}
                   onChange={(val) => setMaterialCost(val)}
                   placeholder="450"
@@ -540,7 +663,7 @@ export default function AddProduct() {
                   id="calc-labor-hours"
                   type="number"
                   step="0.5"
-                  label="Labor Hours (hrs)"
+                  label={t.catalogForm.laborHoursLabel}
                   value={laborHours}
                   onChange={(val) => setLaborHours(val)}
                   placeholder="6"
@@ -550,7 +673,7 @@ export default function AddProduct() {
                 <VoiceInputField
                   id="calc-hourly-wage"
                   type="number"
-                  label="Artisan Wage (₹/hr)"
+                  label={t.catalogForm.wageLabel}
                   value={hourlyWage}
                   onChange={(val) => setHourlyWage(val)}
                   placeholder="150"
@@ -560,7 +683,7 @@ export default function AddProduct() {
                 <VoiceInputField
                   id="calc-packaging-cost"
                   type="number"
-                  label="Packaging (₹)"
+                  label={t.catalogForm.packagingLabel}
                   value={packagingCost}
                   onChange={(val) => setPackagingCost(val)}
                   placeholder="80"
@@ -572,10 +695,10 @@ export default function AddProduct() {
               <div className="calc-breakdown-bar">
                 <div className="calc-breakdown-stats">
                   <div className="calc-stat-sub">
-                    Total Production Cost: <strong>₹{computedTotalCost}</strong> (₹{matNum} mat + ₹{computedLaborCost} wage + ₹{pkgNum} pkg)
+                    Total Production Cost: <strong>â‚¹{computedTotalCost}</strong> (â‚¹{matNum} mat + â‚¹{computedLaborCost} wage + â‚¹{pkgNum} pkg)
                   </div>
                   <div className="calc-stat-main">
-                    Suggested Fair Price: <strong>₹{computedFairSellingPrice}</strong> <span className="profit-tag">(+30% Artisan Profit)</span>
+                    Suggested Fair Price: <strong>â‚¹{computedFairSellingPrice}</strong> <span className="profit-tag">(+30% Artisan Profit)</span>
                   </div>
                 </div>
 
@@ -585,7 +708,7 @@ export default function AddProduct() {
                     onClick={handleApplyFairPrice}
                     className="btn btn-sm btn-apply-price"
                   >
-                    Apply Fair Price (₹{computedFairSellingPrice})
+                    Apply Fair Price (â‚¹{computedFairSellingPrice})
                   </button>
                 )}
               </div>
@@ -598,7 +721,7 @@ export default function AddProduct() {
                   <VoiceInputField
                     id="craft-price"
                     type="number"
-                    label="Selling Price (₹)"
+                    label={t.catalogForm.sellingPriceLabel}
                     value={price}
                     onChange={(val) => setPrice(val)}
                     placeholder="e.g. 1850"
@@ -611,7 +734,7 @@ export default function AddProduct() {
                   <VoiceInputField
                     id="craft-stock"
                     type="number"
-                    label="Available Stock (Units)"
+                    label={t.catalogForm.stockLabel}
                     value={stock}
                     onChange={(val) => setStock(val)}
                     placeholder="e.g. 5"
@@ -624,7 +747,7 @@ export default function AddProduct() {
               <div className="form-group">
                 <VoiceInputField
                   id="craft-tags"
-                  label="Tags / Search Keywords (comma separated)"
+                  label={t.catalogForm.tagsLabel}
                   value={tags}
                   onChange={(val) => setTags(val)}
                   placeholder="GI Tagged, Terracotta, Natural Clay, Heritage Handcrafted, Living Tradition"
@@ -638,50 +761,195 @@ export default function AddProduct() {
                   Product Image Upload
                 </label>
 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                />
+
                 {photoUrl ? (
-                  <div className="uploaded-photo-preview">
-                    <img
-                      src={photoUrl}
-                      alt="Craft preview"
-                      className="photo-thumb"
-                    />
-                    <div className="photo-info">
-                      <span className="photo-title">Craft Photo Ready</span>
-                      <span className="photo-subtitle">
-                        {photoFile ? photoFile.name : 'Image URL loaded successfully'}
-                      </span>
+                  <>
+                    <div className="uploaded-photo-preview">
+                      <img
+                        src={photoUrl}
+                        alt="Selected craft photo"
+                        className="photo-thumb"
+                      />
+                      <div className="photo-info">
+                        <span className="photo-title">
+                          {enhancedImageAccepted ? 'Enhanced Photo Selected' : 'Original Photo Selected'}
+                        </span>
+                        <span className="photo-subtitle">
+                          {photoFile ? photoFile.name : 'Image URL loaded successfully'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="btn btn-secondary btn-sm"
+                        disabled={isUploadingImage || isEnhancingImage}
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="photo-remove-btn"
+                        title="Remove Photo"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleRemovePhoto}
-                      className="photo-remove-btn"
-                      title="Remove Photo"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+
+                    {originalPhotoUrl && photoFile && !enhancedPhotoUrl && (
+                      <div className="image-enhancement-controls">
+                        <label className="image-background-field" htmlFor="product-image-background">
+                          <span>Background option</span>
+                          <select
+                            id="product-image-background"
+                            className="image-background-select"
+                            value={imageBackgroundPreset}
+                            onChange={(event) => {
+                              setImageBackgroundPreset(event.target.value);
+                              setEnhancementError('');
+                            }}
+                            disabled={isUploadingImage || isEnhancingImage}
+                          >
+                            {IMAGE_BACKGROUND_PRESETS.map((preset) => (
+                              <option key={preset.value} value={preset.value}>{preset.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                        {imageBackgroundPreset === 'custom' && (
+                          <>
+                            <input
+                              ref={backgroundInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              onChange={(event) => {
+                                const file = event.target.files?.[0] || null;
+                                try {
+                                  if (file) validateImageFile(file);
+                                  setImageBackgroundFile(file);
+                                  setEnhancementError('');
+                                } catch (error) {
+                                  setEnhancementError(error.message);
+                                  event.target.value = '';
+                                }
+                              }}
+                              hidden
+                            />
+                            <button
+                              type="button"
+                              className="image-enhancer-upload"
+                              onClick={() => backgroundInputRef.current?.click()}
+                              disabled={isUploadingImage || isEnhancingImage}
+                            >
+                              <Upload size={16} />
+                              <span>
+                                {imageBackgroundFile?.name || 'Select a JPEG, PNG, or WebP background'}
+                              </span>
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          onClick={handleEnhanceImage}
+                          disabled={isUploadingImage || isEnhancingImage
+                            || (imageBackgroundPreset === 'custom' && !imageBackgroundFile)}
+                        >
+                          {isEnhancingImage ? (
+                            <RefreshCw size={16} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={16} />
+                          )}
+                          <span>
+                            {isEnhancingImage
+                              ? 'Enhancing image...'
+                              : imageBackgroundPreset === 'none'
+                                ? 'Enhance Image'
+                                : 'Enhance & Replace Background'}
+                          </span>
+                        </button>
+                        <span className="image-enhancement-note">
+                          Your original stays unchanged; review before choosing what to publish.
+                        </span>
+                      </div>
+                    )}
+
+                    {originalPhotoUrl && enhancedPhotoUrl && originalPhotoUrl !== enhancedPhotoUrl && (
+                      <div className="image-enhancement-review">
+                        <BeforeAfterSlider
+                          beforeImage={originalPhotoUrl}
+                          afterImage={enhancedPhotoUrl}
+                          beforeLabel="Original"
+                          afterLabel="Enhanced"
+                        />
+                        <div className="image-enhancement-actions">
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${enhancedImageAccepted ? 'btn-primary' : 'btn-secondary'}`}
+                            onClick={handleAcceptEnhancedImage}
+                            disabled={isUploadingImage || isEnhancingImage || enhancedImageAccepted}
+                          >
+                            <Check size={16} />
+                            <span>{enhancedImageAccepted ? 'Enhanced Image Accepted' : 'Accept Enhanced Image'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${enhancedImageAccepted ? 'btn-secondary' : 'btn-primary'}`}
+                            onClick={handleKeepOriginalImage}
+                            disabled={isUploadingImage || isEnhancingImage}
+                          >
+                            <ImageIcon size={16} />
+                            <span>Keep Original Image</span>
+                          </button>
+                          {photoFile && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={handleTryAgain}
+                              disabled={isUploadingImage || isEnhancingImage}
+                            >
+                              <Upload size={16} />
+                              <span>Try Again â€” Upload New Photo</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {enhancementError && (
+                      <p className="image-enhancement-error" role="alert">
+                        <AlertCircle size={16} />
+                        <span>{enhancementError}</span>
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <div className="upload-dropzone-wrapper">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                    />
-
                     <div
                       onClick={() => fileInputRef.current?.click()}
                       className="upload-dropzone"
                     >
                       <Upload size={26} className="upload-icon" />
                       <div className="upload-title">
-                        {isUploadingImage ? 'Uploading Image...' : 'Click to Upload Craft Photo'}
+                        {isUploadingImage ? 'Uploading Image...' : '{t.catalogForm.uploadPrompt}'}
                       </div>
                       <span className="upload-desc">
-                        PNG, JPG, or WebP up to 10MB
+                        {t.catalogForm.uploadHint}
                       </span>
                     </div>
+
+                    {enhancementError && (
+                      <p className="image-enhancement-error" role="alert">
+                        <AlertCircle size={16} />
+                        <span>{enhancementError}</span>
+                      </p>
+                    )}
 
                     <div className="url-toggle-row">
                       <button
@@ -689,7 +957,7 @@ export default function AddProduct() {
                         onClick={() => setShowUrlInput(!showUrlInput)}
                         className="url-toggle-btn"
                       >
-                        {showUrlInput ? 'Hide Image URL option' : 'Or paste an Image URL'}
+                        {showUrlInput ? '{t.catalogForm.hideUrl}' : '{t.catalogForm.pasteUrl}'}
                       </button>
                     </div>
 
@@ -727,7 +995,7 @@ export default function AddProduct() {
               >
                 <Sparkles size={17} />
                 <span>
-                  {loadingAi ? 'Generating AI Catalog...' : 'Generate AI Catalog'}
+                  {loadingAi ? 'Generating product details...' : 'Auto-fill details from description'}
                 </span>
               </button>
 
@@ -741,7 +1009,7 @@ export default function AddProduct() {
                   {submitting ? (
                     <>
                       <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
-                      <span>{isEditMode ? 'Updating Listing...' : 'Publishing Craft...'}</span>
+                      <span>{isEditMode ? '{t.catalogForm.updating}' : '{t.catalogForm.publishing}'}</span>
                     </>
                   ) : (
                     <>
@@ -759,7 +1027,7 @@ export default function AddProduct() {
                   className="btn btn-secondary"
                   disabled={submitting}
                 >
-                  Clear Form
+                  {t.catalogForm.clearForm}
                 </button>
 
                 {isEditMode && (
@@ -781,7 +1049,7 @@ export default function AddProduct() {
         <div className="catalog-preview-col">
           <div className="preview-sticky-wrap">
             <div className="preview-top-badge">
-              <span className="preview-heading-text">Live Buyer Preview</span>
+              <span className="preview-heading-text">{t.catalogForm.livePreview}</span>
             </div>
 
             {/* Luxury Artisan Product Preview Card */}
@@ -808,14 +1076,14 @@ export default function AddProduct() {
 
               <div className="preview-card-body">
                 <h3 className="preview-card-title">
-                  {title || 'Untitled Traditional Craft'}
+                  {title || '{t.catalogForm.untitledCraft}'}
                 </h3>
 
                 <div className="preview-artisan-line">
                   <MapPin size={14} className="map-icon" />
-                  <span className="preview-region">{region || 'Heritage Village, India'}</span>
-                  <span className="dot-sep">•</span>
-                  <span className="preview-artisan-name">{artisanName || 'Master Craftsman'}</span>
+                  <span className="preview-region">{region || '{t.catalogForm.defaultRegion}'}</span>
+                  <span className="dot-sep">â€¢</span>
+                  <span className="preview-artisan-name">{artisanName || '{t.catalogForm.defaultArtisan}'}</span>
                 </div>
 
                 <div className="preview-materials-line">
@@ -829,14 +1097,14 @@ export default function AddProduct() {
 
                 <div className="preview-card-footer">
                   <div className="preview-price-block">
-                    <span className="price-label">Artisan Direct Price</span>
+                    <span className="price-label">{t.catalogForm.directPrice}</span>
                     <span className="price-amount">
-                      ₹{price ? Number(price).toLocaleString('en-IN') : '0'}
+                      â‚¹{price ? Number(price).toLocaleString('en-IN') : '0'}
                     </span>
                   </div>
 
                   <div className="preview-stock-badge">
-                    <span className="stock-check">✓</span>
+                    <span className="stock-check">âœ“</span>
                     <span>{stock || 1} available</span>
                   </div>
                 </div>
@@ -855,3 +1123,4 @@ export default function AddProduct() {
     </div>
   );
 }
+

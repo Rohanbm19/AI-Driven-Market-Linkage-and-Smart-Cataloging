@@ -23,7 +23,7 @@ import ProductCard from '../components/ProductCard.jsx';
 import Badge from '../components/Badge.jsx';
 import VoiceTextInput from '../components/VoiceTextInput.jsx';
 import { detectLanguage } from '../utils/detectLanguage.js';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function ArtisanProfile() {
   const { t, lang } = useLanguage();

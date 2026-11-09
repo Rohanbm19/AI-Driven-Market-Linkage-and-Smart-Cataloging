@@ -99,6 +99,7 @@ router.post('/', async (req, res) => {
       description,
       materials,
       image_url,
+      original_image_url,
       stock,
       tags
     } = req.body;
@@ -128,7 +129,10 @@ router.post('/', async (req, res) => {
         ? materials
         : (typeof materials === 'string' ? materials.split(',').map(m => m.trim()).filter(Boolean) : []),
       image_url: image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-      enhanced_image_url: req.body.enhanced_image_url || image_url,
+      original_image_url: original_image_url || image_url,
+      enhanced_image_url: Object.prototype.hasOwnProperty.call(req.body, 'enhanced_image_url')
+        ? req.body.enhanced_image_url
+        : image_url,
       tags: Array.isArray(tags)
         ? tags
         : (typeof tags === 'string' ? tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean) : ['Handmade']),

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.js';
+import { useLanguage } from '../i18n/index.jsx';
 import {
   MessageSquare,
   CheckCircle,
@@ -51,6 +52,7 @@ const INITIAL_ENQUIRIES = [
 ];
 
 export default function Enquiries() {
+  const { t } = useLanguage();
   const [enquiries, setEnquiries] = useState(INITIAL_ENQUIRIES);
   const [filter, setFilter] = useState('all');
   const [replyText, setReplyText] = useState({});
@@ -102,9 +104,9 @@ export default function Enquiries() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Direct Buyer Enquiries & Orders</h1>
+          <h1 className="page-title">{t.enquiries.title}</h1>
           <p className="page-subtitle">
-            Manage incoming purchase enquiries from retail boutiques, export houses, and individual collectors.
+            {t.enquiries.subtitle}
           </p>
         </div>
 
@@ -117,7 +119,7 @@ export default function Enquiries() {
               onClick={() => setFilter(tab)}
               style={{ textTransform: 'capitalize' }}
             >
-              {tab}
+              {t.enquiries[tab]}
             </button>
           ))}
         </div>
@@ -188,7 +190,7 @@ export default function Enquiries() {
                   }}
                 >
                   {enq.status === 'pending' ? <Clock size={12} /> : <CheckCircle size={12} />}
-                  <span style={{ textTransform: 'capitalize' }}>{enq.status}</span>
+                  <span style={{ textTransform: 'capitalize' }}>{t.enquiries[enq.status]}</span>
                 </span>
                 <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
                   {enq.date}
@@ -205,8 +207,8 @@ export default function Enquiries() {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.86rem' }}>
-                <strong>Product: {enq.product_title}</strong>
-                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Requested: {enq.quantity}</span>
+                <strong>{t.enquiries.product}: {enq.product_title}</strong>
+                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{t.enquiries.requested}: {enq.quantity}</span>
               </div>
               <p style={{ color: '#374151', fontSize: '0.92rem', lineHeight: 1.5, margin: 0 }}>
                 "{enq.message}"
@@ -227,7 +229,7 @@ export default function Enquiries() {
                       )
                     }
                   >
-                    Template: 3-Week Dispatch
+                    {t.enquiries.templateDispatch}
                   </button>
                   <button
                     type="button"
@@ -239,7 +241,7 @@ export default function Enquiries() {
                       )
                     }
                   >
-                    Template: Send Samples
+                    {t.enquiries.templateSamples}
                   </button>
                 </div>
 
@@ -251,7 +253,7 @@ export default function Enquiries() {
                     onChange={(e) =>
                       setReplyText((prev) => ({ ...prev, [enq.id]: e.target.value }))
                     }
-                    placeholder="Type your response or choose a quick template..."
+                    placeholder={t.enquiries.placeholder}
                     style={{ flex: 1 }}
                   />
                   <button
@@ -260,7 +262,7 @@ export default function Enquiries() {
                     onClick={() => handleSendReply(enq.id)}
                   >
                     <Send size={16} />
-                    <span>Send</span>
+                    <span>{t.enquiries.send}</span>
                   </button>
                 </div>
               </div>
@@ -273,7 +275,7 @@ export default function Enquiries() {
                     onClick={() => setActiveReplyId(enq.id)}
                   >
                     <Send size={14} />
-                    <span>Respond to Buyer</span>
+                    <span>{t.enquiries.respondToBuyer}</span>
                   </button>
                 )}
               </div>

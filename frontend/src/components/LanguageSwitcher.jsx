@@ -1,67 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Globe, ChevronDown, Check } from 'lucide-react';
-import { useLanguage } from '../i18n/index.js';
+﻿import React from 'react';
+import { useLanguage } from '../i18n/index.jsx';
 
-export default function LanguageSwitcher({ variant = 'header', label }) {
+export default function LanguageSwitcher({ variant = 'header' }) {
   const { lang, setLang, languages } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  const currentLanguage = languages.find((l) => l.code === lang) || languages[0];
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   return (
-    <div
-      className={`lang-switcher ${variant === 'card' ? 'is-card-variant' : ''}`}
-      ref={dropdownRef}
+    <select
+      value={lang}
+      onChange={(e) => setLang(e.target.value)}
+      aria-label="Select language"
+      className={`ks-language-select ${variant === 'card' ? 'ks-language-select--card' : ''}`}
     >
-      <button
-        type="button"
-        className={`lang-btn ${variant === 'card' ? 'lang-btn-card' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Select Language"
-        title="Change application & speech language"
-      >
-        <Globe size={15} className="lang-icon" />
-        <span className="lang-label">
-          {label ? `${label}: ` : ''}
-          <strong>{currentLanguage.native}</strong>
-          <span className="lang-subcode"> ({currentLanguage.label})</span>
-        </span>
-        <ChevronDown size={14} className={`lang-chevron ${isOpen ? 'is-open' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className={`lang-dropdown ${variant === 'card' ? 'lang-dropdown-card' : ''}`}>
-          <div className="lang-dropdown-header">Select Language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</div>
-          {languages.map((item) => (
-            <button
-              key={item.code}
-              type="button"
-              className={`lang-option ${item.code === lang ? 'active' : ''}`}
-              onClick={() => {
-                setLang(item.code);
-                setIsOpen(false);
-              }}
-            >
-              <div className="lang-option-text">
-                <span className="lang-native">{item.native}</span>
-                <span className="lang-english">{item.label}</span>
-              </div>
-              {item.code === lang && <Check size={14} className="lang-check" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      {languages.map((language) => (
+        <option key={language.code} value={language.code}>
+          {language.label}
+        </option>
+      ))}
+    </select>
   );
 }

@@ -154,4 +154,19 @@ export default {
     uploadBtn: "फ़ोटो अपलोड करें",
     processing: "फ़ोटो संवारी जा रही है..."
   }
+,
+  enquiries: {
+    templateDispatch: "टेम्पलेट: 3 सप्ताह में भेजें",
+    templateSamples: "टेम्पलेट: नमूने भेजें",
+    product: "उत्पाद",
+    subtitle: "खुदरा दुकानों, निर्यात कंपनियों और ग्राहकों से प्राप्त पूछताछ प्रबंधित करें।",
+    respondToBuyer: "खरीदार को जवाब दें",
+    send: "भेजें",
+    all: "सभी",
+    responded: "जवाब दिया गया",
+    placeholder: "अपना जवाब लिखें या टेम्पलेट चुनें...",
+    pending: "लंबित",
+    requested: "अनुरोधित",
+    title: "खरीदारों की पूछताछ और ऑर्डर"
+  }
 };

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Mic, Sparkles, MessageCircle } from 'lucide-react';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { useVoiceInput } from '../hooks/useVoiceInput.js';
 import { api } from '../services/api.js';
 
