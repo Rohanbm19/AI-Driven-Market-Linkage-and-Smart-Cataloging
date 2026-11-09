@@ -2307,6 +2307,10 @@ h1, h2, h3, h4, .serif-font {
   width: 100%;
 }
 
+.login-google {
+  margin-bottom: 1rem;
+}
+
 .login-otp-input {
   text-align: center;
   letter-spacing: 0.35rem;

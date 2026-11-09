@@ -84,10 +84,15 @@ export default function Header() {
             <LanguageSwitcher />
           </div>
 
-          {!isArtisan && (
-            <Link to="/login?role=artisan" className="btn btn-my-studio" title="Artisan sign in">
+          {isArtisan ? (
+            <Link to="/seller/dashboard" className="btn btn-my-studio" title="Open artisan studio">
               <Store size={16} />
-              <span>Artisan Portal</span>
+              <span>My Studio</span>
+            </Link>
+          ) : (
+            <Link to="/artisan/login" className="btn btn-my-studio" title="Artisan sign in">
+              <Store size={16} />
+              <span>Artisan</span>
             </Link>
           )}
 
@@ -107,12 +112,12 @@ export default function Header() {
             </button>
           ) : (
             <Link
-              to="/login"
+              to="/buyer/login"
               className="btn btn-signin"
               aria-label="Sign In"
             >
               <User size={16} />
-              <span>{t.nav?.login || 'Sign In'}</span>
+              <span>Sign In</span>
             </Link>
           )}
         </div>
@@ -125,13 +130,23 @@ export default function Header() {
             {renderLinks('mobile-nav-link')}
             <li className="mobile-divider" />
             <li>
+              <Link
+                to={isArtisan ? '/seller/dashboard' : '/artisan/login'}
+                className="mobile-nav-link mobile-nav-signin"
+                onClick={closeMobile}
+              >
+                <Store size={18} />
+                <span>{isArtisan ? 'My Studio' : 'Artisan'}</span>
+              </Link>
+            </li>
+            <li>
               {isAuthenticated ? (
                 <button type="button" className="mobile-nav-link mobile-nav-signin" onClick={handleSignOut}>
                   <LogOut size={18} /><span>Sign Out</span>
                 </button>
               ) : (
-                <Link to="/login" className="mobile-nav-link mobile-nav-signin" onClick={closeMobile}>
-                  <User size={18} /><span>{t.nav?.login || 'Sign In'}</span>
+                <Link to="/buyer/login" className="mobile-nav-link mobile-nav-signin" onClick={closeMobile}>
+                  <User size={18} /><span>Sign In</span>
                 </Link>
               )}
             </li>

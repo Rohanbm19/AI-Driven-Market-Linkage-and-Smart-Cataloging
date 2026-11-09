@@ -1,79 +1,113 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
 
 const AuthContext = createContext(null);
+const anonymousAccount = { role: 'buyer', isAuthenticated: false };
 
-const readStoredUser = () => {
-  if (typeof window === 'undefined') {
-    return { role: 'buyer', isAuthenticated: false };
-  }
+async function getAccount(session) {
+  const user = session?.user;
+  if (!user) return anonymousAccount;
 
-  const storedUser = window.localStorage.getItem('kalasetu_user');
-  if (!storedUser) {
-    return { role: 'buyer', isAuthenticated: false };
-  }
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
 
-  try {
-    const parsed = JSON.parse(storedUser);
-    const role = parsed?.role === 'artisan' ? 'artisan' : 'buyer';
-    return {
-      ...parsed,
-      role,
-      isAuthenticated: Boolean(parsed?.email || parsed?.phone || parsed?.id)
-    };
-  } catch (error) {
-    console.warn('Unable to parse stored auth user:', error);
-    return { role: 'buyer', isAuthenticated: false };
-  }
-};
+  if (error) throw error;
+
+  return {
+    id: user.id,
+    email: user.email || null,
+    phone: user.phone || null,
+    role: profile?.role === 'artisan' ? 'artisan' : 'buyer',
+    isAuthenticated: true
+  };
+}
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(() => readStoredUser());
+  const [session, setSession] = useState(anonymousAccount);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const handleStorage = () => setSession(readStoredUser());
-      window.addEventListener('storage', handleStorage);
-      return () => window.removeEventListener('storage', handleStorage);
+      window.localStorage.removeItem('kalasetu_user');
     }
-    return undefined;
+
+    if (!isSupabaseConfigured()) {
+      setIsLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+
+    const syncSession = async (nextSession) => {
+      const account = await getAccount(nextSession);
+      if (!active) return account;
+      setSession(account);
+      setAuthError('');
+      setIsLoading(false);
+      return account;
+    };
+
+    const handleAuthError = (error, nextSession = null) => {
+      console.error('Unable to load the authenticated account:', error);
+      if (!active) return;
+      setSession(nextSession?.user
+        ? {
+            id: nextSession.user.id,
+            email: nextSession.user.email || null,
+            phone: nextSession.user.phone || null,
+            role: 'buyer',
+            isAuthenticated: true
+          }
+        : anonymousAccount);
+      setAuthError('Unable to load your account profile. Please try again.');
+      setIsLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setTimeout(() => {
+        syncSession(nextSession).catch((error) => handleAuthError(error, nextSession));
+      }, 0);
+    });
+
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return syncSession(data.session);
+      })
+      .catch((error) => handleAuthError(error));
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const payload = session.isAuthenticated ? session : null;
-      if (payload) {
-        window.localStorage.setItem('kalasetu_user', JSON.stringify(payload));
-      } else {
-        window.localStorage.removeItem('kalasetu_user');
-      }
-    }
-  }, [session]);
-
   const refreshAuth = async (supabaseSession = null) => {
-    if (supabaseSession?.user) {
-      const derivedRole = supabaseSession.user.app_metadata?.role === 'artisan' ? 'artisan' : 'buyer';
-      const account = {
-        id: supabaseSession.user.id,
-        email: supabaseSession.user.email || null,
-        phone: supabaseSession.user.phone || null,
-        role: derivedRole,
-        isAuthenticated: true
-      };
-      setSession(account);
-      return account;
+    let nextSession = supabaseSession;
+    if (!nextSession) {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      nextSession = data.session;
     }
 
-    const account = readStoredUser();
+    const account = await getAccount(nextSession);
     setSession(account);
+    setAuthError('');
+    setIsLoading(false);
     return account;
   };
 
   const signOut = async () => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('kalasetu_user');
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     }
-    setSession({ role: 'buyer', isAuthenticated: false });
-    return true;
+    setSession(anonymousAccount);
+    setAuthError('');
   };
 
   const value = {
@@ -81,6 +115,8 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(session?.isAuthenticated),
     isArtisan: session?.role === 'artisan',
     role: session?.role || 'buyer',
+    isLoading,
+    authError,
     refreshAuth,
     signOut
   };

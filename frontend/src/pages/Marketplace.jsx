@@ -99,7 +99,7 @@ export default function Marketplace() {
               <span>Explore Marketplace</span>
               <ArrowRight size={17} />
             </a>
-            <Link to="/login?role=artisan" className="btn btn-hero-list">
+            <Link to="/artisan/login" className="btn btn-hero-list">
               <Sparkles size={17} />
               <span>Sell on KalaSetu</span>
             </Link>
