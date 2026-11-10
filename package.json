@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "npm --prefix backend start"
+  },
+  "devDependencies": {
+    "supabase": "^2.122.0"
+  }
+}
