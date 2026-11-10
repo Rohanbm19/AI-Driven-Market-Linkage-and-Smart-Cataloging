@@ -12,9 +12,11 @@ import confetti from 'canvas-confetti';
 import { api, MOCK_PRODUCTS } from '../services/api.js';
 import Badge from '../components/Badge.jsx';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const { id: buyerId, email: accountEmail, fullName, role } = useAuth();
   const [product, setProduct] = useState(
     () => MOCK_PRODUCTS.find((p) => p.id === id) || null
   );
@@ -28,6 +30,11 @@ export default function ProductDetail() {
   const [buyerEmail, setBuyerEmail] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [enquiryError, setEnquiryError] = useState('');
+
+  useEffect(() => {
+    if (!buyerName && fullName) setBuyerName(fullName);
+    if (!buyerEmail && accountEmail) setBuyerEmail(accountEmail);
+  }, [accountEmail, buyerEmail, buyerName, fullName]);
 
   useEffect(() => {
     let isMounted = true;
@@ -62,7 +69,8 @@ export default function ProductDetail() {
         buyer_name: buyerName.trim(),
         buyer_email: buyerEmail.trim(),
         quantity: `${quantity} ${Number(quantity) === 1 ? 'piece' : 'pieces'}`,
-        message: enquiryMsg.trim()
+        message: enquiryMsg.trim(),
+        buyer_id: role === 'buyer' ? buyerId : null
       });
 
       setEnquirySent(true);
@@ -307,9 +315,11 @@ export default function ProductDetail() {
               >
                 <CheckCircle2 size={24} color="#059669" />
                 <div>
-                  <strong>Enquiry Dispatched & Saved!</strong>
+                  <strong>Enquiry submitted!</strong>
                   <p style={{ fontSize: '0.85rem', margin: 0 }}>
-                    {product.artisan_name || 'Artisan'} has been notified and can view your enquiry on their dashboard.
+                    {role === 'buyer' && buyerId
+                      ? 'Your enquiry is saved to your Buyer Profile.'
+                      : 'Your enquiry has been recorded. Sign in as a buyer to keep a personal enquiry history.'}
                   </p>
                 </div>
               </div>

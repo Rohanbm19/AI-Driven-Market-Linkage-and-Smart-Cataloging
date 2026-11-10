@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
+import RequireBuyer from './components/RequireBuyer.jsx';
 import RequireArtisan from './components/RequireArtisan.jsx';
 import SellerLayout from './layouts/SellerLayout.jsx';
 import Marketplace from './pages/Marketplace.jsx';
@@ -14,6 +15,7 @@ import Enquiries from './pages/Enquiries.jsx';
 import ArtisanProfile from './pages/ArtisanProfile.jsx';
 import SellerDashboard from './pages/SellerDashboard.jsx';
 import Login from './pages/Login.jsx';
+import BuyerProfile from './pages/BuyerProfile.jsx';
 
 function LegacyLoginRedirect() {
   const [searchParams] = useSearchParams();
@@ -43,6 +45,9 @@ export default function App() {
           <Route path="/login" element={<LegacyLoginRedirect />} />
           <Route path="/buyer/login" element={<Login role="buyer" />} />
           <Route path="/artisan/login" element={<Login role="artisan" />} />
+          <Route element={<RequireBuyer />}>
+            <Route path="/buyer/profile" element={<BuyerProfile />} />
+          </Route>
           <Route element={<RequireArtisan />}>
             <Route element={<SellerLayout />}>
               <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />

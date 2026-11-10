@@ -1,3 +1,5 @@
+import { isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Curated artisan products for demonstration and fallback
@@ -133,6 +135,30 @@ export const MOCK_ARTISAN = {
 };
 
 export const api = {
+  async submitEnquiry(enquiry) {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Enquiry submission is unavailable because Supabase is not configured.');
+    }
+
+    const { error } = await supabase.from('buyer_enquiries').insert(enquiry);
+    if (error) throw error;
+  },
+
+  async getBuyerEnquiries(buyerId) {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Enquiry history is unavailable because Supabase is not configured.');
+    }
+
+    const { data, error } = await supabase
+      .from('buyer_enquiries')
+      .select('id, product_id, product_title, buyer_name, buyer_email, quantity, message, created_at')
+      .eq('buyer_id', buyerId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
   async getProducts() {
     try {
       const res = await fetch(`${API_BASE_URL}/products`);

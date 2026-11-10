@@ -33,6 +33,7 @@ export default function Header() {
     { to: '/market-insights', label: t.nav?.insights || 'Market Insights', icon: TrendingUp },
     { to: '/assistant', label: t.nav?.assistant || 'Craft Assistant', icon: Sparkles }
   ];
+  const buyerProfileLink = { to: '/buyer/profile', label: 'My Profile', icon: User, end: true };
   const sellerLinks = [
     { to: '/seller/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/add-product', label: t.nav?.smartCatalog || 'AI Cataloging', icon: Sparkles },
@@ -42,7 +43,9 @@ export default function Header() {
   ];
   const links = isArtisan
     ? [{ ...buyerLinks[0], label: 'Marketplace' }, ...sellerLinks]
-    : buyerLinks;
+    : isAuthenticated && role === 'buyer'
+      ? [...buyerLinks, buyerProfileLink]
+      : buyerLinks;
 
   const renderLinks = (className) => links.map(({ to, label, icon: Icon, end }) => (
     <li key={to}>

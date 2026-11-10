@@ -2349,6 +2349,84 @@ h1, h2, h3, h4, .serif-font {
   letter-spacing: 0.35rem;
 }
 
+.buyer-profile {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.buyer-profile-account,
+.buyer-profile-enquiries {
+  margin-bottom: 1.5rem;
+}
+
+.buyer-profile-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  font-family: var(--font-main);
+  font-size: 1.15rem;
+}
+
+.buyer-profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.buyer-profile-details > div {
+  min-width: 0;
+}
+
+.buyer-profile-details dt {
+  margin-bottom: 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.buyer-profile-details dd {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.buyer-enquiry-card {
+  margin-bottom: 0.9rem;
+}
+
+.buyer-enquiry-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.buyer-enquiry-heading h3 {
+  margin: 0;
+  font-family: var(--font-main);
+  font-size: 1rem;
+}
+
+.buyer-enquiry-heading p,
+.buyer-enquiry-message {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.buyer-enquiry-heading > span {
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
 .auth-secondary-action {
   display: block;
   margin: 0.9rem auto 0;
@@ -2469,6 +2547,14 @@ h1, h2, h3, h4, .serif-font {
 
 /* Mobile Phones (<= 640px) */
 @media (max-width: 640px) {
+  .buyer-profile-details {
+    grid-template-columns: 1fr;
+  }
+
+  .buyer-enquiry-heading {
+    flex-direction: column;
+  }
+
   .header-inner {
     padding: 0.6rem 0.85rem;
     gap: 0.5rem;

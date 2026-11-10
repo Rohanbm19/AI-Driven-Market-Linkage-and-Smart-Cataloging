@@ -10,7 +10,7 @@ async function getAccount(session) {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, requested_role, full_name, studio_name')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -19,7 +19,11 @@ async function getAccount(session) {
   return {
     id: user.id,
     email: user.email || null,
-    phone: user.phone || null,
+    fullName: profile?.full_name || user.user_metadata?.full_name || null,
+    studioName: profile?.studio_name || user.user_metadata?.studio_name || null,
+    requestedRole: profile?.requested_role || 'buyer',
+    phone: user.phone || user.user_metadata?.phone || null,
+    createdAt: user.created_at || null,
     role: profile?.role === 'artisan' ? 'artisan' : 'buyer',
     isAuthenticated: true
   };
@@ -58,7 +62,9 @@ export function AuthProvider({ children }) {
         ? {
             id: nextSession.user.id,
             email: nextSession.user.email || null,
+            fullName: nextSession.user.user_metadata?.full_name || null,
             phone: nextSession.user.phone || null,
+            createdAt: nextSession.user.created_at || null,
             role: 'buyer',
             isAuthenticated: true
           }
