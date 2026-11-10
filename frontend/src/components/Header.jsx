@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ShoppingBag,
   Sparkles,
   TrendingUp,
   User,
+  Home,
   Store,
   Menu,
   X,
@@ -20,9 +21,11 @@ import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Header() {
   const { t } = useLanguage();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, isArtisan, role, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isLoginPage = /(^|\/)login\/?$/.test(pathname);
 
   const closeMobile = () => setMobileMenuOpen(false);
   const buyerLinks = [
@@ -110,6 +113,11 @@ export default function Header() {
               <LogOut size={16} />
               <span>Sign Out</span>
             </button>
+          ) : isLoginPage ? (
+            <Link to="/" className="btn btn-signin" aria-label="Back to Home">
+              <Home size={16} />
+              <span>Back to Home</span>
+            </Link>
           ) : (
             <Link
               to="/buyer/login"
@@ -144,6 +152,10 @@ export default function Header() {
                 <button type="button" className="mobile-nav-link mobile-nav-signin" onClick={handleSignOut}>
                   <LogOut size={18} /><span>Sign Out</span>
                 </button>
+              ) : isLoginPage ? (
+                <Link to="/" className="mobile-nav-link mobile-nav-signin" onClick={closeMobile}>
+                  <Home size={18} /><span>Back to Home</span>
+                </Link>
               ) : (
                 <Link to="/buyer/login" className="mobile-nav-link mobile-nav-signin" onClick={closeMobile}>
                   <User size={18} /><span>Sign In</span>

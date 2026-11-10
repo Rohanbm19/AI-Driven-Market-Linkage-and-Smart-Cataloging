@@ -5,107 +5,133 @@ An end-to-end platform empowering rural and traditional artisans with smart AI c
 ## Project Structure
 
 ```
-AI-Driven-Market-Linkage-and-Smart-Cataloging/
-├── README.md
-├── .gitignore
-│
-├── frontend/                            # React + Vite (the user interface)
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── index.html
-│   ├── .env.example                     # VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
-│   ├── public/
-│   │   └── images/
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx                      # Routes only
-│       ├── styles.css
-│       ├── i18n/
-│       │   ├── index.js
-│       │   ├── en.js
-│       │   ├── hi.js
-│       │   ├── kn.js
-│       │   ├── ta.js
-│       │   └── bn.js
-│       ├── lib/
-│       │   └── supabaseClient.js        # createClient with the anon key (login, image upload)
-│       ├── services/
-│       │   └── api.js                   # Calls to the backend
-│       ├── hooks/
-│       │   └── useVoiceInput.js
-│       ├── components/
-│       │   ├── Header.jsx
-│       │   ├── LanguageSwitcher.jsx
-│       │   ├── ProductCard.jsx
-│       │   ├── Badge.jsx
-│       │   └── BeforeAfterSlider.jsx
-│       └── pages/
-│           ├── Marketplace.jsx
-│           ├── ProductDetail.jsx
-│           ├── AddProduct.jsx
-│           ├── ImageEnhancer.jsx
-│           ├── Assistant.jsx
-│           ├── MarketInsights.jsx
-│           ├── Enquiries.jsx
-│           ├── ArtisanProfile.jsx
-│           └── Login.jsx
-│
-├── backend/                             # Node.js + Express (the API)
-│   ├── package.json
-│   ├── .env.example                     # PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, AI_API_KEY
-│   └── src/
-│       ├── index.js                     # App setup only
-│       ├── config/
-│       │   └── supabase.js              # createClient with the service role key
-│       ├── routes/
-│       │   ├── products.js
-│       │   ├── artisans.js
-│       │   ├── enquiries.js
-│       │   ├── market.js
-│       │   └── ai.js                    # /catalog, /chat, /enhance-image
-│       ├── controllers/
-│       ├── services/
-│       │   ├── catalogService.js        # LLM call for titles and descriptions
-│       │   ├── chatService.js           # Multilingual assistant
-│       │   ├── imageService.js          # Image enhancement
-│       │   └── marketService.js         # Trend and price analysis
-│       └── middleware/
-│           ├── auth.js                  # Verifies the Supabase JWT
-│           ├── upload.js
-│           └── errorHandler.js
-│
-└── supabase/                            # Database, auth rules and storage
-    ├── config.toml                      # Local Supabase settings
-    ├── seed.sql                         # Sample artisans, products and enquiries
-    ├── migrations/
-    │   ├── 001_create_tables.sql        # artisans, products, enquiries
-    │   ├── 002_rls_policies.sql         # Row Level Security rules
-    │   └── 003_storage_buckets.sql      # product-images bucket
-    └── functions/                       # Optional Edge Functions
-        ├── ai-catalog/
-        │   └── index.ts
-        └── ai-chat/
-            └── index.ts
+frontend/                 React + Vite application
+backend/                  Express API (ES modules)
+    src/index.js             API startup and route registration
+    src/routes/              Products, artisans, enquiries, AI, and market endpoints
+    src/services/            Catalog, chat, image, and pricing logic
+    image_enhancer/           FastAPI + OpenCV image enhancement service
+supabase/
+    config.toml              Supabase CLI project configuration
+    migrations/              Database migrations, applied in filename order
+    seed.sql                 Sample artisan and product data
+    functions/               Optional Supabase Edge Functions
 ```
+
+## Requirements
+
+- Node.js 18 or newer
+- A Supabase project for persistent database storage (optional for local fallback mode)
 
 ## Getting Started
 
-### 1. Backend Setup
+### Supabase
+
+Install the Supabase CLI dependency from the repository root, then link the project and apply the migrations:
+
+```bash
+npm install
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push
+```
+
+To load the sample artisans and products, run `supabase/seed.sql` in the Supabase Dashboard SQL Editor after the migrations. The migrations create `artisans`, `products`, and `enquiries`; products link to artisans, and enquiries can link to products.
+
+For the currently configured Supabase project, the existing `artisans` and `products` tables are empty and use an older schema. In the Supabase Dashboard SQL Editor, run `supabase/quick_setup.sql` first, then run `supabase/seed.sql`. The setup script drops and recreates those empty tables, so do not run it if you have added data you need to keep.
+
+If these migrations have already been applied to a database, make schema changes in a new migration rather than editing an applied migration.
+The image enhancement workflow uses `products.original_image_url` to retain the original photo alongside the selected listing image. Apply the new migration with `npx supabase db push` before publishing enhanced images to Supabase.
+
+The role migration creates `public.profiles` with `buyer` and `artisan` roles. New accounts default to `buyer`; artisan access must be granted by an administrator, not selected in client-provided signup metadata. After an account is created, grant artisan access from the Supabase SQL Editor using its Auth user UUID:
+
+```sql
+UPDATE public.profiles
+SET role = 'artisan'
+WHERE id = '<auth-user-uuid>';
+```
+
+The frontend reads the signed-in user's own profile to guard `/seller/dashboard`, `/add-product`, `/image-enhancer`, `/enquiries`, and `/artisan-profile`. Apply the migrations with `npx supabase db push` before using role-based sign-in.
+
+Buyer sign-in and registration are available at `/buyer/login`; artisan sign-in with email/password is at `/artisan/login`. Both flows also support Google sign-in. The header's **Sign In** and **Artisan / My Studio** links open only their respective flows. New public sign-ups are buyer accounts; artisans must be promoted by an administrator. The legacy `/login?role=...` URL redirects to the matching dedicated route.
+
+### Backend
+
+In PowerShell, Command Prompt, or a Unix shell:
+
 ```bash
 cd backend
-npm install
-cp .env.example .env
+npm ci
+```
+
+Create `backend/.env` and set:
+
+```dotenv
+PORT=5000
+SUPABASE_URL=https://<your-project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+```
+
+The backend can use `SUPABASE_ANON_KEY` if no service-role key is provided. Keep service-role keys in the backend only; never put them in frontend environment variables. Start the API with:
+
+```bash
 npm run dev
 ```
 
-### 2. Frontend Setup
+The API listens at `http://localhost:5000`. `GET /api/health` reports whether Supabase credentials are configured; it does not verify a live database connection. Without credentials, product, artisan, and enquiry routes use in-memory sample data.
+
+### OpenCV Image Enhancer
+
+Run the image service in a separate terminal. From the repository root in PowerShell:
+
+```powershell
+cd backend\image_enhancer
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+$env:IMAGE_ENHANCER_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+The service accepts multipart image uploads at `POST http://localhost:8000/api/enhance`, limited to JPEG, PNG, and WebP files up to 10 MB. It returns the enhanced image bytes in the original format. Set the optional `background_preset` field to `clean_white`, `warm_sand`, or `soft_sage` to replace the original background, or send an optional `background_file` image to use a custom background. Omit the background fields or use `none` to keep the current background. Background removal works best when the product is centered and clearly separated from a simple background. `GET http://localhost:8000/health` checks service availability. Images are processed in an automatically cleaned temporary directory; the submitted file is never overwritten.
+
+The Add Product form and standalone image enhancer let users choose a studio preset or upload a custom background before processing. Review the result before accepting it; the original photo remains unchanged.
+
+Copy `frontend/.env.example` to `frontend/.env` and set `VITE_IMAGE_ENHANCER_URL=http://localhost:8000` if the service is hosted elsewhere. Restart Vite after changing frontend environment variables. The browser sends the file directly to this service; configure `IMAGE_ENHANCER_ALLOWED_ORIGINS` to include the frontend origin when deploying.
+
+If the frontend reports **“Could not reach the image enhancement service”**, start the FastAPI command above in its own terminal and leave it running while using the frontend. Check `http://localhost:8000/health`; it should return a JSON status of `ok`. If health works but enhancement still fails, make sure `VITE_IMAGE_ENHANCER_URL` points to that service and that `IMAGE_ENHANCER_ALLOWED_ORIGINS` includes the exact frontend origin (for example, `http://localhost:5173`). Restart the relevant service after changing environment variables.
+
+### Frontend
+
+In a second terminal:
+
 ```bash
 cd frontend
-npm install
-cp .env.example .env
+npm ci
+```
+
+Copy `frontend/.env.example` to `frontend/.env` and set the Supabase project URL and public anon key if the frontend Supabase features are needed. The API URL defaults to `http://localhost:5000/api`; the image enhancer URL defaults to `http://localhost:8000`.
+
+```bash
 npm run dev
 ```
 
-### 3. Supabase Setup
-- Configure your Supabase project credentials in frontend and backend `.env` files.
-- Apply database migrations from `supabase/migrations/` and seed data from `supabase/seed.sql`.
+## API Endpoints
+
+- `GET`, `POST`, `PUT`, `DELETE /api/products`
+- `GET`, `POST`, `PUT /api/artisans`
+- `GET`, `POST`, `PATCH /api/enquiries`
+- `POST /api/ai/catalog`, `/api/ai/chat`, `/api/ai/enhance-image`, `/api/ai/pricing`
+- `GET /api/market/trends`
+- `POST http://localhost:8000/api/enhance` (FastAPI image service)
+
+### Image enhancement smoke test
+
+With the FastAPI service running, verify its health and upload a local photo:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/health
+curl.exe -F "file=@C:\path\to\product.jpg" http://localhost:8000/api/enhance --output enhanced.jpg
+```
+
+Then open `http://localhost:5173/add-product`, upload an image, select **Enhance Image**, and use the before/after slider. Choose **Accept Enhanced Image** or **Keep Original Image** before publishing. The standalone `/image-enhancer` page also supports upload, comparison, retry, and download.
