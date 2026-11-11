@@ -69,7 +69,13 @@ export default {
     viewBtn: "ಕಲೆ ವೀಕ್ಷಿಸಿ",
     inStock: "ಲಭ್ಯವಿದೆ",
     available: "ಲಭ್ಯವಿದೆ",
-    shipsDirect: "ಕುಶಲಕರ್ಮಿಗಳ ಕ್ಲಸ್ಟರ್‌ನಿಂದ ನೇರ ರವಾನೆ"
+    shipsDirect: "ಕುಶಲಕರ್ಮಿಗಳ ಕ್ಲಸ್ಟರ್‌ನಿಂದ ನೇರ ರವಾನೆ",
+    craft: "ಕರಕುಶಲ ವಸ್ತು",
+defaultRegion: "ಭಾರತ",
+verified: "ಪರಿಶೀಲಿಸಿದ ಕುಶಲಕರ್ಮಿ",
+untitled: "ಹೆಸರಿಲ್ಲದ ಕರಕುಶಲ ವಸ್ತು",
+noDescription: "ವಿವರಣೆ ಲಭ್ಯವಿಲ್ಲ",
+defaultArtisan: "ಪ್ರಮುಖ ಕುಶಲಕರ್ಮಿ"
   },
 
   catalogForm: {

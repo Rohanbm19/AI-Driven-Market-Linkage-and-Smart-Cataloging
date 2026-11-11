@@ -1,9 +1,21 @@
+
 import express from 'express';
-import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import {
+  supabase,
+  isSupabaseConfigured
+} from '../config/supabase.js';
+
+import {
+  translateProduct,
+  SUPPORTED_LANGUAGES
+} from '../services/translationService.js';
 
 const router = express.Router();
 
-// Fallback products in case Supabase is empty or connecting
+// --------------------------------------------------
+// DEFAULT PRODUCTS
+// --------------------------------------------------
+
 const DEFAULT_PRODUCTS = [
   {
     id: 'prod-1',
@@ -12,9 +24,11 @@ const DEFAULT_PRODUCTS = [
     price: 1850,
     artisan_name: 'Shankar Das',
     region: 'Bishnupur, West Bengal',
-    description: 'Handcrafted terracotta horse characterized by erect ears, elongated neck, and delicate ornamental incised patterns.',
+    description:
+      'Handcrafted terracotta horse characterized by erect ears, elongated neck, and delicate ornamental incised patterns.',
     materials: ['Natural Alluvial Clay', 'Mineral Oxide Slip'],
-    image_url: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+    image_url:
+      'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
     stock: 12,
     rating: 4.9,
     is_verified: true,
@@ -27,9 +41,11 @@ const DEFAULT_PRODUCTS = [
     price: 14200,
     artisan_name: 'Meenakshi Sundaram',
     region: 'Kanchipuram, Tamil Nadu',
-    description: 'Woven with three-ply silk thread and pure gold-dipped silver zari.',
+    description:
+      'Woven with three-ply silk thread and pure gold-dipped silver zari.',
     materials: ['100% Pure Mulberry Silk', 'Silver & Gold Zari'],
-    image_url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
+    image_url:
+      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
     stock: 4,
     rating: 5.0,
     is_verified: true,
@@ -37,34 +53,212 @@ const DEFAULT_PRODUCTS = [
   }
 ];
 
-// In-memory cache for fallback when Supabase keys not set
+// In-memory fallback store
 let localProductStore = [...DEFAULT_PRODUCTS];
 
-// 1. GET /api/products - List all products
+// --------------------------------------------------
+// HELPER: GET PRODUCTS IN SELECTED LANGUAGE
+// --------------------------------------------------
+
+async function getLocalizedProducts(products, language) {
+  if (language === 'en') {
+    return products;
+  }
+
+  if (!SUPPORTED_LANGUAGES[language]) {
+    throw new Error(`Unsupported language: ${language}`);
+  }
+
+  if (products.length === 0) {
+    return [];
+  }
+
+  const productIds = products.map(product => product.id);
+
+  let cachedTranslations = [];
+
+  // Check Supabase translation cache
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('product_translations')
+      .select('product_id, translated_data')
+      .eq('language_code', language)
+      .in('product_id', productIds);
+
+    if (error) {
+      console.error('Translation cache read error:', error.message);
+    } else {
+      cachedTranslations = data || [];
+    }
+  }
+
+  const cacheMap = new Map(
+    cachedTranslations.map(item => [
+      item.product_id,
+      item.translated_data
+    ])
+  );
+
+  const localizedProducts = [];
+
+  // Process products one by one to avoid excessive API requests
+  for (const product of products) {
+    const cached = cacheMap.get(product.id);
+
+    // Return cached translation
+    if (cached) {
+      localizedProducts.push(cached);
+      continue;
+    }
+
+    try {
+      // Generate new translation
+      const translated = await translateProduct(product, language);
+
+      localizedProducts.push(translated);
+
+      // Save translation in Supabase
+      if (isSupabaseConfigured()) {
+        const { error } = await supabase
+          .from('product_translations')
+          .upsert(
+            {
+              product_id: product.id,
+              language_code: language,
+              translated_data: translated,
+              updated_at: new Date().toISOString()
+            },
+            {
+              onConflict: 'product_id,language_code'
+            }
+          );
+
+        if (error) {
+          console.error(
+            'Translation cache save error:',
+            error.message
+          );
+        }
+      }
+    } catch (error) {
+      console.error(
+        `Translation failed for product ${product.id}:`,
+        error.message
+      );
+
+      // Return English product if translation fails
+      localizedProducts.push(product);
+    }
+  }
+
+  return localizedProducts;
+}
+
+// --------------------------------------------------
+// HELPER: CLEAR TRANSLATION CACHE
+// --------------------------------------------------
+
+async function clearProductTranslationCache(productId) {
+  if (!isSupabaseConfigured()) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from('product_translations')
+    .delete()
+    .eq('product_id', productId);
+
+  if (error) {
+    console.error(
+      'Translation cache deletion error:',
+      error.message
+    );
+  }
+}
+
+// --------------------------------------------------
+// HELPER: VALIDATE LANGUAGE
+// --------------------------------------------------
+
+function getRequestedLanguage(req) {
+  const language = String(req.query.lang || 'en').toLowerCase();
+
+  if (!SUPPORTED_LANGUAGES[language]) {
+    return null;
+  }
+
+  return language;
+}
+
+// --------------------------------------------------
+// 1. GET ALL PRODUCTS
+// GET /api/products?lang=kn
+// --------------------------------------------------
+
 router.get('/', async (req, res) => {
   try {
+    const language = getRequestedLanguage(req);
+
+    if (!language) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unsupported language',
+        supportedLanguages: Object.keys(SUPPORTED_LANGUAGES)
+      });
+    }
+
+    let products = localProductStore;
+
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
-        return res.json(data);
+      if (error) {
+        console.error('Supabase product fetch error:', error.message);
+      } else if (Array.isArray(data)) {
+        products = data.length > 0 ? data : localProductStore;
       }
     }
-    return res.json(localProductStore);
-  } catch (err) {
-    console.error('Error fetching products:', err);
-    return res.json(localProductStore);
+
+    const localizedProducts = await getLocalizedProducts(
+      products,
+      language
+    );
+
+    return res.json(localizedProducts);
+
+  } catch (error) {
+    console.error('Error fetching products:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// 2. GET /api/products/:id - Get product details
+// --------------------------------------------------
+// 2. GET PRODUCT BY ID
+// GET /api/products/prod-1?lang=kn
+// --------------------------------------------------
+
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
+    const language = getRequestedLanguage(req);
+
+    if (!language) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unsupported language'
+      });
+    }
+
+    let product = null;
+
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase
         .from('products')
@@ -72,22 +266,46 @@ router.get('/:id', async (req, res) => {
         .eq('id', id)
         .maybeSingle();
 
-      if (!error && data) {
-        return res.json(data);
+      if (error) {
+        console.error('Supabase product lookup error:', error.message);
+      } else {
+        product = data;
       }
     }
 
-    const found = localProductStore.find((p) => p.id === id);
-    if (found) return res.json(found);
+    if (!product) {
+      product = localProductStore.find(
+        p => String(p.id) === String(id)
+      );
+    }
 
-    return res.status(404).json({ error: 'Product not found' });
-  } catch (err) {
-    console.error('Error fetching product by id:', err);
-    return res.status(500).json({ error: err.message });
+    if (!product) {
+      return res.status(404).json({
+        error: 'Product not found'
+      });
+    }
+
+    const [localizedProduct] = await getLocalizedProducts(
+      [product],
+      language
+    );
+
+    return res.json(localizedProduct);
+
+  } catch (error) {
+    console.error('Product detail error:', error);
+
+    return res.status(500).json({
+      error: error.message
+    });
   }
 });
 
-// 3. POST /api/products - Save new product in Supabase
+// --------------------------------------------------
+// 3. CREATE PRODUCT
+// POST /api/products
+// --------------------------------------------------
+
 router.post('/', async (req, res) => {
   try {
     const {
@@ -104,8 +322,10 @@ router.post('/', async (req, res) => {
       tags
     } = req.body;
 
-    if (!title || !price) {
-      return res.status(400).json({ error: 'Title and price are required fields.' });
+    if (!title || price === undefined || price === null || price === '') {
+      return res.status(400).json({
+        error: 'Title and price are required fields.'
+      });
     }
 
     if (!isSupabaseConfigured()) {
@@ -125,17 +345,37 @@ router.post('/', async (req, res) => {
       artisan_id: req.body.artisan_id || `art-${Date.now()}`,
       region: region || 'India',
       description: description || '',
+
       materials: Array.isArray(materials)
         ? materials
-        : (typeof materials === 'string' ? materials.split(',').map(m => m.trim()).filter(Boolean) : []),
-      image_url: image_url || 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+        : (
+            typeof materials === 'string'
+              ? materials.split(',').map(m => m.trim()).filter(Boolean)
+              : []
+          ),
+
+      image_url:
+        image_url ||
+        'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+
       original_image_url: original_image_url || image_url,
-      enhanced_image_url: Object.prototype.hasOwnProperty.call(req.body, 'enhanced_image_url')
-        ? req.body.enhanced_image_url
-        : image_url,
+
+      enhanced_image_url:
+        Object.prototype.hasOwnProperty.call(
+          req.body,
+          'enhanced_image_url'
+        )
+          ? req.body.enhanced_image_url
+          : image_url,
+
       tags: Array.isArray(tags)
         ? tags
-        : (typeof tags === 'string' ? tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean) : ['Handmade']),
+        : (
+            typeof tags === 'string'
+              ? tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
+              : ['Handmade']
+          ),
+
       stock: Number(stock) || 1,
       rating: 5.0,
       reviews_count: 0,
@@ -152,6 +392,7 @@ router.post('/', async (req, res) => {
 
     if (error) {
       console.error('Supabase DB Insert Error:', error);
+
       return res.status(error.code === '23503' ? 400 : 500).json({
         success: false,
         savedInSupabase: false,
@@ -159,7 +400,10 @@ router.post('/', async (req, res) => {
       });
     }
 
-    localProductStore = [data, ...localProductStore.filter(p => p.id !== data.id)];
+    localProductStore = [
+      data,
+      ...localProductStore.filter(p => p.id !== data.id)
+    ];
 
     return res.status(201).json({
       success: true,
@@ -167,24 +411,45 @@ router.post('/', async (req, res) => {
       savedInSupabase: true,
       message: 'Successfully stored in Supabase products table.'
     });
-  } catch (err) {
-    console.error('Product creation failed:', err);
-    return res.status(500).json({ error: err.message });
+
+  } catch (error) {
+    console.error('Product creation failed:', error);
+
+    return res.status(500).json({
+      error: error.message
+    });
   }
 });
 
-// 4. PUT /api/products/:id - Update product
+// --------------------------------------------------
+// 4. UPDATE PRODUCT
+// PUT /api/products/:id
+// --------------------------------------------------
+
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const updates = { ...req.body };
 
-  if (updates.price) updates.price = Number(updates.price);
-  if (updates.stock) updates.stock = Number(updates.stock);
-  if (typeof updates.materials === 'string') {
-    updates.materials = updates.materials.split(',').map(m => m.trim()).filter(Boolean);
+  if (updates.price !== undefined) {
+    updates.price = Number(updates.price);
   }
+
+  if (updates.stock !== undefined) {
+    updates.stock = Number(updates.stock);
+  }
+
+  if (typeof updates.materials === 'string') {
+    updates.materials = updates.materials
+      .split(',')
+      .map(m => m.trim())
+      .filter(Boolean);
+  }
+
   if (typeof updates.tags === 'string') {
-    updates.tags = updates.tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+    updates.tags = updates.tags
+      .split(',')
+      .map(t => t.trim().replace(/^#/, ''))
+      .filter(Boolean);
   }
 
   try {
@@ -203,17 +468,43 @@ router.put('/:id', async (req, res) => {
         dbError = error.message;
       } else if (data && data.length > 0) {
         savedInSupabase = true;
+
+        // Remove outdated translations after successful update
+        await clearProductTranslationCache(id);
+
+        const updatedProduct = data[0];
+
+        const index = localProductStore.findIndex(
+          p => String(p.id) === String(id)
+        );
+
+        if (index >= 0) {
+          localProductStore[index] = updatedProduct;
+        } else {
+          localProductStore.unshift(updatedProduct);
+        }
       }
     }
 
-    const index = localProductStore.findIndex((p) => p.id === id);
+    const index = localProductStore.findIndex(
+      p => String(p.id) === String(id)
+    );
+
     if (index >= 0) {
-      localProductStore[index] = { ...localProductStore[index], ...updates };
+      localProductStore[index] = {
+        ...localProductStore[index],
+        ...updates
+      };
     } else {
-      localProductStore.unshift({ id, ...updates });
+      localProductStore.unshift({
+        id,
+        ...updates
+      });
     }
 
-    const updated = localProductStore.find((p) => p.id === id) || { id, ...updates };
+    const updated = localProductStore.find(
+      p => String(p.id) === String(id)
+    ) || { id, ...updates };
 
     return res.json({
       success: true,
@@ -222,13 +513,21 @@ router.put('/:id', async (req, res) => {
       dbError,
       message: 'Product successfully updated.'
     });
-  } catch (err) {
-    console.error('Product update failed:', err);
-    return res.status(500).json({ error: err.message });
+
+  } catch (error) {
+    console.error('Product update failed:', error);
+
+    return res.status(500).json({
+      error: error.message
+    });
   }
 });
 
-// 5. DELETE /api/products/:id - Delete product
+// --------------------------------------------------
+// 5. DELETE PRODUCT
+// DELETE /api/products/:id
+// --------------------------------------------------
+
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -246,10 +545,17 @@ router.delete('/:id', async (req, res) => {
         dbError = error.message;
       } else {
         deletedInSupabase = true;
-      }
-    }
 
-    localProductStore = localProductStore.filter((p) => p.id !== id);
+        // Supabase ON DELETE CASCADE also removes cached translations
+        localProductStore = localProductStore.filter(
+          p => String(p.id) !== String(id)
+        );
+      }
+    } else {
+      localProductStore = localProductStore.filter(
+        p => String(p.id) !== String(id)
+      );
+    }
 
     return res.json({
       success: true,
@@ -258,9 +564,13 @@ router.delete('/:id', async (req, res) => {
       dbError,
       message: 'Product successfully deleted.'
     });
-  } catch (err) {
-    console.error('Product deletion failed:', err);
-    return res.status(500).json({ error: err.message });
+
+  } catch (error) {
+    console.error('Product deletion failed:', error);
+
+    return res.status(500).json({
+      error: error.message
+    });
   }
 });
 
