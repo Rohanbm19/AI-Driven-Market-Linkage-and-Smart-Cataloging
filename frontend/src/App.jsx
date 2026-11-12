@@ -11,8 +11,11 @@ import MarketInsights from './pages/MarketInsights.jsx';
 import Enquiries from './pages/Enquiries.jsx';
 import ArtisanProfile from './pages/ArtisanProfile.jsx';
 import Login from './pages/Login.jsx';
+import { useLanguage } from './i18n/index.js';
 
 export default function App() {
+  const { t } = useLanguage();
+  const f = t.footer || {};
   return (
     <div className="app-container">
       <Header />
@@ -34,23 +37,21 @@ export default function App() {
         <div className="footer-inner">
           <div className="footer-brand-col">
             <Logo
-              tagline="Crafts • Culture • Connect"
+              tagline={f.logoTagline}
               size={36}
             />
-            <p className="footer-desc">
-              AI-Driven Market Linkage & Smart Cataloging platform directly connecting Indian traditional master artisans with global collectors and conscious buyers.
-            </p>
+            <p className="footer-desc">{f.desc}</p>
           </div>
           <div className="footer-meta-col">
             <div className="footer-badges">
-              <span className="footer-badge">Fair Trade Direct</span>
+              <span className="footer-badge">{f.fairTrade}</span>
               <span className="footer-dot">•</span>
-              <span className="footer-badge">Multilingual Voice AI</span>
+              <span className="footer-badge">{f.voiceAi}</span>
               <span className="footer-dot">•</span>
-              <span className="footer-badge">GI Tag Protection</span>
+              <span className="footer-badge">{f.giTag}</span>
             </div>
             <p className="footer-copyright">
-              © {new Date().getFullYear()} KalaSetu. Preserving Heritage. Unlocking Global Markets.
+              © {new Date().getFullYear()} {f.copyright}
             </p>
           </div>
         </div>

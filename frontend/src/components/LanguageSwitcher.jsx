@@ -3,7 +3,7 @@ import { Globe, ChevronDown, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/index.js';
 
 export default function LanguageSwitcher({ variant = 'header', label }) {
-  const { lang, setLang, languages } = useLanguage();
+  const { lang, setLang, languages, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -28,8 +28,8 @@ export default function LanguageSwitcher({ variant = 'header', label }) {
         type="button"
         className={`lang-btn ${variant === 'card' ? 'lang-btn-card' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Select Language"
-        title="Change application & speech language"
+        aria-label={t.common?.selectLanguage}
+        title={t.common?.changeLanguageTitle}
       >
         <Globe size={15} className="lang-icon" />
         <span className="lang-label">
@@ -42,7 +42,7 @@ export default function LanguageSwitcher({ variant = 'header', label }) {
 
       {isOpen && (
         <div className={`lang-dropdown ${variant === 'card' ? 'lang-dropdown-card' : ''}`}>
-          <div className="lang-dropdown-header">Select Language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</div>
+          <div className="lang-dropdown-header">{t.common?.selectLanguage}</div>
           {languages.map((item) => (
             <button
               key={item.code}

@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.js';
+import { useLanguage } from '../i18n/index.js';
 import {
   MessageSquare,
   CheckCircle,
@@ -51,6 +53,9 @@ const INITIAL_ENQUIRIES = [
 ];
 
 export default function Enquiries() {
+  const { t } = useLanguage();
+  const text = t.enquiries;
+
   const [enquiries, setEnquiries] = useState(INITIAL_ENQUIRIES);
   const [filter, setFilter] = useState('all');
   const [replyText, setReplyText] = useState({});
@@ -58,23 +63,31 @@ export default function Enquiries() {
 
   useEffect(() => {
     let isMounted = true;
+
     async function loadData() {
       try {
         const live = await api.getEnquiries();
+
         if (isMounted && Array.isArray(live) && live.length > 0) {
-          // Merge unique by id
           const map = new Map();
-          live.forEach(e => map.set(e.id, e));
-          INITIAL_ENQUIRIES.forEach(e => {
-            if (!map.has(e.id)) map.set(e.id, e);
+
+          live.forEach((e) => map.set(e.id, e));
+
+          INITIAL_ENQUIRIES.forEach((e) => {
+            if (!map.has(e.id)) {
+              map.set(e.id, e);
+            }
           });
+
           setEnquiries(Array.from(map.values()));
         }
       } catch (err) {
         console.warn('Enquiries fetch error:', err);
       }
     }
+
     loadData();
+
     return () => {
       isMounted = false;
     };
@@ -88,23 +101,42 @@ export default function Enquiries() {
 
   const handleSendReply = (id) => {
     setEnquiries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, status: 'responded' } : e))
+      prev.map((e) =>
+        e.id === id ? { ...e, status: 'responded' } : e
+      )
     );
+
     setActiveReplyId(null);
-    alert('Reply sent directly to buyer via SMS and email!');
+    alert(text.replySent);
   };
 
-  const handleQuickTemplate = (id, text) => {
-    setReplyText((prev) => ({ ...prev, [id]: text }));
+  const handleQuickTemplate = (id, message) => {
+    setReplyText((prev) => ({
+      ...prev,
+      [id]: message
+    }));
+  };
+
+  const getBuyerType = (buyerType) => {
+    const buyerTypes = {
+      'Wholesale Retailer': text.wholesaleRetailer,
+      'Export Buyer (UK)': text.exportBuyer,
+      'Interior Architect': text.interiorArchitect
+    };
+
+    return buyerTypes[buyerType] || buyerType;
   };
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Direct Buyer Enquiries & Orders</h1>
+          <h1 className="page-title">
+            {text.title}
+          </h1>
+
           <p className="page-subtitle">
-            Manage incoming purchase enquiries from retail boutiques, export houses, and individual collectors.
+            {text.desc}
           </p>
         </div>
 
@@ -113,17 +145,25 @@ export default function Enquiries() {
             <button
               key={tab}
               type="button"
-              className={`btn btn-sm ${filter === tab ? 'btn-primary' : 'btn-secondary'}`}
+              className={`btn btn-sm ${
+                filter === tab ? 'btn-primary' : 'btn-secondary'
+              }`}
               onClick={() => setFilter(tab)}
               style={{ textTransform: 'capitalize' }}
             >
-              {tab}
+              {text[tab]}
             </button>
           ))}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.25rem'
+        }}
+      >
         {filtered.map((enq) => (
           <div key={enq.id} className="card">
             <div
@@ -137,8 +177,22 @@ export default function Enquiries() {
               }}
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{enq.buyer_name}</h3>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: '1.2rem',
+                      margin: 0
+                    }}
+                  >
+                    {enq.buyer_name}
+                  </h3>
+
                   <span
                     style={{
                       background: 'var(--bg-subtle)',
@@ -148,7 +202,7 @@ export default function Enquiries() {
                       fontWeight: 600
                     }}
                   >
-                    {enq.buyer_type}
+                    {getBuyerType(enq.buyer_type)}
                   </span>
                 </div>
 
@@ -162,11 +216,24 @@ export default function Enquiries() {
                     marginTop: '0.35rem'
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
+                  >
                     <Mail size={14} />
                     {enq.email}
                   </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
+                  >
                     <Phone size={14} />
                     {enq.phone}
                   </span>
@@ -183,14 +250,35 @@ export default function Enquiries() {
                     borderRadius: 'var(--radius-full)',
                     fontSize: '0.78rem',
                     fontWeight: 700,
-                    background: enq.status === 'pending' ? '#fef3c7' : '#ecfdf5',
-                    color: enq.status === 'pending' ? '#92400e' : '#065f46'
+                    background:
+                      enq.status === 'pending'
+                        ? '#fef3c7'
+                        : '#ecfdf5',
+                    color:
+                      enq.status === 'pending'
+                        ? '#92400e'
+                        : '#065f46'
                   }}
                 >
-                  {enq.status === 'pending' ? <Clock size={12} /> : <CheckCircle size={12} />}
-                  <span style={{ textTransform: 'capitalize' }}>{enq.status}</span>
+                  {enq.status === 'pending' ? (
+                    <Clock size={12} />
+                  ) : (
+                    <CheckCircle size={12} />
+                  )}
+
+                  <span style={{ textTransform: 'capitalize' }}>
+                    {text[enq.status]}
+                  </span>
                 </span>
-                <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-light)',
+                    marginTop: '0.25rem'
+                  }}
+                >
                   {enq.date}
                 </span>
               </div>
@@ -204,68 +292,122 @@ export default function Enquiries() {
                 marginBottom: '1rem'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.86rem' }}>
-                <strong>Product: {enq.product_title}</strong>
-                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Requested: {enq.quantity}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.4rem',
+                  fontSize: '0.86rem'
+                }}
+              >
+                <strong>
+                  {text.product}: {enq.product_title}
+                </strong>
+
+                <span
+                  style={{
+                    color: 'var(--primary)',
+                    fontWeight: 700
+                  }}
+                >
+                  {text.requested}: {enq.quantity}
+                </span>
               </div>
-              <p style={{ color: '#374151', fontSize: '0.92rem', lineHeight: 1.5, margin: 0 }}>
+
+              <p
+                style={{
+                  color: '#374151',
+                  fontSize: '0.92rem',
+                  lineHeight: 1.5,
+                  margin: 0
+                }}
+              >
                 "{enq.message}"
               </p>
             </div>
 
             {/* Quick response panel */}
             {activeReplyId === enq.id ? (
-              <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  marginTop: '1rem',
+                  borderTop: '1px solid var(--border-color)',
+                  paddingTop: '1rem'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    marginBottom: '0.5rem',
+                    flexWrap: 'wrap'
+                  }}
+                >
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     onClick={() =>
                       handleQuickTemplate(
                         enq.id,
-                        'Namaste! Yes, we can fulfill this order within 3 weeks. Please confirm delivery location.'
+                        text.templateDispatchMessage
                       )
                     }
                   >
-                    Template: 3-Week Dispatch
+                    {text.templateDispatch}
                   </button>
+
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     onClick={() =>
                       handleQuickTemplate(
                         enq.id,
-                        'We would be delighted to send sample pieces for your inspection.'
+                        text.templateSamplesMessage
                       )
                     }
                   >
-                    Template: Send Samples
+                    {text.templateSamples}
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '0.75rem'
+                  }}
+                >
                   <input
                     type="text"
                     className="form-input"
                     value={replyText[enq.id] || ''}
                     onChange={(e) =>
-                      setReplyText((prev) => ({ ...prev, [enq.id]: e.target.value }))
+                      setReplyText((prev) => ({
+                        ...prev,
+                        [enq.id]: e.target.value
+                      }))
                     }
-                    placeholder="Type your response or choose a quick template..."
+                    placeholder={text.replyPlaceholder}
                     style={{ flex: 1 }}
                   />
+
                   <button
                     type="button"
                     className="btn btn-primary"
                     onClick={() => handleSendReply(enq.id)}
                   >
                     <Send size={16} />
-                    <span>Send</span>
+                    <span>{text.send}</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem'
+                }}
+              >
                 {enq.status === 'pending' && (
                   <button
                     type="button"
@@ -273,7 +415,7 @@ export default function Enquiries() {
                     onClick={() => setActiveReplyId(enq.id)}
                   >
                     <Send size={14} />
-                    <span>Respond to Buyer</span>
+                    <span>{text.respondToBuyer}</span>
                   </button>
                 )}
               </div>

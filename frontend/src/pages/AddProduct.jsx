@@ -25,7 +25,8 @@ import {
   IMAGE_BACKGROUND_PRESETS,
   validateImageFile
 } from '../services/imageEnhancer.js';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage, fill } from '../i18n/index.js';
+import { analyzeStory, detectCategoryKey, MIN_STORY_LENGTH } from '../services/craftAutofill.js';
 import { isSupabaseConfigured } from '../lib/supabaseClient.js';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import VoiceInputField from '../components/VoiceInputField.jsx';
@@ -35,11 +36,13 @@ export default function AddProduct() {
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
-  const { t, lang } = useLanguage();
+  const { t, lang, formatNumber } = useLanguage();
   const fileInputRef = useRef(null);
   const backgroundInputRef = useRef(null);
 
   const cf = t?.catalogForm || {};
+  const a = t?.addCraft || {};
+  const af = t?.autofill || {};
 
   // Form State
   const [title, setTitle] = useState('');
@@ -69,19 +72,88 @@ export default function AddProduct() {
   const [photoFile, setPhotoFile] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isEnhancingImage, setIsEnhancingImage] = useState(false);
-  const [enhancementError, setEnhancementError] = useState('');
+  const [enhErr, setEnhErr] = useState(null); // { key } or { raw }
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
 
   // AI & Submission Status State
   const [loadingAi, setLoadingAi] = useState(false);
-  const [aiSuccessMessage, setAiSuccessMessage] = useState('');
+  const [autoMode, setAutoMode] = useState(true);
+  const [autoWorking, setAutoWorking] = useState(false);
+  const [autoCount, setAutoCount] = useState(null); // null = no message, 0 = nothing found
+  const [aiFilled, setAiFilled] = useState({});
+  const touchedRef = useRef(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
-  const [formError, setFormError] = useState('');
+  const [formErr, setFormErr] = useState(null); // { key } or { raw }
   const [loadingExisting, setLoadingExisting] = useState(isEditMode);
 
   const supabaseConnected = isSupabaseConfigured();
+
+  const errText = (e) => (e ? (e.key ? a[e.key] : e.raw) : '');
+  const enhancementError = errText(enhErr);
+  const formError = errText(formErr);
+
+  // ----- Field editing: any manual edit "locks" that field so AI never overwrites it -----
+  const editField = (field, setter) => (val) => {
+    touchedRef.current.add(field);
+    setAiFilled((prev) => (prev[field] ? { ...prev, [field]: false } : prev));
+    setter(val);
+  };
+
+  const fieldSetters = {
+    category: setCraftCategory,
+    title: setTitle,
+    region: setRegion,
+    materials: setMaterials,
+    tags: setTags,
+    artisanName: setArtisanName,
+    laborHours: setLaborHours,
+    materialCost: setMaterialCost,
+    price: setPrice
+  };
+
+  // Read the story and fill every field the user has not edited by hand.
+  const runAutofill = ({ force = false, silent = false } = {}) => {
+    const result = analyzeStory(description, {
+      lang,
+      t,
+      wage: hourlyWage,
+      packaging: packagingCost
+    });
+
+    if (force) touchedRef.current.clear();
+
+    const applied = {};
+    Object.entries(result.fields).forEach(([field, value]) => {
+      if (touchedRef.current.has(field)) return;
+      fieldSetters[field]?.(value);
+      applied[field] = true;
+    });
+
+    setAiFilled((prev) => (force ? applied : { ...prev, ...applied }));
+    const n = Object.keys(applied).length;
+    if (!silent || n > 0) setAutoCount(n);
+  };
+
+  // Auto-fill while the artisan types/speaks (and re-translate AI fields when the language changes)
+  useEffect(() => {
+    if (isEditMode || !autoMode) return undefined;
+    if (description.trim().length < MIN_STORY_LENGTH) {
+      setAutoWorking(false);
+      return undefined;
+    }
+    setAutoWorking(true);
+    const timer = setTimeout(() => {
+      runAutofill({ silent: true });
+      setAutoWorking(false);
+    }, 900);
+    return () => {
+      clearTimeout(timer);
+      setAutoWorking(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [description, lang, autoMode, isEditMode]);
 
   useEffect(() => () => {
     if (originalPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(originalPhotoUrl);
@@ -99,15 +171,7 @@ export default function AddProduct() {
         const item = await api.getProductById(id);
         if (isMounted && item) {
           setTitle(item.title || '');
-          const categoryLabels = {
-            pottery: 'Terracotta & Pottery',
-            textiles: 'Handloom & Silk',
-            metal: 'Brass & Bell Metal',
-            woodwork: 'Channapatna Wood',
-            painting: 'Pattachitra Art',
-            other: 'Other Heritage Craft'
-          };
-          setCraftCategory(categoryLabels[item.category] || item.category || '');
+          setCraftCategory(cf.categories?.[item.category] || item.category || '');
           setArtisanName(item.artisan_name || 'Shankar Das');
           setRegion(item.region || '');
           setMaterials(Array.isArray(item.materials) ? item.materials.join(', ') : (item.materials || ''));
@@ -147,7 +211,7 @@ export default function AddProduct() {
     try {
       validateImageFile(file);
     } catch (error) {
-      setEnhancementError(error.message);
+      setEnhErr({ raw: error.message });
       e.target.value = '';
       return;
     }
@@ -161,7 +225,7 @@ export default function AddProduct() {
     setEnhancedImageAccepted(false);
     setImageBackgroundPreset('none');
     setImageBackgroundFile(null);
-    setEnhancementError('');
+    setEnhErr(null);
     setIsUploadingImage(true);
 
     try {
@@ -172,7 +236,7 @@ export default function AddProduct() {
         URL.revokeObjectURL(previewUrl);
       }
     } catch (err) {
-      setEnhancementError(err.message || 'The original image could not be uploaded.');
+      setEnhErr(err.message ? { raw: err.message } : { key: 'uploadFailed' });
     } finally {
       setIsUploadingImage(false);
     }
@@ -180,11 +244,11 @@ export default function AddProduct() {
 
   const handleEnhanceImage = async () => {
     if (!photoFile) {
-      setEnhancementError('Choose an image file before enhancing it.');
+      setEnhErr({ key: 'needFile' });
       return;
     }
 
-    setEnhancementError('');
+    setEnhErr(null);
     setIsEnhancingImage(true);
     try {
       const enhancedFile = await enhanceProductImage(
@@ -196,7 +260,7 @@ export default function AddProduct() {
       setEnhancedPhotoUrl(URL.createObjectURL(enhancedFile));
       setEnhancedImageAccepted(false);
     } catch (error) {
-      setEnhancementError(error.message || 'Image enhancement failed. Please try again.');
+      setEnhErr(error.message ? { raw: error.message } : { key: 'enhanceFailed' });
     } finally {
       setIsEnhancingImage(false);
     }
@@ -205,7 +269,7 @@ export default function AddProduct() {
   const handleAcceptEnhancedImage = async () => {
     if (!enhancedPhotoUrl) return;
 
-    setEnhancementError('');
+    setEnhErr(null);
     if (!enhancedPhotoFile) {
       setPhotoUrl(enhancedPhotoUrl);
       setEnhancedImageAccepted(true);
@@ -216,14 +280,14 @@ export default function AddProduct() {
     try {
       const uploadResult = await api.uploadProductImage(enhancedPhotoFile);
       if (!uploadResult?.url) {
-        throw new Error('The enhanced image could not be saved.');
+        throw new Error(a.enhancedSaveFailed);
       }
       if (enhancedPhotoUrl.startsWith('blob:')) URL.revokeObjectURL(enhancedPhotoUrl);
       setEnhancedPhotoUrl(uploadResult.url);
       setPhotoUrl(uploadResult.url);
       setEnhancedImageAccepted(true);
     } catch (error) {
-      setEnhancementError(error.message || 'The enhanced image could not be saved.');
+      setEnhErr({ raw: error.message || a.enhancedSaveFailed });
     } finally {
       setIsUploadingImage(false);
     }
@@ -243,7 +307,7 @@ export default function AddProduct() {
       setEnhancedPhotoFile(null);
       setEnhancedImageAccepted(false);
       setPhotoFile(null);
-      setEnhancementError('');
+      setEnhErr(null);
       setImageUrlInput('');
       setShowUrlInput(false);
     }
@@ -258,7 +322,7 @@ export default function AddProduct() {
     setImageBackgroundPreset('none');
     setImageBackgroundFile(null);
     setPhotoFile(null);
-    setEnhancementError('');
+    setEnhErr(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -281,65 +345,43 @@ export default function AddProduct() {
 
   const handleApplyFairPrice = () => {
     if (computedFairSellingPrice > 0) {
-      setPrice(String(computedFairSellingPrice));
+      editField('price', setPrice)(String(computedFairSellingPrice));
     }
   };
 
-  // AI Smart Catalog Generator
-  const handleGenerateAi = async () => {
-    setFormError('');
-    setAiSuccessMessage('');
-    setLoadingAi(true);
-
-    const effectiveCategory = craftCategory.trim() || 'Traditional Craft';
-
-    try {
-      const result = await api.generateSmartCatalog({
-        craftType: effectiveCategory,
-        region: region || 'Heritage Village, India',
-        materials: materials || 'Organic raw materials',
-        description: description,
-        language: lang
-      });
-
-      if (result) {
-        if (!title.trim() && result.title) setTitle(result.title);
-        if (result.description) setDescription(result.description);
-        if (!price || Number(price) === 0) setPrice(String(result.suggestedPrice));
-        if (result.tags && (!tags || tags.trim() === '')) setTags(result.tags.join(', '));
-        setAiSuccessMessage('AI Smart Catalog generated with authentic heritage description and market tags!');
-      }
-    } catch (err) {
-      console.error('AI generation error:', err);
-      setFormError('AI assistant is temporarily offline. You can continue filling values manually.');
-    } finally {
-      setLoadingAi(false);
+  // "Auto-fill from my story" button (re-fills everything, including fields edited before)
+  const handleAutofillClick = () => {
+    setFormErr(null);
+    if (description.trim().length < MIN_STORY_LENGTH) {
+      setFormErr({ raw: af.writeFirst });
+      return;
     }
+    runAutofill({ force: true });
   };
 
   // Submit & Publish to Supabase
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError('');
+    setFormErr(null);
 
     if (!title.trim()) {
-      setFormError('Please enter a Product / Craft Title.');
+      setFormErr({ key: 'errTitle' });
       return;
     }
     if (!craftCategory.trim()) {
-      setFormError('Please enter a Craft Category.');
+      setFormErr({ key: 'errCategory' });
       return;
     }
     if (!region.trim()) {
-      setFormError('Please enter the Artisan Region / Village.');
+      setFormErr({ key: 'errRegion' });
       return;
     }
     if (!price || Number(price) <= 0) {
-      setFormError('Please enter a valid price in ₹.');
+      setFormErr({ key: 'errPrice' });
       return;
     }
     if (!description.trim()) {
-      setFormError('Please provide a Craft Story or description.');
+      setFormErr({ key: 'errStory' });
       return;
     }
 
@@ -350,7 +392,7 @@ export default function AddProduct() {
     try {
       const productPayload = {
         title: title.trim(),
-        category: craftCategory.trim(),
+        category: detectCategoryKey(craftCategory) || craftCategory.trim(),
         price: Number(price),
         artisan_name: artisanName.trim() || (cf.defaultArtisan || 'Master Artisan'),
         artisan_id: 'art-1',
@@ -379,10 +421,7 @@ export default function AddProduct() {
         setSaveStatus({
           success: true,
           savedInSupabase: res.savedInSupabase,
-          id: res.data.id,
-          message: isEditMode
-            ? (res.savedInSupabase ? 'Craft listing successfully updated in Supabase cloud database!' : 'Craft updated locally!')
-            : (res.savedInSupabase ? 'Successfully published to KalaSetu global catalog on Supabase!' : 'Saved to local catalog!')
+          id: res.data.id
         });
 
         confetti({
@@ -391,23 +430,23 @@ export default function AddProduct() {
           origin: { y: 0.6 }
         });
       } else {
-        setFormError('Failed to save craft. Please check the inputs.');
+        setFormErr({ key: 'errSave' });
       }
     } catch (err) {
       console.error('Save error:', err);
-      setFormError(err.message || 'Error occurred while saving to database.');
+      setFormErr(err.message ? { raw: err.message } : { key: 'errSaveGeneric' });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this craft?')) return;
+    if (!window.confirm(a.confirmDelete)) return;
     try {
       await api.deleteProduct(id);
       navigate('/artisan-profile');
     } catch (err) {
-      alert('Failed to delete: ' + err.message);
+      alert(`${a.deleteFailed} ${err.message}`);
     }
   };
 
@@ -426,19 +465,29 @@ export default function AddProduct() {
     setMaterialCost('');
     setLaborHours('');
     setPackagingCost('80');
-    setAiSuccessMessage('');
+    touchedRef.current.clear();
+    setAiFilled({});
+    setAutoCount(null);
     setSaveStatus(null);
-    setFormError('');
+    setFormErr(null);
   };
 
   if (loadingExisting) {
     return (
       <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
         <div className="spinner" style={{ margin: '0 auto 1rem auto' }} />
-        <p style={{ color: 'var(--text-muted)' }}>Loading craft details...</p>
+        <p style={{ color: 'var(--text-muted)' }}>{a.loading}</p>
       </div>
     );
   }
+
+  const successTitle = isEditMode ? a.successUpdated : a.successCreated;
+  const successMessage = saveStatus
+    ? (isEditMode
+      ? (saveStatus.savedInSupabase ? a.savedCloudUpdate : a.savedLocalUpdate)
+      : (saveStatus.savedInSupabase ? a.savedCloudNew : a.savedLocalNew))
+    : '';
+  const showEstimateNote = aiFilled.laborHours || aiFilled.materialCost || aiFilled.price;
 
   return (
     <div className="cataloging-page-container">
@@ -447,25 +496,19 @@ export default function AddProduct() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
             {isEditMode && (
-              <Link to="/artisan-profile" className="back-link" title="Back to profile">
+              <Link to="/artisan-profile" className="back-link" title={a.backToProfile}>
                 <ArrowLeft size={18} />
               </Link>
             )}
-            <h1 className="page-title">
-              {isEditMode ? (cf.editTitle || 'Edit Craft Listing') : (cf.title || 'List Your Craft')}
-            </h1>
+            <h1 className="page-title">{isEditMode ? a.editTitle : a.title}</h1>
           </div>
-          <p className="page-subtitle">
-            {isEditMode
-              ? (cf.editSubtitle || 'Update your craft specifications, materials, pricing, and heritage story.')
-              : 'Enter your craft details, calculate fair wages, speak your heritage story, and publish directly to global buyers.'}
-          </p>
+          <p className="page-subtitle">{isEditMode ? a.editSubtitle : a.pageSubtitle}</p>
         </div>
 
         {/* Database Status Pill */}
         <div className={`db-status-pill ${supabaseConnected ? 'is-connected' : 'is-local'}`}>
           <Database size={14} />
-          <span>{supabaseConnected ? 'Supabase Database: Online' : 'Local Storage Mode'}</span>
+          <span>{supabaseConnected ? a.dbOnline : a.dbLocal}</span>
         </div>
       </div>
 
@@ -474,26 +517,17 @@ export default function AddProduct() {
         <div className="catalog-success-banner">
           <CheckCircle size={28} className="success-icon" />
           <div className="success-content">
-            <h3>
-              {isEditMode ? 'Craft Listing Updated!' : 'Craft Successfully Published!'}
-            </h3>
-            <p>{saveStatus.message}</p>
+            <h3>{successTitle}</h3>
+            <p>{successMessage}</p>
             <div className="success-action-btns">
-              <Link
-                to={`/product/${saveStatus.id}`}
-                className="btn btn-sm btn-primary"
-              >
-                <span>View Live Listing</span>
+              <Link to={`/product/${saveStatus.id}`} className="btn btn-sm btn-primary">
+                <span>{a.viewListing}</span>
                 <ArrowRight size={14} />
               </Link>
               {!isEditMode && (
-                <button
-                  type="button"
-                  onClick={handleResetForm}
-                  className="btn btn-sm btn-secondary"
-                >
+                <button type="button" onClick={handleResetForm} className="btn btn-sm btn-secondary">
                   <RefreshCw size={14} />
-                  <span>List Another Craft</span>
+                  <span>{a.listAnother}</span>
                 </button>
               )}
             </div>
@@ -501,11 +535,11 @@ export default function AddProduct() {
         </div>
       )}
 
-      {/* AI Success Feedback */}
-      {aiSuccessMessage && (
+      {/* AI Auto-fill Feedback (re-translates when the language changes) */}
+      {autoCount !== null && !isEditMode && (
         <div className="ai-feedback-banner">
           <Sparkles size={16} />
-          <span>{aiSuccessMessage}</span>
+          <span>{autoCount > 0 ? fill(af.done, { n: autoCount }) : af.nothing}</span>
         </div>
       )}
 
@@ -522,108 +556,142 @@ export default function AddProduct() {
         {/* LEFT SIDE: Craft and Artisan Details Form */}
         <div className="catalog-form-col">
           <form onSubmit={handleSubmit} noValidate>
-            {/* Card 1: Craft & Artisan Identity with Language Selector at Top-Right */}
             <div className="card catalog-card">
               <div className="catalog-card-header">
                 <div className="catalog-card-header-left">
-                  <h2 className="catalog-card-title">
-                    Craft & Artisan Details
-                  </h2>
-                  <span className="card-title-sub">Universal Voice Dictation Enabled</span>
+                  <h2 className="catalog-card-title">{a.detailsTitle}</h2>
+                  <span className="card-title-sub">{a.voiceEnabled}</span>
                 </div>
-
-                {/* LANGUAGE SELECTOR: Inside Craft & Artisan Details card at top-right */}
                 <div className="catalog-card-header-right">
                   <LanguageSwitcher variant="card" />
                 </div>
               </div>
 
-              {/* HORIZONTAL DIVIDER BELOW CRAFT & ARTISAN DETAILS HEADING */}
               <hr className="form-divider" />
 
-              {/* 1. CRAFT CATEGORY */}
+              {/* STORY FIRST: this is the only thing the artisan has to provide */}
+              <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                <VoiceInputField
+                  id="craft-story"
+                  type="textarea"
+                  rows={5}
+                  label={a.storyLabel}
+                  value={description}
+                  onChange={setDescription}
+                  placeholder={a.storyPlaceholder}
+                  required
+                  currentLang={lang}
+                  hint={a.storyHint}
+                />
+              </div>
+
+              {/* AI auto-fill bar */}
+              {!isEditMode && (
+                <div className="autofill-bar">
+                  <div className="autofill-bar-text">
+                    <Sparkles size={18} />
+                    <div>
+                      <strong>{af.title}</strong>
+                      <span>{af.hint}</span>
+                    </div>
+                  </div>
+                  <div className="autofill-bar-actions">
+                    {autoWorking && (
+                      <span className="autofill-working">
+                        <RefreshCw size={13} className="animate-spin" />
+                        {af.working}
+                      </span>
+                    )}
+                    <label className="autofill-switch">
+                      <input
+                        type="checkbox"
+                        checked={autoMode}
+                        onChange={(e) => setAutoMode(e.target.checked)}
+                      />
+                      <span className="autofill-switch-track" />
+                      <span>{af.toggle}</span>
+                    </label>
+                    <button type="button" className="btn btn-sm btn-primary" onClick={handleAutofillClick}>
+                      <Sparkles size={14} />
+                      <span>{aiFilled && Object.values(aiFilled).some(Boolean) ? af.refill : af.button}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <hr className="form-divider" />
+
+              {/* CRAFT CATEGORY */}
               <div className="form-group">
                 <VoiceInputField
                   id="craft-category"
-                  label="Craft Category"
+                  label={a.categoryLabel}
                   value={craftCategory}
-                  onChange={setCraftCategory}
-                  placeholder="e.g. Terracotta Pottery, Wood Carving, Blue Pottery, Handloom Weaving"
+                  onChange={editField('category', setCraftCategory)}
+                  placeholder={a.categoryPlaceholder}
                   required
                   currentLang={lang}
-                  hint="Speak or type the traditional craft category name."
+                  hint={a.categoryHint}
+                  aiFilled={aiFilled.category}
                 />
               </div>
 
-              {/* 2. PRODUCT / CRAFT TITLE */}
+              {/* PRODUCT / CRAFT TITLE */}
               <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                 <VoiceInputField
                   id="craft-title"
-                  label="Product / Craft Title"
+                  label={a.titleLabel}
                   value={title}
-                  onChange={(val) => setTitle(val)}
-                  placeholder="e.g. Bankura Terracotta Sacred Horse, Kanjivaram Pure Silk Saree"
+                  onChange={editField('title', setTitle)}
+                  placeholder={a.titlePlaceholder}
                   required
                   currentLang={lang}
-                  hint="Speak or type the traditional product name."
+                  hint={a.titleHint}
+                  aiFilled={aiFilled.title}
                 />
               </div>
 
-              {/* HORIZONTAL DIVIDER DIRECTLY BELOW PRODUCT / CRAFT TITLE */}
               <hr className="form-divider" />
 
-              {/* 3. ARTISAN / MAKER NAME & 4. ARTISAN REGION / VILLAGE */}
+              {/* ARTISAN NAME & REGION */}
               <div className="form-grid-two">
                 <div className="form-group">
                   <VoiceInputField
                     id="artisan-name"
-                    label="Artisan / Maker Name"
+                    label={a.artisanLabel}
                     value={artisanName}
-                    onChange={(val) => setArtisanName(val)}
-                    placeholder="e.g. Shankar Das, Meenakshi S."
+                    onChange={editField('artisanName', setArtisanName)}
+                    placeholder={a.artisanPlaceholder}
                     currentLang={lang}
+                    aiFilled={aiFilled.artisanName}
                   />
                 </div>
 
                 <div className="form-group">
                   <VoiceInputField
                     id="artisan-region"
-                    label="Artisan Region / Village"
+                    label={a.regionLabel}
                     value={region}
-                    onChange={(val) => setRegion(val)}
-                    placeholder="e.g. Bishnupur, West Bengal"
+                    onChange={editField('region', setRegion)}
+                    placeholder={a.regionPlaceholder}
                     required
                     currentLang={lang}
+                    aiFilled={aiFilled.region}
                   />
                 </div>
               </div>
 
-              {/* Raw Materials Used with Voice Input */}
-              <div className="form-group">
-                <VoiceInputField
-                  id="raw-materials"
-                  label="Raw Materials Used"
-                  value={materials}
-                  onChange={(val) => setMaterials(val)}
-                  placeholder="e.g. Natural Alluvial Clay, Pure Mulberry Silk, Virgin Brass, Vegetable Dyes"
-                  currentLang={lang}
-                  hint="Comma-separated materials used in creation."
-                />
-              </div>
-
-              {/* Craft Story & Heritage Description with Voice Input in Selected Language */}
+              {/* RAW MATERIALS */}
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <VoiceInputField
-                  id="craft-story"
-                  type="textarea"
-                  rows={4}
-                  label="Craft Story & Heritage Description"
-                  value={description}
-                  onChange={(val) => setDescription(val)}
-                  placeholder="Speak in English, Kannada, Hindi, Tamil, Telugu, or Malayalam to describe your creation process, cultural history, ancestry, or firing techniques..."
-                  required
+                  id="raw-materials"
+                  label={a.materialsLabel}
+                  value={materials}
+                  onChange={editField('materials', setMaterials)}
+                  placeholder={a.materialsPlaceholder}
                   currentLang={lang}
-                  hint="Artisans can speak freely in their native tongue. AI preserves and translates this for global collectors."
+                  hint={a.materialsHint}
+                  aiFilled={aiFilled.materials}
                 />
               </div>
             </div>
@@ -633,13 +701,11 @@ export default function AddProduct() {
               <div className="calculator-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Calculator size={19} color="var(--primary)" />
-                  <h3 className="calculator-title">
-                    Fair Trade Artisan Wage & Cost Calculation
-                  </h3>
+                  <h3 className="calculator-title">{a.calcTitle}</h3>
                 </div>
                 <span className="fair-trade-badge">
                   <ShieldCheck size={14} />
-                  <span>Prevents Artisan Undervaluation</span>
+                  <span>{a.calcBadge}</span>
                 </span>
               </div>
 
@@ -647,28 +713,30 @@ export default function AddProduct() {
                 <VoiceInputField
                   id="calc-material-cost"
                   type="number"
-                  label="Material Cost (₹)"
+                  label={a.materialCost}
                   value={materialCost}
-                  onChange={(val) => setMaterialCost(val)}
+                  onChange={editField('materialCost', setMaterialCost)}
                   placeholder="450"
                   currentLang={lang}
+                  aiFilled={aiFilled.materialCost}
                 />
 
                 <VoiceInputField
                   id="calc-labor-hours"
                   type="number"
                   step="0.5"
-                  label="Labor Hours (hrs)"
+                  label={a.laborHours}
                   value={laborHours}
-                  onChange={(val) => setLaborHours(val)}
+                  onChange={editField('laborHours', setLaborHours)}
                   placeholder="6"
                   currentLang={lang}
+                  aiFilled={aiFilled.laborHours}
                 />
 
                 <VoiceInputField
                   id="calc-hourly-wage"
                   type="number"
-                  label="Artisan Wage (₹/hr)"
+                  label={a.wage}
                   value={hourlyWage}
                   onChange={(val) => setHourlyWage(val)}
                   placeholder="150"
@@ -678,7 +746,7 @@ export default function AddProduct() {
                 <VoiceInputField
                   id="calc-packaging-cost"
                   type="number"
-                  label="Packaging (₹)"
+                  label={a.packaging}
                   value={packagingCost}
                   onChange={(val) => setPackagingCost(val)}
                   placeholder="80"
@@ -690,23 +758,26 @@ export default function AddProduct() {
               <div className="calc-breakdown-bar">
                 <div className="calc-breakdown-stats">
                   <div className="calc-stat-sub">
-                    Total Production Cost: <strong>₹{computedTotalCost}</strong> (₹{matNum} mat + ₹{computedLaborCost} wage + ₹{pkgNum} pkg)
+                    {a.totalCost} <strong>₹{formatNumber(computedTotalCost)}</strong>{' '}
+                    {fill(a.breakdown, {
+                      mat: formatNumber(matNum),
+                      wage: formatNumber(computedLaborCost),
+                      pkg: formatNumber(pkgNum)
+                    })}
                   </div>
                   <div className="calc-stat-main">
-                    Suggested Fair Price: <strong>₹{computedFairSellingPrice}</strong> <span className="profit-tag">(+30% Artisan Profit)</span>
+                    {a.fairPrice} <strong>₹{formatNumber(computedFairSellingPrice)}</strong>{' '}
+                    <span className="profit-tag">{a.profit}</span>
                   </div>
                 </div>
 
                 {computedFairSellingPrice > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleApplyFairPrice}
-                    className="btn btn-sm btn-apply-price"
-                  >
-                    Apply Fair Price (₹{computedFairSellingPrice})
+                  <button type="button" onClick={handleApplyFairPrice} className="btn btn-sm btn-apply-price">
+                    {fill(a.applyFair, { price: formatNumber(computedFairSellingPrice) })}
                   </button>
                 )}
               </div>
+              {showEstimateNote && <p className="ai-estimate-note">{af.estimateNote}</p>}
             </div>
 
             {/* Selling Price, Stock & Tags */}
@@ -716,12 +787,13 @@ export default function AddProduct() {
                   <VoiceInputField
                     id="craft-price"
                     type="number"
-                    label="Selling Price (₹)"
+                    label={a.sellingPrice}
                     value={price}
-                    onChange={(val) => setPrice(val)}
-                    placeholder="e.g. 1850"
+                    onChange={editField('price', setPrice)}
+                    placeholder={a.sellingPricePlaceholder}
                     required
                     currentLang={lang}
+                    aiFilled={aiFilled.price}
                   />
                 </div>
 
@@ -729,10 +801,10 @@ export default function AddProduct() {
                   <VoiceInputField
                     id="craft-stock"
                     type="number"
-                    label="Available Stock (Units)"
+                    label={a.stock}
                     value={stock}
                     onChange={(val) => setStock(val)}
-                    placeholder="e.g. 5"
+                    placeholder="5"
                     required
                     currentLang={lang}
                   />
@@ -742,19 +814,18 @@ export default function AddProduct() {
               <div className="form-group">
                 <VoiceInputField
                   id="craft-tags"
-                  label="Tags / Search Keywords (comma separated)"
+                  label={a.tags}
                   value={tags}
-                  onChange={(val) => setTags(val)}
-                  placeholder="GI Tagged, Terracotta, Natural Clay, Heritage Handcrafted, Living Tradition"
+                  onChange={editField('tags', setTags)}
+                  placeholder={a.tagsPlaceholder}
                   currentLang={lang}
+                  aiFilled={aiFilled.tags}
                 />
               </div>
 
               {/* Product Image Upload */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">
-                  Product Image Upload
-                </label>
+                <label className="form-label">{a.photoLabel}</label>
 
                 <input
                   type="file"
@@ -767,18 +838,12 @@ export default function AddProduct() {
                 {photoUrl ? (
                   <>
                     <div className="uploaded-photo-preview">
-                      <img
-                        src={photoUrl}
-                        alt="Selected craft photo"
-                        className="photo-thumb"
-                      />
+                      <img src={photoUrl} alt={title || a.photoLabel} className="photo-thumb" />
                       <div className="photo-info">
                         <span className="photo-title">
-                          {enhancedImageAccepted ? 'Enhanced Photo Selected' : 'Original Photo Selected'}
+                          {enhancedImageAccepted ? a.enhancedSelected : a.originalSelected}
                         </span>
-                        <span className="photo-subtitle">
-                          {photoFile ? photoFile.name : 'Image URL loaded successfully'}
-                        </span>
+                        <span className="photo-subtitle">{photoFile ? photoFile.name : a.urlLoaded}</span>
                       </div>
                       <button
                         type="button"
@@ -786,14 +851,9 @@ export default function AddProduct() {
                         className="btn btn-secondary btn-sm"
                         disabled={isUploadingImage || isEnhancingImage}
                       >
-                        Change
+                        {a.change}
                       </button>
-                      <button
-                        type="button"
-                        onClick={handleRemovePhoto}
-                        className="photo-remove-btn"
-                        title="Remove Photo"
-                      >
+                      <button type="button" onClick={handleRemovePhoto} className="photo-remove-btn" title={a.removePhoto}>
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -801,14 +861,14 @@ export default function AddProduct() {
                     {originalPhotoUrl && photoFile && !enhancedPhotoUrl && (
                       <div className="image-enhancement-controls">
                         <label className="image-background-field" htmlFor="product-image-background">
-                          <span>Background option</span>
+                          <span>{a.bgOption}</span>
                           <select
                             id="product-image-background"
                             className="image-background-select"
                             value={imageBackgroundPreset}
                             onChange={(event) => {
                               setImageBackgroundPreset(event.target.value);
-                              setEnhancementError('');
+                              setEnhErr(null);
                             }}
                             disabled={isUploadingImage || isEnhancingImage}
                           >
@@ -828,9 +888,9 @@ export default function AddProduct() {
                                 try {
                                   if (file) validateImageFile(file);
                                   setImageBackgroundFile(file);
-                                  setEnhancementError('');
+                                  setEnhErr(null);
                                 } catch (error) {
-                                  setEnhancementError(error.message);
+                                  setEnhErr({ raw: error.message });
                                   event.target.value = '';
                                 }
                               }}
@@ -843,9 +903,7 @@ export default function AddProduct() {
                               disabled={isUploadingImage || isEnhancingImage}
                             >
                               <Upload size={16} />
-                              <span>
-                                {imageBackgroundFile?.name || 'Select a JPEG, PNG, or WebP background'}
-                              </span>
+                              <span>{imageBackgroundFile?.name || a.selectBg}</span>
                             </button>
                           </>
                         )}
@@ -863,15 +921,13 @@ export default function AddProduct() {
                           )}
                           <span>
                             {isEnhancingImage
-                              ? 'Enhancing image...'
+                              ? a.enhancing
                               : imageBackgroundPreset === 'none'
-                                ? 'Enhance Image'
-                                : 'Enhance & Replace Background'}
+                                ? a.enhance
+                                : a.enhanceBg}
                           </span>
                         </button>
-                        <span className="image-enhancement-note">
-                          Your original stays unchanged; review before choosing what to publish.
-                        </span>
+                        <span className="image-enhancement-note">{a.originalStays}</span>
                       </div>
                     )}
 
@@ -880,8 +936,8 @@ export default function AddProduct() {
                         <BeforeAfterSlider
                           beforeImage={originalPhotoUrl}
                           afterImage={enhancedPhotoUrl}
-                          beforeLabel="Original"
-                          afterLabel="Enhanced"
+                          beforeLabel={a.original}
+                          afterLabel={a.enhanced}
                         />
                         <div className="image-enhancement-actions">
                           <button
@@ -891,7 +947,7 @@ export default function AddProduct() {
                             disabled={isUploadingImage || isEnhancingImage || enhancedImageAccepted}
                           >
                             <Check size={16} />
-                            <span>{enhancedImageAccepted ? 'Enhanced Image Accepted' : 'Accept Enhanced Image'}</span>
+                            <span>{enhancedImageAccepted ? a.enhancedAccepted : a.acceptEnhanced}</span>
                           </button>
                           <button
                             type="button"
@@ -900,7 +956,7 @@ export default function AddProduct() {
                             disabled={isUploadingImage || isEnhancingImage}
                           >
                             <ImageIcon size={16} />
-                            <span>Keep Original Image</span>
+                            <span>{a.keepOriginal}</span>
                           </button>
                           {photoFile && (
                             <button
@@ -910,7 +966,7 @@ export default function AddProduct() {
                               disabled={isUploadingImage || isEnhancingImage}
                             >
                               <Upload size={16} />
-                              <span>Try Again — Upload New Photo</span>
+                              <span>{a.tryAgain}</span>
                             </button>
                           )}
                         </div>
@@ -926,17 +982,10 @@ export default function AddProduct() {
                   </>
                 ) : (
                   <div className="upload-dropzone-wrapper">
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="upload-dropzone"
-                    >
+                    <div onClick={() => fileInputRef.current?.click()} className="upload-dropzone">
                       <Upload size={26} className="upload-icon" />
-                      <div className="upload-title">
-                        {isUploadingImage ? 'Uploading Image...' : 'Click to Upload Craft Photo'}
-                      </div>
-                      <span className="upload-desc">
-                        PNG, JPG, or WebP up to 10MB
-                      </span>
+                      <div className="upload-title">{isUploadingImage ? a.uploading : a.uploadPrompt}</div>
+                      <span className="upload-desc">{a.uploadHint}</span>
                     </div>
 
                     {enhancementError && (
@@ -947,12 +996,8 @@ export default function AddProduct() {
                     )}
 
                     <div className="url-toggle-row">
-                      <button
-                        type="button"
-                        onClick={() => setShowUrlInput(!showUrlInput)}
-                        className="url-toggle-btn"
-                      >
-                        {showUrlInput ? 'Hide Image URL option' : 'Or paste an Image URL'}
+                      <button type="button" onClick={() => setShowUrlInput(!showUrlInput)} className="url-toggle-btn">
+                        {showUrlInput ? a.hideUrl : a.pasteUrl}
                       </button>
                     </div>
 
@@ -965,12 +1010,8 @@ export default function AddProduct() {
                           value={imageUrlInput}
                           onChange={(e) => setImageUrlInput(e.target.value)}
                         />
-                        <button
-                          type="button"
-                          onClick={handleApplyUrl}
-                          className="btn btn-secondary btn-sm"
-                        >
-                          Apply
+                        <button type="button" onClick={handleApplyUrl} className="btn btn-secondary btn-sm">
+                          {a.apply}
                         </button>
                       </div>
                     )}
@@ -979,60 +1020,31 @@ export default function AddProduct() {
               </div>
             </div>
 
-            {/* Action Buttons: K. Generate AI Catalog & L. Publish Product */}
+            {/* Action Buttons */}
             <div className="catalog-actions-bar">
-              {/* Generate AI Catalog Button */}
-              <button
-                type="button"
-                onClick={handleGenerateAi}
-                disabled={loadingAi}
-                className="btn btn-ai-generate"
-              >
-                <Sparkles size={17} />
-                <span>
-                  {loadingAi ? 'Generating AI Catalog...' : 'Generate AI Catalog'}
-                </span>
-              </button>
-
-              {/* Publish Product Button */}
               <div className="publish-btns-group">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn btn-publish"
-                >
+                <button type="submit" disabled={submitting} className="btn btn-publish">
                   {submitting ? (
                     <>
                       <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
-                      <span>{isEditMode ? 'Updating Listing...' : 'Publishing Craft...'}</span>
+                      <span>{isEditMode ? a.updating : a.publishing}</span>
                     </>
                   ) : (
                     <>
                       <Check size={18} />
-                      <span>
-                        {isEditMode ? 'Update & Publish Changes' : 'Publish Product'}
-                      </span>
+                      <span>{isEditMode ? a.update : a.publish}</span>
                     </>
                   )}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleResetForm}
-                  className="btn btn-secondary"
-                  disabled={submitting}
-                >
-                  Clear Form
+                <button type="button" onClick={handleResetForm} className="btn btn-secondary" disabled={submitting}>
+                  {a.clear}
                 </button>
 
                 {isEditMode && (
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="btn btn-danger-delete"
-                  >
+                  <button type="button" onClick={handleDelete} className="btn btn-danger-delete">
                     <Trash2 size={16} />
-                    <span>Delete Craft</span>
+                    <span>{a.deleteBtn}</span>
                   </button>
                 )}
               </div>
@@ -1044,63 +1056,51 @@ export default function AddProduct() {
         <div className="catalog-preview-col">
           <div className="preview-sticky-wrap">
             <div className="preview-top-badge">
-              <span className="preview-heading-text">Live Buyer Preview</span>
+              <span className="preview-heading-text">{a.previewHeading}</span>
             </div>
 
-            {/* Luxury Artisan Product Preview Card */}
             <div className="preview-card">
               <div className="preview-img-container">
                 {photoUrl ? (
-                  <img
-                    src={photoUrl}
-                    alt={title || 'Craft preview'}
-                    className="preview-img"
-                  />
+                  <img src={photoUrl} alt={title || a.previewHeading} className="preview-img" />
                 ) : (
                   <div className="preview-placeholder-box">
                     <ImageIcon size={44} className="placeholder-icon" />
-                    <span>Craft photo preview will appear here</span>
+                    <span>{a.previewPhoto}</span>
                   </div>
                 )}
 
                 <div className="preview-category-tag">
-                  {(craftCategory || 'HERITAGE CRAFT').toUpperCase()}
+                  {(craftCategory || a.heritageCraft).toUpperCase()}
                 </div>
-
               </div>
 
               <div className="preview-card-body">
-                <h3 className="preview-card-title">
-                  {title || 'Untitled Traditional Craft'}
-                </h3>
+                <h3 className="preview-card-title">{title || a.untitled}</h3>
 
                 <div className="preview-artisan-line">
                   <MapPin size={14} className="map-icon" />
-                  <span className="preview-region">{region || 'Heritage Village, India'}</span>
+                  <span className="preview-region">{region || a.defaultRegion}</span>
                   <span className="dot-sep">•</span>
-                  <span className="preview-artisan-name">{artisanName || 'Master Craftsman'}</span>
+                  <span className="preview-artisan-name">{artisanName || a.defaultMaker}</span>
                 </div>
 
                 <div className="preview-materials-line">
-                  <strong>Materials: </strong>
-                  <span>{materials || 'Natural traditional materials'}</span>
+                  <strong>{a.materialsPrefix} </strong>
+                  <span>{materials || a.defaultMaterials}</span>
                 </div>
 
-                <p className="preview-card-story">
-                  {description || 'Craft story and ancestral heritage description will appear live here as you speak or write in your chosen language...'}
-                </p>
+                <p className="preview-card-story">{description || a.previewStory}</p>
 
                 <div className="preview-card-footer">
                   <div className="preview-price-block">
-                    <span className="price-label">Artisan Direct Price</span>
-                    <span className="price-amount">
-                      ₹{price ? Number(price).toLocaleString('en-IN') : '0'}
-                    </span>
+                    <span className="price-label">{a.priceLabel}</span>
+                    <span className="price-amount">₹{price ? formatNumber(price) : '0'}</span>
                   </div>
 
                   <div className="preview-stock-badge">
                     <span className="stock-check">✓</span>
-                    <span>{stock || 1} available</span>
+                    <span>{stock || 1} {a.available}</span>
                   </div>
                 </div>
               </div>
@@ -1110,7 +1110,7 @@ export default function AddProduct() {
       </div>
 
       <div className="catalog-signin-row">
-        <Link to="/login" className="btn btn-signin" aria-label="Sign In">
+        <Link to="/login" className="btn btn-signin" aria-label={a.signIn || t.common?.signIn}>
           <User size={16} />
           <span>{t.nav?.login || 'Sign In'}</span>
         </Link>

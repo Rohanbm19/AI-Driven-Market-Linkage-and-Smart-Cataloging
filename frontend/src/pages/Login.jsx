@@ -1,12 +1,26 @@
+
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Phone, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
+import { useNavigate } from 'react-router-dom';
+import {
+  Phone,
+  Mail,
+  Lock,
+  ArrowRight,
+  ShieldCheck
+} from 'lucide-react';
+import {
+  supabase,
+  isSupabaseConfigured
+} from '../lib/supabaseClient.js';
 import Logo from '../components/Logo.jsx';
+import { useLanguage } from '../i18n/index.js';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [authMode, setAuthMode] = useState('otp'); // 'otp' or 'email'
+  const { t } = useLanguage();
+  const text = t.login;
+
+  const [authMode, setAuthMode] = useState('otp');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -17,21 +31,34 @@ export default function Login() {
 
   const handleSendOtp = (e) => {
     e.preventDefault();
+
     if (!phone) return;
+
     setLoading(true);
+
     setTimeout(() => {
       setLoading(false);
       setOtpSent(true);
-      setMessage('OTP 4-digit code sent to your mobile phone!');
+      setMessage(text.otpSent);
     }, 700);
   };
 
   const handleVerifyOtp = (e) => {
     e.preventDefault();
+
     setLoading(true);
+
     setTimeout(() => {
       setLoading(false);
-      localStorage.setItem('kalasetu_user', JSON.stringify({ phone, role: 'artisan' }));
+
+      localStorage.setItem(
+        'kalasetu_user',
+        JSON.stringify({
+          phone,
+          role: 'artisan'
+        })
+      );
+
       navigate('/artisan-profile');
     }, 600);
   };
@@ -46,17 +73,27 @@ export default function Login() {
           email,
           password
         });
+
         if (error) throw error;
+
         navigate('/');
       } catch (err) {
-        setMessage(err.message || 'Authentication failed. Please verify credentials.');
+        setMessage(text.authFailed);
       } finally {
         setLoading(false);
       }
     } else {
       setTimeout(() => {
         setLoading(false);
-        localStorage.setItem('kalasetu_user', JSON.stringify({ email, role: 'buyer' }));
+
+        localStorage.setItem(
+          'kalasetu_user',
+          JSON.stringify({
+            email,
+            role: 'buyer'
+          })
+        );
+
         navigate('/');
       }, 700);
     }
@@ -65,19 +102,43 @@ export default function Login() {
   return (
     <div style={{ maxWidth: '440px', margin: '2.5rem auto' }}>
       <div className="card" style={{ padding: '2rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-          <div style={{ display: 'inline-block', marginBottom: '0.75rem' }}>
+        <div
+          style={{
+            textAlign: 'center',
+            marginBottom: '1.75rem'
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-block',
+              marginBottom: '0.75rem'
+            }}
+          >
             <Logo size={52} />
           </div>
-          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, marginBottom: '0.35rem', color: '#1a1b1e' }}>
-            Artisan & Buyer Portal
+
+          <h1
+            style={{
+              fontSize: '1.45rem',
+              fontWeight: 700,
+              marginBottom: '0.35rem',
+              color: '#1a1b1e'
+            }}
+          >
+            {text.title}
           </h1>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-            Sign in to access your artisan studio or buyer catalogue
+
+          <p
+            style={{
+              fontSize: '0.88rem',
+              color: 'var(--text-muted)'
+            }}
+          >
+            {text.desc}
           </p>
         </div>
 
-        {/* Tab switch */}
+        {/* Authentication mode switch */}
         <div
           style={{
             display: 'flex',
@@ -102,12 +163,19 @@ export default function Login() {
               fontWeight: 600,
               fontSize: '0.86rem',
               cursor: 'pointer',
-              boxShadow: authMode === 'otp' ? 'var(--shadow-sm)' : 'none',
-              color: authMode === 'otp' ? 'var(--primary)' : 'var(--text-muted)'
+              boxShadow:
+                authMode === 'otp'
+                  ? 'var(--shadow-sm)'
+                  : 'none',
+              color:
+                authMode === 'otp'
+                  ? 'var(--primary)'
+                  : 'var(--text-muted)'
             }}
           >
-            Artisan Mobile OTP
+            {text.mobileOtp}
           </button>
+
           <button
             type="button"
             onClick={() => {
@@ -119,15 +187,22 @@ export default function Login() {
               padding: '0.55rem',
               border: 'none',
               borderRadius: 'var(--radius-sm)',
-              background: authMode === 'email' ? 'white' : 'transparent',
+              background:
+                authMode === 'email' ? 'white' : 'transparent',
               fontWeight: 600,
               fontSize: '0.86rem',
               cursor: 'pointer',
-              boxShadow: authMode === 'email' ? 'var(--shadow-sm)' : 'none',
-              color: authMode === 'email' ? 'var(--primary)' : 'var(--text-muted)'
+              boxShadow:
+                authMode === 'email'
+                  ? 'var(--shadow-sm)'
+                  : 'none',
+              color:
+                authMode === 'email'
+                  ? 'var(--primary)'
+                  : 'var(--text-muted)'
             }}
           >
-            Email & Password
+            {text.emailPassword}
           </button>
         </div>
 
@@ -147,16 +222,27 @@ export default function Login() {
           </div>
         )}
 
+        {/* Mobile OTP authentication */}
         {authMode === 'otp' ? (
           !otpSent ? (
             <form onSubmit={handleSendOtp}>
               <div className="form-group">
-                <label className="form-label">Artisan Mobile Number</label>
+                <label className="form-label">
+                  {text.mobileNumber}
+                </label>
+
                 <div style={{ position: 'relative' }}>
                   <Phone
                     size={16}
-                    style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+                    style={{
+                      position: 'absolute',
+                      left: '1rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-muted)'
+                    }}
                   />
+
                   <input
                     type="tel"
                     required
@@ -175,21 +261,31 @@ export default function Login() {
                 style={{ width: '100%' }}
                 disabled={loading}
               >
-                <span>{loading ? 'Sending OTP...' : 'Send Login OTP via SMS'}</span>
+                <span>
+                  {loading ? text.sendingOtp : text.sendOtp}
+                </span>
+
                 <ArrowRight size={16} />
               </button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp}>
               <div className="form-group">
-                <label className="form-label">Enter 4-Digit Verification Code</label>
+                <label className="form-label">
+                  {text.verificationCode}
+                </label>
+
                 <input
                   type="text"
                   required
                   placeholder="1 2 3 4"
                   maxLength={4}
                   className="form-input"
-                  style={{ textAlign: 'center', letterSpacing: '0.5rem', fontSize: '1.25rem' }}
+                  style={{
+                    textAlign: 'center',
+                    letterSpacing: '0.5rem',
+                    fontSize: '1.25rem'
+                  }}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                 />
@@ -201,7 +297,9 @@ export default function Login() {
                 style={{ width: '100%' }}
                 disabled={loading}
               >
-                <span>{loading ? 'Verifying...' : 'Verify & Enter Studio'}</span>
+                <span>
+                  {loading ? text.verifying : text.verifyEnter}
+                </span>
               </button>
 
               <button
@@ -217,19 +315,30 @@ export default function Login() {
                   cursor: 'pointer'
                 }}
               >
-                Change Phone Number
+                {text.changePhone}
               </button>
             </form>
           )
         ) : (
+          /* Email and password authentication */
           <form onSubmit={handleEmailAuth}>
             <div className="form-group">
-              <label className="form-label">Email Address</label>
+              <label className="form-label">
+                {text.emailAddress}
+              </label>
+
               <div style={{ position: 'relative' }}>
                 <Mail
                   size={16}
-                  style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+                  style={{
+                    position: 'absolute',
+                    left: '1rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-muted)'
+                  }}
                 />
+
                 <input
                   type="email"
                   required
@@ -243,12 +352,22 @@ export default function Login() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
+              <label className="form-label">
+                {text.password}
+              </label>
+
               <div style={{ position: 'relative' }}>
                 <Lock
                   size={16}
-                  style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+                  style={{
+                    position: 'absolute',
+                    left: '1rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-muted)'
+                  }}
                 />
+
                 <input
                   type="password"
                   required
@@ -267,12 +386,16 @@ export default function Login() {
               style={{ width: '100%' }}
               disabled={loading}
             >
-              <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+              <span>
+                {loading ? text.authenticating : text.signIn}
+              </span>
+
               <ArrowRight size={16} />
             </button>
           </form>
         )}
 
+        {/* Security information */}
         <div
           style={{
             marginTop: '1.5rem',
@@ -288,7 +411,7 @@ export default function Login() {
           }}
         >
           <ShieldCheck size={14} color="#059669" />
-          <span>Protected with 256-bit SSL encryption & Fair Trade verification.</span>
+          <span>{text.protected}</span>
         </div>
       </div>
     </div>

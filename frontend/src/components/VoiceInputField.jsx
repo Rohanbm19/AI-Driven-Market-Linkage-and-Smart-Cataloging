@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Mic, MicOff, AlertCircle, Volume2 } from 'lucide-react';
+import { Mic, MicOff, AlertCircle, Sparkles } from 'lucide-react';
+import { useLanguage } from '../i18n/index.js';
 import { useVoiceInput, VOICE_LANGUAGES } from '../hooks/useVoiceInput.js';
 
 /**
@@ -21,8 +22,11 @@ export default function VoiceInputField({
   step,
   currentLang = 'en',
   hint,
+  aiFilled = false,
   className = ''
 }) {
+  const { t } = useLanguage();
+  const v = t.voice || {};
   const baseTextRef = useRef(value);
   const valueRef = useRef(value);
   const [internalError, setInternalError] = useState('');
@@ -73,7 +77,7 @@ export default function VoiceInputField({
     if (disabled) return;
 
     if (!isSupported) {
-      setInternalError('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      setInternalError(v.unsupported);
       return;
     }
 
@@ -97,12 +101,18 @@ export default function VoiceInputField({
   const displayError = internalError || voiceError;
 
   return (
-    <div className={`voice-input-group ${isListening ? 'is-recording' : ''} ${className}`}>
+    <div className={`voice-input-group ${isListening ? 'is-recording' : ''} ${aiFilled ? 'is-ai-filled' : ''} ${className}`}>
       {/* Label & Voice Status */}
       <div className="voice-input-header">
         {label && (
           <label htmlFor={id} className="form-label" style={{ margin: 0 }}>
             {label} {required && <span className="req-asterisk">*</span>}
+            {aiFilled && (
+              <span className="ai-chip" title={t.autofill?.estimateNote}>
+                <Sparkles size={10} />
+                {t.autofill?.aiChip || 'AI'}
+              </span>
+            )}
           </label>
         )}
 
@@ -110,7 +120,7 @@ export default function VoiceInputField({
           <div className="voice-listening-pill" title="Listening to speech">
             <span className="pulse-dot" />
             <span className="listening-text">
-              Listening in {activeLangObj.native} ({activeLangObj.name.split(' ')[0]})...
+              {v.listeningIn} {activeLangObj.native}...
             </span>
           </div>
         )}
@@ -150,8 +160,8 @@ export default function VoiceInputField({
           onClick={handleMicToggle}
           disabled={disabled}
           className={`voice-mic-btn ${isListening ? 'active-recording' : ''}`}
-          aria-label={isListening ? `Stop listening in ${activeLangObj.name}` : `Speak in ${activeLangObj.name}`}
-          title={isListening ? `Click to finish speaking (${activeLangObj.native})` : `Click to speak in ${activeLangObj.native}`}
+          aria-label={isListening ? `${v.stopListening} (${activeLangObj.native})` : `${v.speakIn} ${activeLangObj.native}`}
+          title={isListening ? `${v.clickToFinish} (${activeLangObj.native})` : `${v.clickToSpeak} ${activeLangObj.native}`}
         >
           {isListening ? (
             <MicOff size={16} className="mic-icon mic-active" />

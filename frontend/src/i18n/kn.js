@@ -1,6 +1,8 @@
+
 export default {
   brand: "ಕಲಾ ಸೇತು",
   tagline: "ಪಾರಂಪರಿಕ ಕರಕುಶಲತೆಯನ್ನು ಜಾಗತಿಕ ಮಾರುಕಟ್ಟೆಗೆ ಜೋಡಿಸುವುದು",
+
   nav: {
     marketplace: "ಮಾರುಕಟ್ಟೆ",
     smartCatalog: "AI ಕ್ಯಾಟಲಾಗ್",
@@ -11,6 +13,7 @@ export default {
     profile: "ನನ್ನ ಸ್ಟುಡಿಯೋ",
     login: "ಲಾಗಿನ್"
   },
+
   hero: {
     badge: "ಕುಶಲಕರ್ಮಿಗಳಿಗೆ AI ಸಬಲೀಕರಣ",
     title: "ಪರಂಪರೆಯ ರಕ್ಷಣೆ. ಜಾಗತಿಕ ಮಾರುಕಟ್ಟೆಯ ಅವಕಾಶ.",
@@ -18,6 +21,7 @@ export default {
     exploreBtn: "ಉತ್ಪನ್ನಗಳನ್ನು ನೋಡಿ",
     listBtn: "ನಿಮ್ಮ ಕಲೆ ಸೇರಿಸಿ"
   },
+
   market: {
     searchPlaceholder: "ಮಣ್ಣಿನ ಪಾತ್ರೆಗಳು, ಕೈಮಗ್ಗ ಸೀರೆಗಳು, ಹಿತ್ತಾಳೆ ಕಲೆ ಹುಡುಕಿ...",
     allCategories: "ಎಲ್ಲಾ ಕರಕುಶಲತೆ",
@@ -30,8 +34,29 @@ export default {
     filterState: "ಎಲ್ಲಾ ಪ್ರದೇಶಗಳು",
     verifiedOnly: "ದೃಢೀಕರಿಸಿದ ಕುಶಲಕರ್ಮಿಗಳು",
     voiceHint: "ಧ್ವನಿ ಮೂಲಕ ಹುಡುಕಲು ಮೈಕ್ ಒತ್ತಿರಿ",
-    curatedTitle: "ಕುಶಲಕರ್ಮಿಗಳ ಕರಕುಶಲ ಸಂಗ್ರಹ"
+    curatedTitle: "ಕುಶಲಕರ್ಮಿಗಳ ಕರಕುಶಲ ಸಂಗ್ರಹ",
+
+    heroTerracotta: "ಟೆರಾಕೋಟಾ ಮಣ್ಣಿನ ಪಾತ್ರೆಗಳು",
+    heroTerracottaAlt: "ಭಾರತೀಯ ಟೆರಾಕೋಟಾ ಕರಕುಶಲ ಕಲೆ",
+    heroBrass: "ಹಿತ್ತಾಳೆ ಮತ್ತು ಕಂಚಿನ ಕಲೆ",
+    heroBrassAlt: "ಕೆತ್ತನೆಯ ಹಿತ್ತಾಳೆ ಕರಕುಶಲ ಕಲೆ",
+    heroSilk: "ಕಾಂಜೀವರಂ ರೇಷ್ಮೆ",
+    heroSilkAlt: "ಕೈಮಗ್ಗ ರೇಷ್ಮೆ ಕರಕುಶಲ ಕಲೆ",
+    searchLongPlaceholder: "ಮಣ್ಣಿನ ಪಾತ್ರೆಗಳು, ಕೈಮಗ್ಗ ಸೀರೆಗಳು, ಹಿತ್ತಾಳೆ ಕಲೆ, ಕುಶಲಕರ್ಮಿಯ ಹೆಸರು ಅಥವಾ ಗ್ರಾಮವನ್ನು ಹುಡುಕಿ...",
+    clearSearch: "ಹುಡುಕಾಟ ತೆರವುಗೊಳಿಸಿ",
+    listeningStopTitle: "ಕೇಳಲಾಗುತ್ತಿದೆ... ನಿಲ್ಲಿಸಲು ಕ್ಲಿಕ್ ಮಾಡಿ",
+    voiceSearchTitle: "ಧ್ವನಿಯ ಮೂಲಕ ಹುಡುಕಲು ಕ್ಲಿಕ್ ಮಾಡಿ",
+    voiceSearch: "ಧ್ವನಿ ಹುಡುಕಾಟ",
+    listening: "ಕೇಳಲಾಗುತ್ತಿದೆ...",
+    gridSubtitle: "ಭಾರತದ ಜಿಐ ನೋಂದಾಯಿತ ಕುಶಲಕರ್ಮಿಗಳ ಸಮೂಹಗಳಿಂದ ನೇರವಾಗಿ ಸಂಗ್ರಹಿಸಿದ ಅಧಿಕೃತ ಕೈಯಿಂದ ತಯಾರಿಸಿದ ಕಲಾಕೃತಿಗಳು.",
+    craftSingular: "ಕಲಾಕೃತಿ",
+    craftPlural: "ಕಲಾಕೃತಿಗಳು",
+    available: "ಲಭ್ಯವಿದೆ",
+    noMatches: "ನಿಮ್ಮ ಹುಡುಕಾಟಕ್ಕೆ ಯಾವುದೇ ಕಲಾಕೃತಿಗಳು ಹೊಂದಿಕೆಯಾಗಿಲ್ಲ.",
+    emptySubtitle: "ಮಣ್ಣಿನ ಪಾತ್ರೆಗಳು, ರೇಷ್ಮೆ ಸೀರೆಗಳು ಅಥವಾ ಹಿತ್ತಾಳೆ ಕಲೆ ಹುಡುಕಿ, ಇಲ್ಲವೇ ಹುಡುಕಾಟ ಫಿಲ್ಟರ್‌ಗಳನ್ನು ತೆರವುಗೊಳಿಸಿ.",
+    resetFilters: "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಮರುಹೊಂದಿಸಿ"
   },
+
   product: {
     price: "ಬೆಲೆ",
     fairPrice: "ನ್ಯಾಯಯುತ ಬೆಲೆ ಪ್ರಮಾಣಪತ್ರ",
@@ -44,8 +69,15 @@ export default {
     viewBtn: "ಕಲೆ ವೀಕ್ಷಿಸಿ",
     inStock: "ಲಭ್ಯವಿದೆ",
     available: "ಲಭ್ಯವಿದೆ",
-    shipsDirect: "ಕುಶಲಕರ್ಮಿಗಳ ಕ್ಲಸ್ಟರ್‌ನಿಂದ ನೇರ ರವಾನೆ"
+    shipsDirect: "ಕುಶಲಕರ್ಮಿಗಳ ಕ್ಲಸ್ಟರ್‌ನಿಂದ ನೇರ ರವಾನೆ",
+    craft: "ಕರಕುಶಲ ವಸ್ತು",
+defaultRegion: "ಭಾರತ",
+verified: "ಪರಿಶೀಲಿಸಿದ ಕುಶಲಕರ್ಮಿ",
+untitled: "ಹೆಸರಿಲ್ಲದ ಕರಕುಶಲ ವಸ್ತು",
+noDescription: "ವಿವರಣೆ ಲಭ್ಯವಿಲ್ಲ",
+defaultArtisan: "ಪ್ರಮುಖ ಕುಶಲಕರ್ಮಿ"
   },
+
   catalogForm: {
     title: "ನಿಮ್ಮ ಕಲೆ ಸೇರಿಸಿ",
     editTitle: "ಕರಕುಶಲ ವಿವರಣೆ ತಿದ್ದಿ",
@@ -57,6 +89,7 @@ export default {
     autoGenAi: "AI ಮೂಲಕ ಶೀರ್ಷಿಕೆ ಮತ್ತು ಕಥೆ ರಚಿಸಿ",
     generatingAi: "AI ವಿವರಣೆ ಸಿದ್ಧಪಡಿಸುತ್ತಿದೆ...",
     categoryLabel: "ಕರಕುಶಲ ವರ್ಗ",
+
     categories: {
       pottery: "ಟೆರಾಕೋಟಾ ಮತ್ತು ಮಣ್ಣಿನ ಕಲೆ",
       textiles: "ಕೈಮಗ್ಗ ಮತ್ತು ರೇಷ್ಮೆ",
@@ -65,6 +98,7 @@ export default {
       painting: "ಪಾರಂಪರಿಕ ಚಿತ್ರಕಲೆ",
       other: "ಇತರ ಪಾರಂಪರಿಕ ಕಲೆ"
     },
+
     customCategoryPlaceholder: "ಕರಕುಶಲ ಕಲೆಯ ಹೆಸರು ಬರೆಯಿರಿ",
     productTitleLabel: "ಉತ್ಪನ್ನ / ಕಲೆಯ ಶೀರ್ಷಿಕೆ",
     productTitlePlaceholder: "ಉದಾ. ಚನ್ನಪಟ್ಟಣ ಮರದ ಆಟಿಕೆ, ಬಂಕುರಾ ಟೆರಾಕೋಟಾ ಕುದುರೆ",
@@ -114,6 +148,7 @@ export default {
     viewLiveListing: "ಲೈವ್ ಕಲೆ ವೀಕ್ಷಿಸಿ",
     listAnother: "ಮತ್ತೊಂದು ಕಲೆ ಸೇರಿಸಿ"
   },
+
   profile: {
     editProfileBtn: "ಪ್ರೊಫೈಲ್ ಮತ್ತು ಕಥೆ ತಿದ್ದಿ",
     cancelEditingBtn: "ರದ್ದುಮಾಡಿ",
@@ -139,6 +174,7 @@ export default {
     deleteCraft: "ಅಳಿಸಿ",
     loadingProfile: "ಪ್ರೊಫೈಲ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ..."
   },
+
   aiCatalog: {
     title: "AI ಸ್ಮಾರ್ಟ್ ಕ್ಯಾಟಲಾಗ್",
     desc: "ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಿ ಅಥವಾ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ, AI ನಿಮಗಾಗಿ ಶೀರ್ಷಿಕೆ ಮತ್ತು ವಿವರಣೆ ಸಿದ್ಧಪಡಿಸುತ್ತದೆ.",
@@ -147,6 +183,7 @@ export default {
     generateBtn: "ಕ್ಯಾಟಲಾಗ್ ರಚಿಸಿ",
     generating: "AI ಪರಿಶೀಲಿಸುತ್ತಿದೆ..."
   },
+
   enhancer: {
     title: "ಸ್ಟುಡಿಯೋ ಫೋಟೋ ಸುಧಾರಣೆ",
     desc: "ಸಾಮಾನ್ಯ ಮೊಬೈಲ್ ಫೋಟೋಗಳನ್ನು ವೃತ್ತಿಪರ ಗುಣಮಟ್ಟಕ್ಕೆ ಪರಿವರ್ತಿಸಿ.",

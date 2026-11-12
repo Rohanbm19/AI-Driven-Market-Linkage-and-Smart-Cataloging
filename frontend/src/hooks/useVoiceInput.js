@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLanguage } from '../i18n/index.js';
 
 export const VOICE_LANGUAGES = [
   { code: 'en', bcp47: 'en-IN', name: 'English (India)', native: 'English' },
@@ -34,6 +35,12 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
   const callbackRef = useRef(onResult);
   const listeningRef = useRef(false);
   const currentLangRef = useRef(currentLang);
+  const { t } = useLanguage();
+  const voiceTextRef = useRef(t.voice || {});
+
+  useEffect(() => {
+    voiceTextRef.current = t.voice || {};
+  }, [t]);
 
   useEffect(() => {
     callbackRef.current = onResult;
@@ -50,7 +57,7 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
 
     if (!SpeechRecognition) {
       setIsSupported(false);
-      setError('Speech recognition is unavailable in this browser. Please use Chrome or Edge for voice input.');
+      setError(voiceTextRef.current.unavailable);
       return;
     }
 
@@ -78,20 +85,20 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
     };
 
     recognition.onerror = (event) => {
+      const v = voiceTextRef.current;
       const errorMap = {
-        'not-allowed': 'Microphone permission was denied. Please allow microphone access in your browser settings.',
-        'service-not-allowed': 'Speech recognition service is currently unavailable in this browser.',
-        'no-speech': 'No speech was detected. Please try speaking closer to your microphone.',
-        'audio-capture': 'No microphone found. Please connect an audio input device.',
-        'network': 'Network error contacting speech service. Please check your internet connection.',
-        'language-not-supported': 'The selected language speech model is not installed on this browser engine.'
+        'not-allowed': v.errPermission,
+        'service-not-allowed': v.errService,
+        'audio-capture': v.errNoMic,
+        'network': v.errNetwork,
+        'language-not-supported': v.errLanguage
       };
 
       if (event.error === 'no-speech') {
         return;
       }
 
-      setError(errorMap[event.error] || `Voice error: ${event.error}`);
+      setError(errorMap[event.error] || `${v.errGeneric}: ${event.error}`);
       listeningRef.current = false;
       setIsListening(false);
     };
@@ -145,11 +152,11 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
           try {
             recognition.start();
           } catch (innerErr) {
-            setError('Could not start microphone. Please try again.');
+            setError(voiceTextRef.current.errStart);
           }
         }, 150);
       } catch (retryErr) {
-        setError('Could not start microphone. Please try again.');
+        setError(voiceTextRef.current.errStart);
       }
     }
   }, []);

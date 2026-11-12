@@ -1,3 +1,4 @@
+
 export default {
   brand: "KalaSetu",
   tagline: "Connecting Heritage Craft to Modern Markets",
@@ -155,3 +156,5 @@ export default {
     processing: "Enhancing details and lighting..."
   }
 };
+
+// en.js

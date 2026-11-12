@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
@@ -11,13 +12,14 @@ import {
   X
 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher.jsx';
+import ThemeToggle from './ThemeToggle.jsx';
 import Logo from './Logo.jsx';
 import { useLanguage } from '../i18n/index.js';
 
 export default function Header() {
   const { t } = useLanguage();
   const { pathname } = useLocation();
-  const isCatalogingPage = pathname.startsWith('/add-product');
+  const isCatalogingPage = pathname?.startsWith('/add-product');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const closeMobile = () => setMobileMenuOpen(false);
@@ -25,7 +27,8 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-inner">
-        {/* Left: Brand Logo */}
+
+        {/* Brand Logo */}
         <div className="header-left">
           <Logo
             variant="compact"
@@ -34,8 +37,11 @@ export default function Header() {
           />
         </div>
 
-        {/* Center: Main Navigation (Marketplace, AI Cataloging, AI Assistant, Market Insights) */}
-        <nav className="nav-center" aria-label="Main Navigation">
+        {/* Desktop Navigation */}
+        <nav
+          className="nav-center"
+          aria-label={t?.common?.mainNav || 'Main Navigation'}
+        >
           <ul className="nav-links">
             <li>
               <NavLink
@@ -44,62 +50,67 @@ export default function Header() {
                 end
               >
                 <ShoppingBag size={17} />
-                <span>{t.nav?.marketplace || 'Marketplace'}</span>
+                <span>{t?.nav?.marketplace || 'Marketplace'}</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/add-product"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               >
                 <Sparkles size={17} />
-                <span>{t.nav?.smartCatalog || 'AI Cataloging'}</span>
+                <span>{t?.nav?.smartCatalog || 'AI Cataloging'}</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/assistant"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               >
                 <Bot size={17} />
-                <span>{t.nav?.assistant || 'AI Assistant'}</span>
+                <span>{t?.nav?.assistant || 'AI Assistant'}</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/market-insights"
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               >
                 <TrendingUp size={17} />
-                <span>{t.nav?.insights || 'Market Insights'}</span>
+                <span>{t?.nav?.insights || 'Market Insights'}</span>
               </NavLink>
             </li>
           </ul>
         </nav>
 
-        {/* Right Actions: Language Selector, My Studio, Sign In (always last) */}
+        {/* Header Actions */}
         <div className="header-actions">
-          {/* Language Selector */}
+
           <div className="header-lang-wrapper">
             <LanguageSwitcher />
           </div>
 
-          {/* My Studio Button */}
+          {/* Single Theme Toggle */}
+          <ThemeToggle />
+
           <Link
             to="/artisan-profile"
             className="btn btn-my-studio"
-            title="My Artisan Studio"
+            title={t?.common?.myStudioTitle || 'My Studio'}
           >
             <Store size={16} />
-            <span>{t.nav?.profile || 'My Studio'}</span>
+            <span>{t?.nav?.profile || 'My Studio'}</span>
           </Link>
 
-          {/* Mobile Menu Toggle Button */}
           <button
             type="button"
             className="mobile-menu-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -111,16 +122,17 @@ export default function Header() {
               aria-label="Sign In"
             >
               <User size={16} />
-              <span>{t.nav?.login || 'Sign In'}</span>
+              <span>{t?.nav?.login || 'Sign In'}</span>
             </Link>
           )}
         </div>
       </div>
 
-      {/* Mobile Drawer Navigation */}
+      {/* Compact Floating Navigation Menu */}
       {mobileMenuOpen && (
         <div className="mobile-drawer">
           <ul className="mobile-nav-links">
+
             <li>
               <NavLink
                 to="/"
@@ -129,9 +141,10 @@ export default function Header() {
                 end
               >
                 <ShoppingBag size={18} />
-                <span>{t.nav?.marketplace || 'Marketplace'}</span>
+                <span>{t?.nav?.marketplace || 'Marketplace'}</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/add-product"
@@ -139,9 +152,10 @@ export default function Header() {
                 onClick={closeMobile}
               >
                 <Sparkles size={18} />
-                <span>{t.nav?.smartCatalog || 'AI Cataloging'}</span>
+                <span>{t?.nav?.smartCatalog || 'AI Cataloging'}</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/assistant"
@@ -149,9 +163,10 @@ export default function Header() {
                 onClick={closeMobile}
               >
                 <Bot size={18} />
-                <span>{t.nav?.assistant || 'AI Assistant'}</span>
+                <span>{t?.nav?.assistant || 'AI Assistant'}</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/market-insights"
@@ -159,10 +174,12 @@ export default function Header() {
                 onClick={closeMobile}
               >
                 <TrendingUp size={18} />
-                <span>{t.nav?.insights || 'Market Insights'}</span>
+                <span>{t?.nav?.insights || 'Market Insights'}</span>
               </NavLink>
             </li>
+
             <li className="mobile-divider" />
+
             <li>
               <Link
                 to="/artisan-profile"
@@ -170,9 +187,10 @@ export default function Header() {
                 onClick={closeMobile}
               >
                 <Store size={18} />
-                <span>{t.nav?.profile || 'My Studio'}</span>
+                <span>{t?.nav?.profile || 'My Studio'}</span>
               </Link>
             </li>
+
             {!isCatalogingPage && (
               <li>
                 <Link
@@ -181,10 +199,11 @@ export default function Header() {
                   onClick={closeMobile}
                 >
                   <User size={18} />
-                  <span>{t.nav?.login || 'Sign In'}</span>
+                  <span>{t?.nav?.login || 'Sign In'}</span>
                 </Link>
               </li>
             )}
+
           </ul>
         </div>
       )}
