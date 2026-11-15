@@ -25,10 +25,13 @@ import VoiceTextInput from '../components/VoiceTextInput.jsx';
 import { detectLanguage } from '../utils/detectLanguage.js';
 import { useLanguage } from '../i18n/index.js';
 
+import { useAuth } from '../context/AuthContext.jsx';
+
 export default function ArtisanProfile() {
+  const { id: userId, fullName, studioName } = useAuth();
   const { t, lang } = useLanguage();
   const pf = t?.profile || {};
-  const [artisan, setArtisan] = useState(MOCK_ARTISAN);
+  const [artisan, setArtisan] = useState({ id: userId, name: studioName || fullName || '', badges: [] });
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,12 +54,12 @@ export default function ArtisanProfile() {
     async function loadData() {
       try {
         const [loadedArtisan, allProducts] = await Promise.all([
-          api.getArtisanProfile('art-1'),
+          api.getArtisanProfile(userId),
           api.getProducts()
         ]);
 
         if (isMounted) {
-          const profile = loadedArtisan || MOCK_ARTISAN;
+          const profile = loadedArtisan || { id: userId, name: studioName || fullName || '', craft: '', region: '', experience: '', bio: '', avatar: '', badges: [], rating: 0, total_sales: 0 };
           setArtisan(profile);
           setName(profile.name || '');
           setCraft(profile.craft || '');
@@ -66,12 +69,12 @@ export default function ArtisanProfile() {
           setBio(profile.bio || '');
 
           const artisanProducts = allProducts.filter(
-            (p) => p.artisan_id === profile.id || p.artisan_name === profile.name || p.category === 'pottery'
+            (p) => p.artisan_id === userId
           );
-          setProducts(artisanProducts.length > 0 ? artisanProducts : allProducts.slice(0, 4));
+          setProducts(artisanProducts);
         }
       } catch (err) {
-        console.error('Failed to load artisan profile:', err);
+        setSaveError(err.message || 'Unable to load your studio.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -80,7 +83,7 @@ export default function ArtisanProfile() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [userId]);
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -299,7 +302,7 @@ export default function ArtisanProfile() {
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#d97706', fontWeight: 600 }}>
                     <Star size={16} fill="#d97706" />
-                    {artisan.rating || 4.9} ({artisan.total_sales || 342} {pf.craftSales || 'craft sales'})
+                    {artisan.rating || 0} ({artisan.total_sales || 0} {pf.craftSales || 'craft sales'})
                   </span>
                 </div>
               </div>

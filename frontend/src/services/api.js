@@ -201,6 +201,25 @@ function mergeProducts(primaryList, secondaryList, fallbackList = []) {
   return Array.from(map.values());
 }
 
+async function currentUser() {
+  if (!isSupabaseConfigured()) throw new Error('Supabase is not configured.');
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error('Please sign in first.');
+  return user;
+}
+async function requireArtisan() {
+  const user = await currentUser();
+  const { data: profile, error } = await supabase.from('profiles').select('role, studio_name, full_name').eq('id', user.id).single();
+  if (error) throw error;
+  if (profile.role !== 'artisan') throw new Error('Artisan access is required.');
+  const { error: studioError } = await supabase.from('artisans').upsert({
+    id: user.id, name: profile.studio_name || profile.full_name || 'My Studio', craft: '', region: ''
+  }, { onConflict: 'id', ignoreDuplicates: true });
+  if (studioError) throw studioError;
+  return user;
+}
+
 export const api = {
   /**
    * Fetch all products from Supabase, local cache, or fallback mock list
@@ -275,12 +294,13 @@ export const api = {
    */
   async uploadProductImage(file) {
     if (!file) return null;
+    const user = await requireArtisan();
 
     if (isSupabaseConfigured()) {
       try {
         const fileExt = file.name.split('.').pop() || 'jpg';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-        const filePath = `crafts/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { error } = await supabase.storage
           .from('product-images')
@@ -348,7 +368,7 @@ export const api = {
         : (typeof productData.tags === 'string'
           ? productData.tags.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean)
           : ['Handmade']),
-      stock: Number(productData.stock) || 1,
+      stock: productData.stock == null ? 1 : Number(productData.stock),
       rating: 5.0,
       reviews_count: 0,
       is_verified: true,
@@ -356,18 +376,13 @@ export const api = {
       created_at: new Date().toISOString()
     };
 
-    const response = await fetch(`${API_BASE_URL}/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok || !result.success || !result.savedInSupabase) {
-      throw new Error(
-        result.dbError || result.error || result.message || 'The product was not saved to Supabase.'
-      );
-    }
+    await requireArtisan();
+    payload.artisan_id = (await currentUser()).id;
+    payload.is_verified = false;
+    payload.rating = 0;
+    const { data: saved, error } = await supabase.from('products').insert(payload).select().single();
+    if (error) throw error;
+    const result = { data: saved };
 
     const savedRecord = result.data;
     saveProductLocally(savedRecord);
@@ -393,266 +408,91 @@ export const api = {
       updates.tags = updates.tags.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean);
     }
 
-    let savedInSupabase = false;
-    let supabaseError = null;
-
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase
-          .from('products')
-          .update(updates)
-          .eq('id', id);
-
-        if (!error) {
-          savedInSupabase = true;
-        } else {
-          supabaseError = error.message;
-        }
-      } catch (err) {
-        supabaseError = err.message;
-      }
-    }
-
-    try {
-      await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-    } catch {
-      // Backend optional
-    }
-
-    // Update in local cache
-    const existing = await this.getProductById(id);
-    const updatedRecord = { ...existing, ...updates, id };
-    saveProductLocally(updatedRecord);
-
-    return {
-      success: true,
-      data: updatedRecord,
-      savedInSupabase,
-      supabaseError
-    };
+    const user = await requireArtisan();
+    delete updates.id;
+    delete updates.artisan_id;
+    const { data, error } = await supabase.from('products').update(updates)
+      .eq('id', id).eq('artisan_id', user.id).select().single();
+    if (error) throw error;
+    saveProductLocally(data);
+    return { success: true, data, savedInSupabase: true };
   },
 
-  /**
-   * Delete a product
-   */
   async deleteProduct(id) {
-    let deletedInSupabase = false;
-    let supabaseError = null;
-
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase
-          .from('products')
-          .delete()
-          .eq('id', id);
-
-        if (!error) {
-          deletedInSupabase = true;
-        } else {
-          supabaseError = error.message;
-        }
-      } catch (err) {
-        supabaseError = err.message;
-      }
-    }
-
-    try {
-      await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: 'DELETE'
-      });
-    } catch {
-      // Backend optional
-    }
-
+    const user = await requireArtisan();
+    const { data, error } = await supabase.from('products').delete()
+      .eq('id', id).eq('artisan_id', user.id).select('id').single();
+    if (error) throw error;
     removeProductLocally(id);
-
-    return {
-      success: true,
-      id,
-      deletedInSupabase,
-      supabaseError
-    };
+    return { success: true, id: data.id, deletedInSupabase: true };
   },
 
   /**
    * Get artisan profile
    */
-  async getArtisanProfile(id = 'art-1') {
-    const local = getLocalArtisan();
-    if (local && (!id || local.id === id)) {
-      return local;
-    }
-
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('artisans')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle();
-
-        if (!error && data) {
-          return { ...MOCK_ARTISAN, ...data };
-        }
-      } catch (e) {
-        console.warn('Supabase getArtisan error:', e);
-      }
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/artisans/${id}`);
-      if (res.ok) {
-        const backendArtisan = await res.json();
-        return { ...MOCK_ARTISAN, ...backendArtisan };
-      }
-    } catch {
-      // Backend optional
-    }
-
-    return MOCK_ARTISAN;
+  async getArtisanProfile(id) {
+    const { data, error } = await supabase.from('artisans').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    return data;
   },
 
-  /**
-   * Update artisan profile
-   */
-  async updateArtisanProfile(id, updatedData) {
-    const existing = (await this.getArtisanProfile(id)) || MOCK_ARTISAN;
-    const merged = { ...existing, ...updatedData, id };
-
-    let savedInSupabase = false;
-    let supabaseError = null;
-
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase
-          .from('artisans')
-          .update(updatedData)
-          .eq('id', id);
-
-        if (!error) {
-          savedInSupabase = true;
-        } else {
-          supabaseError = error.message;
-        }
-      } catch (err) {
-        supabaseError = err.message;
-      }
-    }
-
-    try {
-      await fetch(`${API_BASE_URL}/artisans/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData)
-      });
-    } catch {
-      // Backend optional
-    }
-
-    saveLocalArtisan(merged);
-
-    return {
-      success: true,
-      data: merged,
-      savedInSupabase,
-      supabaseError
-    };
+  async updateArtisanProfile(id, updates) {
+    const user = await requireArtisan();
+    if (id !== user.id) throw new Error('You can only update your own studio.');
+    const { data, error } = await supabase.from('artisans').upsert({
+      id: user.id, name: updates.name, craft: updates.craft, region: updates.region,
+      experience: updates.experience, avatar: updates.avatar, bio: updates.bio
+    }).select().single();
+    if (error) throw error;
+    return { success: true, data, savedInSupabase: true };
   },
 
-  /**
-   * Fetch enquiries
-   */
   async getEnquiries() {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('enquiries')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (!error && Array.isArray(data) && data.length > 0) {
-          return data;
-        }
-      } catch (e) {
-        console.warn('Supabase fetch enquiries error:', e);
-      }
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/enquiries`);
-      if (res.ok) return await res.json();
-    } catch {
-      // Backend optional
-    }
-
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_ENQUIRIES_KEY);
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // fallback
-    }
-
-    return [];
+    const user = await requireArtisan();
+    const { data: products, error: productError } = await supabase.from('products')
+      .select('id').eq('artisan_id', user.id);
+    if (productError) throw productError;
+    if (!products.length) return [];
+    const { data, error } = await supabase.from('enquiries').select('*')
+      .in('product_id', products.map(p => p.id)).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
   },
 
-  /**
-   * Submit an enquiry
-   */
+  async getBuyerEnquiries(buyerId) {
+    const { data, error } = await supabase.from('enquiries').select('*')
+      .eq('buyer_id', buyerId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
   async submitEnquiry(enquiryData) {
-    const id = enquiryData.id || `enq-${Date.now()}`;
-    const payload = {
-      ...enquiryData,
-      id,
-      status: 'pending',
-      created_at: new Date().toISOString()
-    };
+    if (!isSupabaseConfigured()) throw new Error('Configure Supabase to send enquiries.');
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    const payload = { ...enquiryData, id: crypto.randomUUID(), buyer_id: session?.user?.id || null,
+      quantity: enquiryData.quantity || 'Single piece / Inquiry', status: 'pending' };
+    const { error } = await supabase.from('enquiries').insert(payload);
+    if (error) throw error;
+    return { success: true, data: payload, savedInSupabase: true };
+  },
 
-    let savedInSupabase = false;
-
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase
-          .from('enquiries')
-          .insert([payload]);
-
-        if (!error) savedInSupabase = true;
-      } catch (e) {
-        console.warn('Supabase enquiry error:', e);
-      }
-    }
-
-    try {
-      await fetch(`${API_BASE_URL}/enquiries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch {
-      // Backend optional
-    }
-
-    try {
-      const current = await this.getEnquiries();
-      localStorage.setItem(LOCAL_STORAGE_ENQUIRIES_KEY, JSON.stringify([payload, ...current]));
-    } catch (e) {
-      console.warn('Local enquiry cache error:', e);
-    }
-
-    return { success: true, data: payload, savedInSupabase };
+  async replyToEnquiry(id, reply) {
+    await requireArtisan();
+    const { error } = await supabase.from('enquiries')
+      .update({ reply, status: 'responded', updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
   },
 
   /**
    * AI Catalog generator endpoint or local AI simulation
    */
   async generateSmartCatalog(formData) {
+    await requireArtisan();
     try {
       const res = await fetch(`${API_BASE_URL}/ai/catalog`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
         body: JSON.stringify(formData)
       });
       if (res.ok) return await res.json();
