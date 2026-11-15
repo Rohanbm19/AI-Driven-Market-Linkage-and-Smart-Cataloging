@@ -3654,6 +3654,23 @@ html[data-theme="dark"] .footer-badge {
 }
 
 
-.header-actions > .mobile-menu-toggle { display: inline-flex !important; }
+.header-actions > .mobile-menu-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.header-actions > .mobile-menu-toggle:focus-visible {
+  outline: 3px solid var(--primary-glow);
+  outline-offset: 3px;
+}
+
 .mobile-nav-links button { width:100%; background:transparent; border:0; color:inherit; font:inherit; text-align:left; cursor:pointer; }
 @media(max-width:600px) { .buyer-profile-details { grid-template-columns:1fr; } }

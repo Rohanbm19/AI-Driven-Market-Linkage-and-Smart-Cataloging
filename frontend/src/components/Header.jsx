@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ShoppingBag,
@@ -23,6 +23,8 @@ export default function Header() {
   const { pathname } = useLocation();
   const { isAuthenticated, isArtisan, signOut } = useAuth();
   const navigate = useNavigate();
+  const headerRef = useRef(null);
+  const menuToggleRef = useRef(null);
   const profilePath = isArtisan ? '/artisan-profile' : '/buyer/profile';
   const profileLabel = isArtisan ? 'My Studio' : 'My Profile';
   const handleSignOut = async () => {
@@ -33,10 +35,31 @@ export default function Header() {
 
   useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!headerRef.current?.contains(event.target)) setMobileMenuOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
   const closeMobile = () => setMobileMenuOpen(false);
 
   return (
-    <header className="header">
+    <header className="header" ref={headerRef}>
       <div className="header-inner">
 
         {/* Brand Logo */}
@@ -48,55 +71,6 @@ export default function Header() {
           />
         </div>
 
-        {/* Desktop Navigation */}
-        <nav
-          className="nav-center"
-          aria-label={t?.common?.mainNav || 'Main Navigation'}
-        >
-          <ul className="nav-links">
-            <li>
-              <NavLink
-                to="/"
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                end
-              >
-                <ShoppingBag size={17} />
-                <span>{t?.nav?.marketplace || 'Marketplace'}</span>
-              </NavLink>
-            </li>
-
-            {isArtisan && <li>
-              <NavLink
-                to="/add-product"
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              >
-                <Sparkles size={17} />
-                <span>{t?.nav?.smartCatalog || 'AI Cataloging'}</span>
-              </NavLink>
-            </li>}
-
-            <li>
-              <NavLink
-                to="/assistant"
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              >
-                <Bot size={17} />
-                <span>{t?.nav?.assistant || 'AI Assistant'}</span>
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to="/market-insights"
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              >
-                <TrendingUp size={17} />
-                <span>{t?.nav?.insights || 'Market Insights'}</span>
-              </NavLink>
-            </li>
-          </ul>
-        </nav>
-
         {/* Header Actions */}
         <div className="header-actions">
 
@@ -107,19 +81,11 @@ export default function Header() {
           {/* Single Theme Toggle */}
           <ThemeToggle />
 
-          <Link
-            to={isAuthenticated ? profilePath : "/artisan/login"}
-            className="btn btn-my-studio"
-            title={t?.common?.myStudioTitle || 'My Studio'}
-          >
-            <Store size={16} />
-            <span>{isAuthenticated ? profileLabel : 'Artisan Sign In'}</span>
-          </Link>
-
           <button
             type="button"
             className="mobile-menu-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            ref={menuToggleRef}
             aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
             aria-expanded={mobileMenuOpen}
             aria-controls="account-menu"
@@ -127,16 +93,6 @@ export default function Header() {
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          {!isAuthenticated && (
-            <Link
-              to="/buyer/login"
-              className="btn btn-signin"
-              aria-label="Sign In"
-            >
-              <User size={16} />
-              <span>{t?.nav?.login || 'Sign In'}</span>
-            </Link>
-          )}
         </div>
       </div>
 
