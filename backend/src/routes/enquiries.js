@@ -1,7 +1,9 @@
+import { requireAuth } from '../middleware/auth.js';
 import express from 'express';
 import { supabase, isSupabaseConfigured } from '../config/supabase.js';
-
+import { randomUUID } from 'node:crypto';
 const router = express.Router();
+router.use(requireAuth);
 
 let localEnquiriesStore = [
   {
@@ -49,7 +51,7 @@ let localEnquiriesStore = [
 router.get('/', async (req, res) => {
   try {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
+      const { data, error } = await req.db
         .from('enquiries')
         .select('*')
         .order('created_at', { ascending: false });
@@ -58,73 +60,95 @@ router.get('/', async (req, res) => {
         return res.json(data);
       }
     }
-    return res.json(localEnquiriesStore);
+    return res.json([]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // POST /api/enquiries - Create enquiry
-router.post('/', async (req, res) => {
+
+router.post("/", async (req, res) => {
   try {
-    const { product_id, product_title, buyer_name, buyer_email, phone, message, quantity } = req.body;
-
-    if (!buyer_name || !buyer_email || !message) {
-      return res.status(400).json({ error: 'Name, email, and message are required.' });
-    }
-
-    const newEnquiry = {
-      id: req.body.id || `enq-${Date.now()}`,
-      product_id: product_id || null,
-      product_title: product_title || 'Handcrafted Craft Item',
+    const {
+      product_id,
+      product_title,
       buyer_name,
       buyer_email,
-      phone: phone || '',
-      quantity: quantity || 'Single piece / Inquiry',
+      phone,
       message,
-      status: 'pending',
-      created_at: new Date().toISOString()
-    };
+      quantity
+    } = req.body;
 
-    if (isSupabaseConfigured()) {
-      await supabase.from('enquiries').insert([newEnquiry]);
+    // Check authenticated user
+    if (!req.user?.id) {
+      return res.status(401).json({
+        error: "Please log in to send an enquiry"
+      });
     }
 
-    localEnquiriesStore.unshift(newEnquiry);
+    // Find numeric user ID using Supabase Auth UUID
+    const { data: user, error: userError } = await req.db
+      .from("users")
+      .select("user_id")
+      .eq("auth_user_id", req.user.id)
+      .maybeSingle();
+
+    if (userError) {
+      return res.status(500).json({
+        error: userError.message
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User profile not found in public.users"
+      });
+    }
+
+    // Insert enquiry with numeric buyer ID
+    const { data, error } = await req.db
+      .from("enquiries")
+      .insert({
+        id: randomUUID(),
+        buyer_id: req.user.id,
+        product_id,
+        product_title,
+        buyer_name,
+        buyer_email,
+        phone: phone || "",
+        message,
+        quantity: quantity || "Single piece / Inquiry"
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
 
     return res.status(201).json({
       success: true,
-      data: newEnquiry,
-      message: 'Enquiry received and routed to artisan.'
+      data
     });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Enquiry creation error:", err);
+
+    return res.status(500).json({
+      error: "Failed to create enquiry"
+    });
   }
 });
 
-// PATCH /api/enquiries/:id - Update enquiry status
+
 router.patch('/:id', async (req, res) => {
-  const { id } = req.params;
   const { status, reply } = req.body;
-
-  try {
-    if (isSupabaseConfigured()) {
-      await supabase
-        .from('enquiries')
-        .update({ status, reply, updated_at: new Date().toISOString() })
-        .eq('id', id);
-    }
-
-    const found = localEnquiriesStore.find(e => e.id === id);
-    if (found) {
-      if (status) found.status = status;
-      if (reply) found.reply = reply;
-    }
-
-    return res.json({ success: true, data: found });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const { data, error } = await req.db.from('enquiries').update({ status, reply, updated_at: new Date().toISOString() })
+    .eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  return res.json({ success: true, data });
 });
-
 export default router;

@@ -32,6 +32,8 @@ import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import VoiceInputField from '../components/VoiceInputField.jsx';
 import LanguageSwitcher from '../components/LanguageSwitcher.jsx';
 
+import { useAuth } from '../context/AuthContext.jsx';
+
 export default function AddProduct() {
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -47,7 +49,8 @@ export default function AddProduct() {
   // Form State
   const [title, setTitle] = useState('');
   const [craftCategory, setCraftCategory] = useState('');
-  const [artisanName, setArtisanName] = useState('Shankar Das');
+  const { id: userId, studioName, fullName } = useAuth();
+  const [artisanName, setArtisanName] = useState(studioName || fullName || '');
   const [region, setRegion] = useState('');
   const [materials, setMaterials] = useState('');
   const [description, setDescription] = useState('');
@@ -169,6 +172,7 @@ export default function AddProduct() {
       setLoadingExisting(true);
       try {
         const item = await api.getProductById(id);
+        if (!item || item.artisan_id !== userId) throw new Error('You can only edit your own craft listings.');
         if (isMounted && item) {
           setTitle(item.title || '');
           setCraftCategory(cf.categories?.[item.category] || item.category || '');
@@ -190,7 +194,8 @@ export default function AddProduct() {
           ));
         }
       } catch (err) {
-        console.error('Failed to load craft for editing:', err);
+        window.alert(err.message || 'Unable to load craft.');
+        navigate('/artisan-profile', { replace: true });
       } finally {
         if (isMounted) setLoadingExisting(false);
       }
@@ -395,7 +400,7 @@ export default function AddProduct() {
         category: detectCategoryKey(craftCategory) || craftCategory.trim(),
         price: Number(price),
         artisan_name: artisanName.trim() || (cf.defaultArtisan || 'Master Artisan'),
-        artisan_id: 'art-1',
+        artisan_id: userId,
         region: region.trim(),
         description: description.trim(),
         materials: materials.trim()

@@ -1,7 +1,9 @@
+import { protectArtisanWrites } from '../middleware/auth.js';
 import express from 'express';
 import { supabase, isSupabaseConfigured } from '../config/supabase.js';
 
 const router = express.Router();
+router.use(protectArtisanWrites);
 
 let localArtisansStore = [
   {
@@ -23,7 +25,7 @@ let localArtisansStore = [
 router.get('/', async (req, res) => {
   try {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('artisans').select('*');
+      const { data, error } = await req.db.from('artisans').select('*');
       if (!error && Array.isArray(data) && data.length > 0) {
         return res.json(data);
       }
@@ -39,7 +41,7 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
+      const { data, error } = await req.db
         .from('artisans')
         .select('*')
         .eq('id', id)
@@ -61,75 +63,16 @@ router.get('/:id', async (req, res) => {
 
 // PUT /api/artisans/:id - Update artisan profile
 router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const updates = req.body;
-
-  try {
-    let savedInSupabase = false;
-    let dbError = null;
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('artisans')
-        .update(updates)
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.warn('Supabase artisan update error:', error.message);
-        dbError = error.message;
-      } else if (data && data.length > 0) {
-        savedInSupabase = true;
-      }
-    }
-
-    // Update in local memory cache
-    const index = localArtisansStore.findIndex((a) => a.id === id);
-    if (index >= 0) {
-      localArtisansStore[index] = { ...localArtisansStore[index], ...updates };
-    } else {
-      localArtisansStore.push({ id, ...updates });
-    }
-
-    const updated = localArtisansStore.find((a) => a.id === id) || { id, ...updates };
-
-    return res.json({
-      success: true,
-      data: updated,
-      savedInSupabase,
-      dbError,
-      message: 'Artisan profile successfully updated.'
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  if (req.params.id !== req.user.id) return res.status(403).json({ error: 'You can only update your own studio.' });
+  const { name, craft, region, experience, bio, avatar } = req.body;
+  const { data, error } = await req.db.from('artisans').upsert({ id: req.user.id, name, craft, region, experience, bio, avatar }).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  return res.json({ success: true, data, savedInSupabase: true });
 });
-
-// POST /api/artisans - Register / Create artisan
 router.post('/', async (req, res) => {
-  try {
-    const payload = {
-      id: req.body.id || `art-${Date.now()}`,
-      name: req.body.name || 'Master Artisan',
-      craft: req.body.craft || 'Traditional Craft',
-      region: req.body.region || 'India',
-      experience: req.body.experience || '10+ years',
-      bio: req.body.bio || '',
-      avatar: req.body.avatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
-      is_verified: true,
-      rating: 5.0,
-      total_sales: 0
-    };
-
-    if (isSupabaseConfigured()) {
-      await supabase.from('artisans').insert([payload]);
-    }
-
-    localArtisansStore.push(payload);
-    return res.status(201).json({ success: true, data: payload });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const { name, craft, region, experience, bio, avatar } = req.body;
+  const { data, error } = await req.db.from('artisans').insert({ id: req.user.id, name, craft, region, experience, bio, avatar }).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  return res.status(201).json({ success: true, data, savedInSupabase: true });
 });
-
 export default router;

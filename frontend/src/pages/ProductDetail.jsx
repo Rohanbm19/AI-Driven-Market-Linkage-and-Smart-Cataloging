@@ -21,8 +21,11 @@ import Badge from '../components/Badge.jsx';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import { useLanguage } from '../i18n/index.js';
 
+import { useAuth } from '../context/AuthContext.jsx';
+
 export default function ProductDetail() {
   const { id } = useParams();
+  const { id: userId, isArtisan, fullName, email } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [product, setProduct] = useState(
@@ -34,8 +37,8 @@ export default function ProductDetail() {
   const [enquirySent, setEnquirySent] = useState(false);
   const [enquirySubmitting, setEnquirySubmitting] = useState(false);
   const [enquiryMsg, setEnquiryMsg] = useState('');
-  const [buyerName, setBuyerName] = useState('');
-  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerName, setBuyerName] = useState(fullName || '');
+  const [buyerEmail, setBuyerEmail] = useState(email || '');
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function ProductDetail() {
     setEnquirySubmitting(true);
     try {
       await api.submitEnquiry({
+        buyer_id: userId || null,
         product_id: product.id,
         product_title: product.title,
         buyer_name: buyerName.trim(),
@@ -79,7 +83,7 @@ export default function ProductDetail() {
         origin: { y: 0.7 }
       });
     } catch (err) {
-      console.error('Failed to submit enquiry:', err);
+      window.alert(err.message || 'Could not send enquiry. Please try again.');
     } finally {
       setEnquirySubmitting(false);
     }
@@ -132,7 +136,7 @@ export default function ProductDetail() {
         </Link>
 
         {/* Artisan Actions: Edit & Delete */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        {isArtisan && product.artisan_id === userId && <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Link
             to={`/edit-product/${product.id}`}
             className="btn btn-secondary btn-sm"
@@ -160,7 +164,7 @@ export default function ProductDetail() {
             <Trash2 size={15} />
             <span>{deleting ? 'Deleting...' : 'Delete'}</span>
           </button>
-        </div>
+        </div>}
       </div>
 
       <div

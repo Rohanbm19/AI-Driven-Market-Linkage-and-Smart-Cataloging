@@ -1,3 +1,4 @@
+import { requireAuth, requireArtisan } from '../middleware/auth.js';
 import express from 'express';
 import { generateSmartCatalog } from '../services/catalogService.js';
 import { handleAdvisorChat } from '../services/chatService.js';
@@ -7,7 +8,7 @@ import { calculateFairPrice } from '../services/marketService.js';
 const router = express.Router();
 
 // 1. POST /api/ai/catalog - Smart AI Catalog generation
-router.post('/catalog', (req, res) => {
+router.post('/catalog', requireAuth, requireArtisan, (req, res) => {
   try {
     const generated = generateSmartCatalog(req.body);
     return res.json(generated);

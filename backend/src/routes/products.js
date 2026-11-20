@@ -1,3 +1,4 @@
+import { protectArtisanWrites } from '../middleware/auth.js';
 
 import express from 'express';
 import {
@@ -11,6 +12,7 @@ import {
 } from '../services/translationService.js';
 
 const router = express.Router();
+router.use(protectArtisanWrites);
 
 // --------------------------------------------------
 // DEFAULT PRODUCTS
@@ -210,7 +212,7 @@ router.get('/', async (req, res) => {
     let products = localProductStore;
 
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
+      const { data, error } = await req.db
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
@@ -260,7 +262,7 @@ router.get('/:id', async (req, res) => {
     let product = null;
 
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
+      const { data, error } = await req.db
         .from('products')
         .select('*')
         .eq('id', id)
@@ -308,270 +310,30 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const {
-      title,
-      category,
-      price,
-      artisan_name,
-      region,
-      description,
-      materials,
-      image_url,
-      original_image_url,
-      stock,
-      tags
-    } = req.body;
-
-    if (!title || price === undefined || price === null || price === '') {
-      return res.status(400).json({
-        error: 'Title and price are required fields.'
-      });
-    }
-
-    if (!isSupabaseConfigured()) {
-      return res.status(503).json({
-        success: false,
-        savedInSupabase: false,
-        error: 'Supabase is not configured on the backend.'
-      });
-    }
-
-    const newProduct = {
-      id: req.body.id || `prod-${Date.now()}`,
-      title: title.trim(),
-      category: category || 'other',
-      price: Number(price),
-      artisan_name: artisan_name || 'Master Artisan',
-      artisan_id: req.body.artisan_id || `art-${Date.now()}`,
-      region: region || 'India',
-      description: description || '',
-
-      materials: Array.isArray(materials)
-        ? materials
-        : (
-            typeof materials === 'string'
-              ? materials.split(',').map(m => m.trim()).filter(Boolean)
-              : []
-          ),
-
-      image_url:
-        image_url ||
-        'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-
-      original_image_url: original_image_url || image_url,
-
-      enhanced_image_url:
-        Object.prototype.hasOwnProperty.call(
-          req.body,
-          'enhanced_image_url'
-        )
-          ? req.body.enhanced_image_url
-          : image_url,
-
-      tags: Array.isArray(tags)
-        ? tags
-        : (
-            typeof tags === 'string'
-              ? tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
-              : ['Handmade']
-          ),
-
-      stock: Number(stock) || 1,
-      rating: 5.0,
-      reviews_count: 0,
-      is_verified: true,
-      fair_trade: true,
-      created_at: new Date().toISOString()
-    };
-
-    const { data, error } = await supabase
-      .from('products')
-      .insert([newProduct])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase DB Insert Error:', error);
-
-      return res.status(error.code === '23503' ? 400 : 500).json({
-        success: false,
-        savedInSupabase: false,
-        error: error.message
-      });
-    }
-
-    localProductStore = [
-      data,
-      ...localProductStore.filter(p => p.id !== data.id)
-    ];
-
-    return res.status(201).json({
-      success: true,
-      data,
-      savedInSupabase: true,
-      message: 'Successfully stored in Supabase products table.'
-    });
-
-  } catch (error) {
-    console.error('Product creation failed:', error);
-
-    return res.status(500).json({
-      error: error.message
-    });
-  }
+    const payload = { ...req.body, id: req.body.id || crypto.randomUUID(), artisan_id: req.user.id,
+      is_verified: false, rating: 0, reviews_count: 0 };
+    if (!payload.title || !Number.isFinite(Number(payload.price)) || Number(payload.price) < 0)
+      return res.status(400).json({ error: 'A title and valid non-negative price are required.' });
+    const { data, error } = await req.db.from('products').insert(payload).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(201).json({ success: true, data, savedInSupabase: true });
+  } catch (error) { return res.status(500).json({ error: error.message }); }
 });
-
-// --------------------------------------------------
-// 4. UPDATE PRODUCT
-// PUT /api/products/:id
-// --------------------------------------------------
-
 router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const updates = { ...req.body };
-
-  if (updates.price !== undefined) {
-    updates.price = Number(updates.price);
-  }
-
-  if (updates.stock !== undefined) {
-    updates.stock = Number(updates.stock);
-  }
-
-  if (typeof updates.materials === 'string') {
-    updates.materials = updates.materials
-      .split(',')
-      .map(m => m.trim())
-      .filter(Boolean);
-  }
-
-  if (typeof updates.tags === 'string') {
-    updates.tags = updates.tags
-      .split(',')
-      .map(t => t.trim().replace(/^#/, ''))
-      .filter(Boolean);
-  }
-
   try {
-    let savedInSupabase = false;
-    let dbError = null;
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('products')
-        .update(updates)
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error('Supabase DB Update Error:', error);
-        dbError = error.message;
-      } else if (data && data.length > 0) {
-        savedInSupabase = true;
-
-        // Remove outdated translations after successful update
-        await clearProductTranslationCache(id);
-
-        const updatedProduct = data[0];
-
-        const index = localProductStore.findIndex(
-          p => String(p.id) === String(id)
-        );
-
-        if (index >= 0) {
-          localProductStore[index] = updatedProduct;
-        } else {
-          localProductStore.unshift(updatedProduct);
-        }
-      }
-    }
-
-    const index = localProductStore.findIndex(
-      p => String(p.id) === String(id)
-    );
-
-    if (index >= 0) {
-      localProductStore[index] = {
-        ...localProductStore[index],
-        ...updates
-      };
-    } else {
-      localProductStore.unshift({
-        id,
-        ...updates
-      });
-    }
-
-    const updated = localProductStore.find(
-      p => String(p.id) === String(id)
-    ) || { id, ...updates };
-
-    return res.json({
-      success: true,
-      data: updated,
-      savedInSupabase,
-      dbError,
-      message: 'Product successfully updated.'
-    });
-
-  } catch (error) {
-    console.error('Product update failed:', error);
-
-    return res.status(500).json({
-      error: error.message
-    });
-  }
+    const updates = { ...req.body };
+    delete updates.id; delete updates.artisan_id;
+    const { data, error } = await req.db.from('products').update(updates)
+      .eq('id', req.params.id).eq('artisan_id', req.user.id).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    await clearProductTranslationCache(req.params.id);
+    return res.json({ success: true, data, savedInSupabase: true });
+  } catch (error) { return res.status(500).json({ error: error.message }); }
 });
-
-// --------------------------------------------------
-// 5. DELETE PRODUCT
-// DELETE /api/products/:id
-// --------------------------------------------------
-
 router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    let deletedInSupabase = false;
-    let dbError = null;
-
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        dbError = error.message;
-      } else {
-        deletedInSupabase = true;
-
-        // Supabase ON DELETE CASCADE also removes cached translations
-        localProductStore = localProductStore.filter(
-          p => String(p.id) !== String(id)
-        );
-      }
-    } else {
-      localProductStore = localProductStore.filter(
-        p => String(p.id) !== String(id)
-      );
-    }
-
-    return res.json({
-      success: true,
-      deletedId: id,
-      deletedInSupabase,
-      dbError,
-      message: 'Product successfully deleted.'
-    });
-
-  } catch (error) {
-    console.error('Product deletion failed:', error);
-
-    return res.status(500).json({
-      error: error.message
-    });
-  }
+  const { data, error } = await req.db.from('products').delete()
+    .eq('id', req.params.id).eq('artisan_id', req.user.id).select('id').single();
+  if (error) return res.status(400).json({ error: error.message });
+  return res.json({ success: true, deletedId: data.id, deletedInSupabase: true });
 });
-
 export default router;

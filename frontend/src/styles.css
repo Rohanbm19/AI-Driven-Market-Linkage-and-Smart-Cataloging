@@ -3445,3 +3445,232 @@ html[data-theme="dark"] .footer-badge {
 
 
 
+
+/* Account pages */
+.seller-empty-state,
+.auth-loading {
+  padding: 1.2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.login-card {
+  padding: 2rem;
+}
+
+.login-heading {
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.login-logo {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+}
+
+.login-heading h1 {
+  margin: 0 0 0.35rem;
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: 1.45rem;
+}
+
+.login-heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.portal-role-switch,
+.auth-mode-switch {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.2rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.portal-role-switch button,
+.auth-mode-switch button {
+  flex: 1;
+  padding: 0.55rem 0.4rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.portal-role-switch button.active,
+.auth-mode-switch button.active {
+  color: var(--primary);
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  color: #1e40af;
+  background: #eff6ff;
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.login-input-wrap {
+  position: relative;
+}
+
+.login-input-wrap > svg {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  color: var(--text-muted);
+  transform: translateY(-50%);
+}
+
+.login-input-wrap .form-input {
+  padding-left: 2.5rem;
+}
+
+.login-submit {
+  width: 100%;
+}
+
+.login-google {
+  margin-bottom: 1rem;
+}
+
+.login-otp-input {
+  text-align: center;
+  letter-spacing: 0.35rem;
+}
+
+.buyer-profile {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.buyer-profile-account,
+.buyer-profile-enquiries {
+  margin-bottom: 1.5rem;
+}
+
+.buyer-profile-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  font-family: var(--font-main);
+  font-size: 1.15rem;
+}
+
+.buyer-profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.buyer-profile-details > div {
+  min-width: 0;
+}
+
+.buyer-profile-details dt {
+  margin-bottom: 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.buyer-profile-details dd {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.buyer-enquiry-card {
+  margin-bottom: 0.9rem;
+}
+
+.buyer-enquiry-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.buyer-enquiry-heading h3 {
+  margin: 0;
+  font-family: var(--font-main);
+  font-size: 1rem;
+}
+
+.buyer-enquiry-heading p,
+.buyer-enquiry-message {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.buyer-enquiry-heading > span {
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.auth-secondary-action {
+  display: block;
+  margin: 0.9rem auto 0;
+  border: 0;
+  color: var(--text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.login-security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+
+.header-actions > .mobile-menu-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.header-actions > .mobile-menu-toggle:focus-visible {
+  outline: 3px solid var(--primary-glow);
+  outline-offset: 3px;
+}
+
+.mobile-nav-links button { width:100%; background:transparent; border:0; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+@media(max-width:600px) { .buyer-profile-details { grid-template-columns:1fr; } }
