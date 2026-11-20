@@ -1,5 +1,7 @@
+
 import express from 'express';
 import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import { translateArtisan } from '../services/artisanTranslationService.js';
 
 const router = express.Router();
 
@@ -19,25 +21,33 @@ let localArtisansStore = [
   }
 ];
 
-// GET /api/artisans - List all artisans
+// GET /api/artisans
 router.get('/', async (req, res) => {
   try {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('artisans').select('*');
+      const { data, error } = await supabase
+        .from('artisans')
+        .select('*');
+
       if (!error && Array.isArray(data) && data.length > 0) {
         return res.json(data);
       }
     }
+
     return res.json(localArtisansStore);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/artisans/:id - Get single artisan
+// GET /api/artisans/:id?lang=hi
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+  const language = String(req.query.lang || 'en').toLowerCase();
+
   try {
+    let artisan = null;
+
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase
         .from('artisans')
@@ -45,21 +55,42 @@ router.get('/:id', async (req, res) => {
         .eq('id', id)
         .maybeSingle();
 
-      if (!error && data) {
-        return res.json(data);
+      if (error) {
+        console.warn('Supabase artisan fetch error:', error.message);
+      } else {
+        artisan = data;
       }
     }
 
-    const found = localArtisansStore.find((a) => a.id === id);
-    if (found) return res.json(found);
+    if (!artisan) {
+      artisan = localArtisansStore.find((item) => item.id === id);
+    }
 
-    return res.json(localArtisansStore[0]);
+    if (!artisan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Artisan not found.'
+      });
+    }
+
+    const localizedArtisan = await translateArtisan(artisan, language);
+
+    return res.json({
+      success: true,
+      data: localizedArtisan
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Artisan profile error:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Could not load the artisan profile.',
+      error: err.message
+    });
   }
 });
 
-// PUT /api/artisans/:id - Update artisan profile
+// PUT /api/artisans/:id
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
@@ -67,31 +98,37 @@ router.put('/:id', async (req, res) => {
   try {
     let savedInSupabase = false;
     let dbError = null;
+    let updated = null;
 
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase
         .from('artisans')
         .update(updates)
         .eq('id', id)
-        .select();
+        .select()
+        .maybeSingle();
 
       if (error) {
-        console.warn('Supabase artisan update error:', error.message);
         dbError = error.message;
-      } else if (data && data.length > 0) {
+        console.warn('Supabase artisan update error:', error.message);
+      } else if (data) {
         savedInSupabase = true;
+        updated = data;
       }
     }
 
-    // Update in local memory cache
-    const index = localArtisansStore.findIndex((a) => a.id === id);
-    if (index >= 0) {
-      localArtisansStore[index] = { ...localArtisansStore[index], ...updates };
-    } else {
-      localArtisansStore.push({ id, ...updates });
-    }
+    const index = localArtisansStore.findIndex((item) => item.id === id);
 
-    const updated = localArtisansStore.find((a) => a.id === id) || { id, ...updates };
+    if (index >= 0) {
+      localArtisansStore[index] = {
+        ...localArtisansStore[index],
+        ...updates
+      };
+      updated = updated || localArtisansStore[index];
+    } else if (!updated) {
+      localArtisansStore.push({ id, ...updates });
+      updated = { id, ...updates };
+    }
 
     return res.json({
       success: true,
@@ -101,11 +138,11 @@ router.put('/:id', async (req, res) => {
       message: 'Artisan profile successfully updated.'
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
-// POST /api/artisans - Register / Create artisan
+// POST /api/artisans
 router.post('/', async (req, res) => {
   try {
     const payload = {
@@ -115,20 +152,36 @@ router.post('/', async (req, res) => {
       region: req.body.region || 'India',
       experience: req.body.experience || '10+ years',
       bio: req.body.bio || '',
-      avatar: req.body.avatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
+      avatar: req.body.avatar ||
+        'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80',
       is_verified: true,
       rating: 5.0,
-      total_sales: 0
+      total_sales: 0,
+      badges: req.body.badges || []
     };
 
     if (isSupabaseConfigured()) {
-      await supabase.from('artisans').insert([payload]);
+      const { error } = await supabase
+        .from('artisans')
+        .insert([payload]);
+
+      if (error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Could not create artisan.',
+          error: error.message
+        });
+      }
     }
 
     localArtisansStore.push(payload);
-    return res.status(201).json({ success: true, data: payload });
+
+    return res.status(201).json({
+      success: true,
+      data: payload
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 

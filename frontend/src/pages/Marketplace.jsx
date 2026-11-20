@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
-import { api, MOCK_PRODUCTS } from '../services/api.js';
+import { api } from '../services/api.js';
 import { useLanguage } from '../i18n/index.js';
 import { useVoiceInput } from '../hooks/useVoiceInput.js';
 
@@ -19,35 +19,52 @@ export default function Marketplace() {
   const hero = t.hero;
   const market = t.market;
 
-  const [products, setProducts] = useState(MOCK_PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [productError, setProductError] = useState('');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
+  // Fetch products whenever the selected language changes.
   useEffect(() => {
-    let isMounted = true;
+    let active = true;
 
     async function fetchCatalog() {
-      try {
-        const data = await api.getProducts();
+      setLoading(true);
+      setProductError('');
+      setProducts([]);
 
-        if (isMounted && data && data.length > 0) {
-          setProducts(data);
+      try {
+        // Pass the currently selected language to the backend.
+        const data = await api.getProducts(lang);
+
+        if (active) {
+          setProducts(Array.isArray(data) ? data : []);
         }
-      } catch (err) {
-        console.error('Error fetching marketplace catalog:', err);
+      } catch (error) {
+        console.error('Error fetching marketplace catalog:', error);
+
+        if (active) {
+          setProducts([]);
+          setProductError(
+            error.message || 'Unable to load products.'
+          );
+        }
       } finally {
-        if (isMounted) setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
     fetchCatalog();
 
     return () => {
-      isMounted = false;
+      active = false;
     };
-  }, []);
+  }, [lang]);
 
   const { isListening, toggleListening } = useVoiceInput({
     currentLang: lang,
@@ -77,7 +94,9 @@ export default function Marketplace() {
         (p.artisan_name && p.artisan_name.toLowerCase().includes(q)) ||
         (p.description && p.description.toLowerCase().includes(q)) ||
         (Array.isArray(p.tags) &&
-          p.tags.some((tag) => tag.toLowerCase().includes(q)));
+          p.tags.some((tag) =>
+            String(tag).toLowerCase().includes(q)
+          ));
 
       const matchesCategory =
         selectedCategory === 'all' ||
@@ -258,7 +277,33 @@ export default function Marketplace() {
           </span>
         </div>
 
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <div className="empty-market-state">
+            <div
+              className="spinner"
+              style={{ margin: '0 auto 1rem auto' }}
+            />
+            <p className="empty-subtitle">
+              Loading products...
+            </p>
+          </div>
+        ) : productError ? (
+          <div className="empty-market-state">
+            <p className="empty-title">
+              Unable to load products
+            </p>
+            <p className="empty-subtitle">
+              {productError}
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="btn btn-secondary"
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="empty-market-state">
             <p className="empty-title">
               {market.noMatches}

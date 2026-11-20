@@ -12,7 +12,6 @@ import kn from './kn.js';
 import ta from './ta.js';
 import te from './te.js';
 import ml from './ml.js';
-import bn from './bn.js';
 
 const translations = {
   en,
@@ -20,8 +19,7 @@ const translations = {
   kn,
   ta,
   te,
-  ml,
-  bn
+  ml
 };
 
 export const languageList = [
@@ -30,19 +28,28 @@ export const languageList = [
   { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
   { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
   { code: 'te', label: 'Telugu', native: 'తెలుగు' },
-  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
-  { code: 'bn', label: 'Bengali', native: 'বাংলা' }
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' }
 ];
 
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => {
-    return localStorage.getItem('kalasetu_lang') || 'en';
+    try {
+      const saved = localStorage.getItem('kalasetu_lang');
+      return translations[saved] ? saved : 'en';
+    } catch {
+      return 'en';
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('kalasetu_lang', lang);
+    try {
+      localStorage.setItem('kalasetu_lang', lang);
+    } catch {
+      // Ignore storage errors
+    }
+
     document.documentElement.lang = lang;
   }, [lang]);
 
@@ -50,7 +57,12 @@ export function LanguageProvider({ children }) {
 
   return (
     <LanguageContext.Provider
-      value={{ lang, setLang, t, languages: languageList }}
+      value={{
+        lang,
+        setLang,
+        t,
+        languages: languageList
+      }}
     >
       {children}
     </LanguageContext.Provider>

@@ -7,569 +7,434 @@ import {
 
 import {
   translateProduct,
+  saveProductTranslations,
   SUPPORTED_LANGUAGES
 } from '../services/translationService.js';
 
 const router = express.Router();
 
-// --------------------------------------------------
-// DEFAULT PRODUCTS
-// --------------------------------------------------
-
-const DEFAULT_PRODUCTS = [
-  {
-    id: 'prod-1',
-    title: 'Bankura Terracotta Sacred Horse',
-    category: 'pottery',
-    price: 1850,
-    artisan_name: 'Shankar Das',
-    region: 'Bishnupur, West Bengal',
-    description:
-      'Handcrafted terracotta horse characterized by erect ears, elongated neck, and delicate ornamental incised patterns.',
-    materials: ['Natural Alluvial Clay', 'Mineral Oxide Slip'],
-    image_url:
-      'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-    stock: 12,
-    rating: 4.9,
-    is_verified: true,
-    fair_trade: true
-  },
-  {
-    id: 'prod-2',
-    title: 'Kanjivaram Pure Mulberry Silk Saree',
-    category: 'textiles',
-    price: 14200,
-    artisan_name: 'Meenakshi Sundaram',
-    region: 'Kanchipuram, Tamil Nadu',
-    description:
-      'Woven with three-ply silk thread and pure gold-dipped silver zari.',
-    materials: ['100% Pure Mulberry Silk', 'Silver & Gold Zari'],
-    image_url:
-      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
-    stock: 4,
-    rating: 5.0,
-    is_verified: true,
-    fair_trade: true
-  }
-];
-
-// In-memory fallback store
-let localProductStore = [...DEFAULT_PRODUCTS];
-
-// --------------------------------------------------
-// HELPER: GET PRODUCTS IN SELECTED LANGUAGE
-// --------------------------------------------------
-
-async function getLocalizedProducts(products, language) {
-  if (language === 'en') {
-    return products;
+function requireDatabase(res) {
+  if (!isSupabaseConfigured() || !supabase) {
+    res.status(503).json({
+      success: false,
+      error: 'Supabase is not configured on the backend.'
+    });
+    return false;
   }
 
-  if (!SUPPORTED_LANGUAGES[language]) {
-    throw new Error(`Unsupported language: ${language}`);
-  }
-
-  if (products.length === 0) {
-    return [];
-  }
-
-  const productIds = products.map(product => product.id);
-
-  let cachedTranslations = [];
-
-  // Check Supabase translation cache
-  if (isSupabaseConfigured()) {
-    const { data, error } = await supabase
-      .from('product_translations')
-      .select('product_id, translated_data')
-      .eq('language_code', language)
-      .in('product_id', productIds);
-
-    if (error) {
-      console.error('Translation cache read error:', error.message);
-    } else {
-      cachedTranslations = data || [];
-    }
-  }
-
-  const cacheMap = new Map(
-    cachedTranslations.map(item => [
-      item.product_id,
-      item.translated_data
-    ])
-  );
-
-  const localizedProducts = [];
-
-  // Process products one by one to avoid excessive API requests
-  for (const product of products) {
-    const cached = cacheMap.get(product.id);
-
-    // Return cached translation
-    if (cached) {
-      localizedProducts.push(cached);
-      continue;
-    }
-
-    try {
-      // Generate new translation
-      const translated = await translateProduct(product, language);
-
-      localizedProducts.push(translated);
-
-      // Save translation in Supabase
-      if (isSupabaseConfigured()) {
-        const { error } = await supabase
-          .from('product_translations')
-          .upsert(
-            {
-              product_id: product.id,
-              language_code: language,
-              translated_data: translated,
-              updated_at: new Date().toISOString()
-            },
-            {
-              onConflict: 'product_id,language_code'
-            }
-          );
-
-        if (error) {
-          console.error(
-            'Translation cache save error:',
-            error.message
-          );
-        }
-      }
-    } catch (error) {
-      console.error(
-        `Translation failed for product ${product.id}:`,
-        error.message
-      );
-
-      // Return English product if translation fails
-      localizedProducts.push(product);
-    }
-  }
-
-  return localizedProducts;
+  return true;
 }
 
-// --------------------------------------------------
-// HELPER: CLEAR TRANSLATION CACHE
-// --------------------------------------------------
-
-async function clearProductTranslationCache(productId) {
-  if (!isSupabaseConfigured()) {
-    return;
+function normalizeArray(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
   }
 
-  const { error } = await supabase
-    .from('product_translations')
-    .delete()
-    .eq('product_id', productId);
-
-  if (error) {
-    console.error(
-      'Translation cache deletion error:',
-      error.message
-    );
+  if (typeof value === 'string') {
+    return value.split(',').map((item) => item.trim()).filter(Boolean);
   }
+
+  return [];
 }
 
-// --------------------------------------------------
-// HELPER: VALIDATE LANGUAGE
-// --------------------------------------------------
+/**
+ * Only fields that exist in the products table are accepted.
+ */
+function normalizeProductInput(body = {}) {
+  const product = {};
 
-function getRequestedLanguage(req) {
-  const language = String(req.query.lang || 'en').toLowerCase();
-
-  if (!SUPPORTED_LANGUAGES[language]) {
-    return null;
+  if (body.title !== undefined) {
+    product.title = String(body.title).trim();
   }
 
-  return language;
+  if (body.category !== undefined) {
+    product.category = String(body.category).trim();
+  }
+
+  if (body.price !== undefined) {
+    product.price = Number(body.price);
+  }
+
+  if (body.artisan_name !== undefined) {
+    product.artisan_name = String(body.artisan_name).trim();
+  }
+
+  if (body.artisan_id !== undefined) {
+    product.artisan_id = body.artisan_id || null;
+  }
+
+  if (body.region !== undefined) {
+    product.region = String(body.region).trim();
+  }
+
+  if (body.description !== undefined) {
+    product.description = String(body.description).trim();
+  }
+
+  if (body.materials !== undefined) {
+    product.materials = normalizeArray(body.materials);
+  }
+
+  if (body.tags !== undefined) {
+    product.tags = normalizeArray(body.tags);
+  }
+
+  if (body.image_url !== undefined) {
+    product.image_url = body.image_url || null;
+  }
+
+  if (body.original_image_url !== undefined) {
+    product.original_image_url = body.original_image_url || null;
+  }
+
+  if (body.enhanced_image_url !== undefined) {
+    product.enhanced_image_url = body.enhanced_image_url || null;
+  }
+
+  if (body.stock !== undefined) {
+    product.stock = Number(body.stock);
+  }
+
+  return product;
 }
 
-// --------------------------------------------------
-// 1. GET ALL PRODUCTS
-// GET /api/products?lang=kn
-// --------------------------------------------------
+function validateProduct(product, isUpdate = false) {
+  if (!isUpdate && !product.title) {
+    return 'Product title is required.';
+  }
 
+  if (!isUpdate && !product.category) {
+    return 'Product category is required.';
+  }
+
+  if (
+    product.price !== undefined &&
+    (!Number.isFinite(product.price) || product.price < 0)
+  ) {
+    return 'Product price must be a valid non-negative number.';
+  }
+
+  if (
+    product.stock !== undefined &&
+    (!Number.isInteger(product.stock) || product.stock < 0)
+  ) {
+    return 'Product stock must be a non-negative whole number.';
+  }
+
+  return null;
+}
+
+function validateLanguage(language) {
+  return Boolean(SUPPORTED_LANGUAGES[language]);
+}
+
+/**
+ * GET /api/products?lang=kn
+ * Fetch products in the requested language.
+ */
 router.get('/', async (req, res) => {
-  try {
-    const language = getRequestedLanguage(req);
+  if (!requireDatabase(res)) return;
 
-    if (!language) {
+  try {
+    const language = String(req.query.lang || 'en');
+
+    if (!validateLanguage(language)) {
       return res.status(400).json({
         success: false,
-        error: 'Unsupported language',
-        supportedLanguages: Object.keys(SUPPORTED_LANGUAGES)
+        error: 'Unsupported language.'
       });
     }
 
-    let products = localProductStore;
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Supabase product fetch error:', error.message);
-      } else if (Array.isArray(data)) {
-        products = data.length > 0 ? data : localProductStore;
-      }
+    if (error) {
+      throw error;
     }
 
-    const localizedProducts = await getLocalizedProducts(
-      products,
-      language
+    if (language === 'en') {
+      return res.json(data || []);
+    }
+
+    const localizedProducts = await Promise.all(
+      (data || []).map((product) =>
+        translateProduct(product, language)
+      )
     );
 
     return res.json(localizedProducts);
-
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Get products error:', error.message);
 
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Unable to fetch products.',
+      details: error.message
     });
   }
 });
 
-// --------------------------------------------------
-// 2. GET PRODUCT BY ID
-// GET /api/products/prod-1?lang=kn
-// --------------------------------------------------
-
+/**
+ * GET /api/products/:id?lang=kn
+ * Fetch one product in the requested language.
+ */
 router.get('/:id', async (req, res) => {
-  const { id } = req.params;
+  if (!requireDatabase(res)) return;
 
   try {
-    const language = getRequestedLanguage(req);
+    const language = String(req.query.lang || 'en');
 
-    if (!language) {
+    if (!validateLanguage(language)) {
       return res.status(400).json({
         success: false,
-        error: 'Unsupported language'
+        error: 'Unsupported language.'
       });
     }
 
-    let product = null;
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', req.params.id)
+      .maybeSingle();
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Supabase product lookup error:', error.message);
-      } else {
-        product = data;
-      }
+    if (error) {
+      throw error;
     }
 
-    if (!product) {
-      product = localProductStore.find(
-        p => String(p.id) === String(id)
-      );
-    }
-
-    if (!product) {
+    if (!data) {
       return res.status(404).json({
-        error: 'Product not found'
+        success: false,
+        error: 'Product not found.'
       });
     }
 
-    const [localizedProduct] = await getLocalizedProducts(
-      [product],
-      language
-    );
+    const product = language === 'en'
+      ? data
+      : await translateProduct(data, language);
 
-    return res.json(localizedProduct);
-
+    return res.json(product);
   } catch (error) {
-    console.error('Product detail error:', error);
+    console.error('Get product error:', error.message);
 
     return res.status(500).json({
-      error: error.message
+      success: false,
+      error: 'Unable to fetch product.',
+      details: error.message
     });
   }
 });
 
-// --------------------------------------------------
-// 3. CREATE PRODUCT
-// POST /api/products
-// --------------------------------------------------
-
+/**
+ * POST /api/products
+ * Save a product and its six AI-generated translations.
+ */
 router.post('/', async (req, res) => {
+  if (!requireDatabase(res)) return;
+
   try {
-    const {
-      title,
-      category,
-      price,
-      artisan_name,
-      region,
-      description,
-      materials,
-      image_url,
-      original_image_url,
-      stock,
-      tags
-    } = req.body;
+    const productData = normalizeProductInput(req.body);
+    const validationError = validateProduct(productData);
 
-    if (!title || price === undefined || price === null || price === '') {
+    if (validationError) {
       return res.status(400).json({
-        error: 'Title and price are required fields.'
+        success: false,
+        error: validationError
       });
     }
 
-    if (!isSupabaseConfigured()) {
-      return res.status(503).json({
-        success: false,
-        savedInSupabase: false,
-        error: 'Supabase is not configured on the backend.'
-      });
-    }
+    const id = req.body.id || `prod-${Date.now()}`;
 
     const newProduct = {
-      id: req.body.id || `prod-${Date.now()}`,
-      title: title.trim(),
-      category: category || 'other',
-      price: Number(price),
-      artisan_name: artisan_name || 'Master Artisan',
-      artisan_id: req.body.artisan_id || `art-${Date.now()}`,
-      region: region || 'India',
-      description: description || '',
-
-      materials: Array.isArray(materials)
-        ? materials
-        : (
-            typeof materials === 'string'
-              ? materials.split(',').map(m => m.trim()).filter(Boolean)
-              : []
-          ),
-
-      image_url:
-        image_url ||
-        'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-
-      original_image_url: original_image_url || image_url,
-
-      enhanced_image_url:
-        Object.prototype.hasOwnProperty.call(
-          req.body,
-          'enhanced_image_url'
-        )
-          ? req.body.enhanced_image_url
-          : image_url,
-
-      tags: Array.isArray(tags)
-        ? tags
-        : (
-            typeof tags === 'string'
-              ? tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
-              : ['Handmade']
-          ),
-
-      stock: Number(stock) || 1,
-      rating: 5.0,
+      ...productData,
+      id,
+      artisan_name: productData.artisan_name || 'Master Artisan',
+      region: productData.region || '',
+      description: productData.description || '',
+      materials: productData.materials || [],
+      tags: productData.tags || [],
+      stock: productData.stock ?? 1,
+      rating: 0,
       reviews_count: 0,
-      is_verified: true,
-      fair_trade: true,
+      is_verified: false,
+      fair_trade: false,
       created_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
       .from('products')
       .insert([newProduct])
-      .select()
+      .select('*')
       .single();
 
     if (error) {
-      console.error('Supabase DB Insert Error:', error);
-
-      return res.status(error.code === '23503' ? 400 : 500).json({
-        success: false,
-        savedInSupabase: false,
-        error: error.message
-      });
+      throw error;
     }
 
-    localProductStore = [
-      data,
-      ...localProductStore.filter(p => p.id !== data.id)
-    ];
+    let translationsSaved = false;
+    let translationError = null;
+
+    if (req.body.translations) {
+      try {
+        await saveProductTranslations(
+          data.id,
+          req.body.translations,
+          data
+        );
+
+        translationsSaved = true;
+      } catch (error) {
+        translationError = error.message;
+        console.error('Translation save error:', error.message);
+      }
+    }
 
     return res.status(201).json({
       success: true,
-      data,
       savedInSupabase: true,
-      message: 'Successfully stored in Supabase products table.'
+      translationsSaved,
+      translationError,
+      data
     });
-
   } catch (error) {
-    console.error('Product creation failed:', error);
+    console.error('Create product error:', error.message);
 
     return res.status(500).json({
-      error: error.message
+      success: false,
+      savedInSupabase: false,
+      error: 'Unable to save product.',
+      dbError: error.message
     });
   }
 });
 
-// --------------------------------------------------
-// 4. UPDATE PRODUCT
-// PUT /api/products/:id
-// --------------------------------------------------
-
+/**
+ * PUT /api/products/:id
+ * Update product and refresh translations when supplied.
+ */
 router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const updates = { ...req.body };
-
-  if (updates.price !== undefined) {
-    updates.price = Number(updates.price);
-  }
-
-  if (updates.stock !== undefined) {
-    updates.stock = Number(updates.stock);
-  }
-
-  if (typeof updates.materials === 'string') {
-    updates.materials = updates.materials
-      .split(',')
-      .map(m => m.trim())
-      .filter(Boolean);
-  }
-
-  if (typeof updates.tags === 'string') {
-    updates.tags = updates.tags
-      .split(',')
-      .map(t => t.trim().replace(/^#/, ''))
-      .filter(Boolean);
-  }
+  if (!requireDatabase(res)) return;
 
   try {
-    let savedInSupabase = false;
-    let dbError = null;
+    const updates = normalizeProductInput(req.body);
+    const validationError = validateProduct(updates, true);
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('products')
-        .update(updates)
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error('Supabase DB Update Error:', error);
-        dbError = error.message;
-      } else if (data && data.length > 0) {
-        savedInSupabase = true;
-
-        // Remove outdated translations after successful update
-        await clearProductTranslationCache(id);
-
-        const updatedProduct = data[0];
-
-        const index = localProductStore.findIndex(
-          p => String(p.id) === String(id)
-        );
-
-        if (index >= 0) {
-          localProductStore[index] = updatedProduct;
-        } else {
-          localProductStore.unshift(updatedProduct);
-        }
-      }
-    }
-
-    const index = localProductStore.findIndex(
-      p => String(p.id) === String(id)
-    );
-
-    if (index >= 0) {
-      localProductStore[index] = {
-        ...localProductStore[index],
-        ...updates
-      };
-    } else {
-      localProductStore.unshift({
-        id,
-        ...updates
+    if (validationError) {
+      return res.status(400).json({
+        success: false,
+        error: validationError
       });
     }
 
-    const updated = localProductStore.find(
-      p => String(p.id) === String(id)
-    ) || { id, ...updates };
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No valid product fields were supplied.'
+      });
+    }
 
-    return res.json({
-      success: true,
-      data: updated,
-      savedInSupabase,
-      dbError,
-      message: 'Product successfully updated.'
-    });
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', req.params.id)
+      .select('*')
+      .maybeSingle();
 
-  } catch (error) {
-    console.error('Product update failed:', error);
+    if (error) {
+      throw error;
+    }
 
-    return res.status(500).json({
-      error: error.message
-    });
-  }
-});
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found.'
+      });
+    }
 
-// --------------------------------------------------
-// 5. DELETE PRODUCT
-// DELETE /api/products/:id
-// --------------------------------------------------
+    let translationsSaved = false;
+    let translationError = null;
 
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    let deletedInSupabase = false;
-    let dbError = null;
-
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        dbError = error.message;
-      } else {
-        deletedInSupabase = true;
-
-        // Supabase ON DELETE CASCADE also removes cached translations
-        localProductStore = localProductStore.filter(
-          p => String(p.id) !== String(id)
+    if (req.body.translations) {
+      try {
+        await saveProductTranslations(
+          data.id,
+          req.body.translations,
+          data
         );
+
+        translationsSaved = true;
+      } catch (error) {
+        translationError = error.message;
+        console.error('Updated translation save error:', error.message);
       }
-    } else {
-      localProductStore = localProductStore.filter(
-        p => String(p.id) !== String(id)
-      );
     }
 
     return res.json({
       success: true,
-      deletedId: id,
-      deletedInSupabase,
-      dbError,
-      message: 'Product successfully deleted.'
+      savedInSupabase: true,
+      translationsSaved,
+      translationError,
+      data
     });
-
   } catch (error) {
-    console.error('Product deletion failed:', error);
+    console.error('Update product error:', error.message);
 
     return res.status(500).json({
-      error: error.message
+      success: false,
+      error: 'Unable to update product.',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/products/:id
+ * Delete translations first, then delete the product.
+ */
+router.delete('/:id', async (req, res) => {
+  if (!requireDatabase(res)) return;
+
+  try {
+    const { error: translationError } = await supabase
+      .from('product_translations')
+      .delete()
+      .eq('product_id', req.params.id);
+
+    if (translationError) {
+      throw translationError;
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', req.params.id)
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      deletedInSupabase: true,
+      id: data.id
+    });
+  } catch (error) {
+    console.error('Delete product error:', error.message);
+
+    return res.status(500).json({
+      success: false,
+      error: 'Unable to delete product.',
+      details: error.message
     });
   }
 });

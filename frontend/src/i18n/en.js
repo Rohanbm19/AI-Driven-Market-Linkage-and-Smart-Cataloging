@@ -33,20 +33,55 @@ export default {
     voiceHint: "Click mic to speak in your native language",
     curatedTitle: "Curated Artisan Collection"
   },
-  product: {
-    price: "Price",
-    fairPrice: "Fair Trade Certified",
-    artisan: "Crafted by",
-    region: "Origin",
-    materials: "Materials",
-    story: "Heritage & Craft Story",
-    enquire: "Send Direct Enquiry",
-    addToCart: "Inquire for Bulk Order",
-    viewBtn: "View Craft",
-    inStock: "In Stock",
-    available: "available",
-    shipsDirect: "Ships directly from artisan cluster"
-  },
+  
+product: {
+  price: "Price",
+  fairPrice: "Fair Trade Certified",
+  artisan: "Crafted by",
+  region: "Origin",
+  materials: "Materials",
+  story: "Heritage & Craft Story",
+  enquire: "Send Direct Enquiry",
+  addToCart: "Inquire for Bulk Order",
+  viewBtn: "View Craft",
+  inStock: "In Stock",
+  available: "available",
+  shipsDirect: "Ships directly from artisan cluster",
+
+  // Product detail page
+  backToMarketplace: "Back to Marketplace",
+  editListing: "Edit Craft Listing",
+  deleting: "Deleting...",
+  delete: "Delete",
+  originalPhoto: "Original Photo",
+  enhancedPhoto: "OpenCV Enhanced",
+  showStandardPhoto: "Show Standard Photo",
+  compareImages: "Compare AI Studio Quality",
+  authenticHandcraft: "100% Authentic Handcraft",
+  fairTradeCertified: "Fair Trade Certified",
+  craftedBy: "Crafted by",
+  defaultArtisan: "Master Artisan",
+  fairTradePrice: "Fair Trade Direct Price",
+  directShipping: "Ships directly from artisan cluster",
+  heritageTechnique: "Craft Heritage & Technique",
+  contactArtisan: "Contact Artisan / Send Bulk Enquiry",
+  directMessage: "Direct message to",
+  preferredLanguageResponse: "Responses will be received in your preferred language.",
+  enquirySent: "Enquiry Dispatched & Saved!",
+  enquiryNotified: "has been notified and can view your enquiry on their dashboard.",
+  yourName: "Your Name",
+  yourEmail: "Your Email",
+  enquiryPlaceholder: "Ask about dimensions, customization, bulk discounts, or delivery timelines...",
+  sending: "Sending...",
+  sendEnquiry: "Send Direct Enquiry",
+
+  // Product card fallbacks
+  craft: "Craft",
+  untitled: "Untitled Craft",
+  noDescription: "No description available",
+  defaultRegion: "India"
+}
+,
   catalogForm: {
     title: "List Your Craft",
     editTitle: "Edit Craft Listing",
@@ -154,7 +189,13 @@ export default {
     compareTitle: "Before & After AI Studio Enhancement",
     uploadBtn: "Upload Photo to Enhance",
     processing: "Enhancing details and lighting..."
-  }
+  },
+  loadingProduct: "Loading product...",
+  productNotFound: "Product not found.",
+  unableToLoadProduct: "Unable to load product. Please try again.",
+  confirmDelete: "Are you sure you want to delete this product?",
+  deleteFailed: "Could not delete product. Please try again.",
+  enquiryFailed: "Failed to send your enquiry. Please try again."
 };
 
 // en.js

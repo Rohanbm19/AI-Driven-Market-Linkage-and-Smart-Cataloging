@@ -1,3 +1,4 @@
+
 export function detectLanguage(text) {
   if (!text || !text.trim()) return 'en';
 
@@ -6,8 +7,7 @@ export function detectLanguage(text) {
     { code: 'hi', regex: /[\u0900-\u097F]/ },
     { code: 'ta', regex: /[\u0B80-\u0BFF]/ },
     { code: 'te', regex: /[\u0C00-\u0C7F]/ },
-    { code: 'ml', regex: /[\u0D00-\u0D7F]/ },
-    { code: 'bn', regex: /[\u0980-\u09FF]/ }
+    { code: 'ml', regex: /[\u0D00-\u0D7F]/ }
   ];
 
   for (const script of scripts) {
