@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
 import Logo from '../components/Logo.jsx';
+import { useLanguage } from '../i18n/index.js';
+import { loginTranslations } from '../i18n/loginTranslations.js';
 
 const allowedArtisanRedirects = [
   /^\/seller(?:\/|$)/,
@@ -17,6 +19,8 @@ const allowedBuyerRedirects = [/^\/buyer\/profile$/];
 
 export default function Login({ role: requestedRole }) {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const copy = loginTranslations[lang] || loginTranslations.en;
   const [searchParams] = useSearchParams();
   const { isAuthenticated, role, isLoading: authLoading, authError, refreshAuth, signOut } = useAuth();
   const requestedRedirect = searchParams.get('redirect');
@@ -156,15 +160,15 @@ export default function Login({ role: requestedRole }) {
           <div className="login-logo"><Logo size={52} /></div>
           <h1>
             {isSignup
-              ? requestedRole === 'artisan' ? 'Register Your Artisan Studio' : 'Create Buyer Account'
-              : requestedRole === 'artisan' ? 'Artisan Studio Sign In' : 'Buyer Portal Sign In'}
+              ? requestedRole === 'artisan' ? copy.register : copy.createBuyer
+              : requestedRole === 'artisan' ? copy.title : copy.buyer}
           </h1>
           <p>
             {isSignup
               ? requestedRole === 'artisan'
-                ? 'Create an account and submit your studio details for artisan access review.'
+                ? copy.registerInfo
                 : 'Create an account to save your KalaSetu buyer details.'
-              : `Sign in to your ${requestedRole === 'artisan' ? 'seller tools' : 'KalaSetu buyer account'}.`}
+              : requestedRole === 'artisan' ? copy.subtitle : copy.buyerSubtitle}
           </p>
         </div>
 
@@ -184,22 +188,22 @@ export default function Login({ role: requestedRole }) {
 
         <div className="auth-mode-switch" role="group" aria-label="Choose account action">
           <button type="button" className={!isSignup ? 'active' : ''} onClick={() => { setEmailAction('login'); setMessage(''); }}>
-            Sign In
+            {copy.signIn}
           </button>
           <button type="button" className={isSignup ? 'active' : ''} onClick={() => { setEmailAction('signup'); setMessage(''); }}>
-            Create Account
+            {copy.create}
           </button>
         </div>
 
         {requestedRole === 'artisan' && !isSignup && (
           <div className="auth-message" role="note">
-            Sign in with an approved artisan account. New artisans can register for access review.
+            {copy.approved}
           </div>
         )}
 
         {requestedRole === 'artisan' && isSignup && (
           <div className="auth-message" role="note">
-            New registrations are reviewed before artisan tools are enabled.
+            {copy.review}
           </div>
         )}
 
@@ -211,7 +215,7 @@ export default function Login({ role: requestedRole }) {
           onClick={handleGoogleSignIn}
           disabled={loading || !configured}
         >
-          {loading ? 'Connecting to Google...' : 'Continue with Google'}
+          {loading ? copy.connecting : copy.google}
         </button>}
 
         <form onSubmit={handleEmailAuth}>
@@ -230,14 +234,14 @@ export default function Login({ role: requestedRole }) {
               </>
             )}
             <div className="form-group">
-              <label className="form-label" htmlFor="login-email">Email Address</label>
+              <label className="form-label" htmlFor="login-email">{copy.email}</label>
               <div className="login-input-wrap">
                 <Mail size={16} aria-hidden="true" />
                 <input id="login-email" type="email" required autoComplete="email" placeholder="you@kalasetu.org" className="form-input" value={email} onChange={(event) => setEmail(event.target.value)} />
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="login-password">Password</label>
+              <label className="form-label" htmlFor="login-password">{copy.password}</label>
               <div className="login-input-wrap">
                 <Lock size={16} aria-hidden="true" />
                 <input id="login-password" type="password" required minLength={6} autoComplete={isSignup ? 'new-password' : 'current-password'} placeholder="Password" className="form-input" value={password} onChange={(event) => setPassword(event.target.value)} />
@@ -245,17 +249,20 @@ export default function Login({ role: requestedRole }) {
             </div>
             <button type="submit" className="btn btn-primary login-submit" disabled={loading || !configured}>
               <span>
-                {loading ? (isSignup ? 'Creating account...' : 'Authenticating...') : isSignup ? requestedRole === 'artisan' ? 'Register Studio' : 'Create Account' : 'Sign In'}
+                {loading ? (isSignup ? 'Creating account...' : copy.authenticating) : isSignup ? requestedRole === 'artisan' ? copy.registerButton : copy.create : copy.signIn}
               </span><ArrowRight size={16} />
             </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '1rem' }}><Link to={requestedRole === 'artisan' ? '/buyer/login' : '/artisan/login'}>{requestedRole === 'artisan' ? 'Buyer sign in' : 'Artisan sign in'}</Link></p>
+        <p style={{ textAlign: 'center', marginTop: '1rem' }}><Link to={requestedRole === 'artisan' ? '/buyer/login' : '/artisan/login'}>{requestedRole === 'artisan' ? copy.buyerLink : copy.artisanLink}</Link></p>
         <div className="login-security-note">
           <ShieldCheck size={14} color="#059669" />
-          <span>Account roles are verified using your KalaSetu profile.</span>
+          <span>{copy.security}</span>
         </div>
       </div>
     </div>
   );
 }
+
+
+
