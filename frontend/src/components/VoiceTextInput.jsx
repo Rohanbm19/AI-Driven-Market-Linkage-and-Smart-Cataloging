@@ -97,7 +97,7 @@ export default function VoiceTextInput({
               padding: '0.35rem 0.65rem',
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--border-color)',
-              background: 'white',
+              background: 'var(--bg-card)',
               fontSize: '0.84rem',
               color: 'var(--text-main)',
               cursor: 'pointer'

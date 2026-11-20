@@ -19,8 +19,10 @@ export async function requireAuth(req, res, next) {
   } catch (error) { res.status(401).json({ error: 'Unable to validate session.' }); }
 }
 export async function requireArtisan(req, res, next) {
-  const { data, error } = await req.db.from('profiles').select('role').eq('id', req.user.id).single();
-  if (error || data?.role !== 'artisan') return res.status(403).json({ error: 'Artisan access required.' });
+  const { data: role, error } = await req.db.rpc('get_my_kalasetu_role');
+  if (error) return res.status(500).json({ error: `Unable to verify KalaSetu role: ${error.message}` });
+  if (!role) return res.status(404).json({ error: 'No KalaSetu user record is linked to this account.' });
+  if (role !== 'artisan') return res.status(403).json({ error: 'Artisan access required.' });
   next();
 }
 export function protectArtisanWrites(req, res, next) {

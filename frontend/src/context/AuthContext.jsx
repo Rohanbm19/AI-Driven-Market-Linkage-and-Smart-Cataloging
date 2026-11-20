@@ -2,29 +2,26 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
 
 const AuthContext = createContext(null);
-const anonymousAccount = { role: 'buyer', isAuthenticated: false };
+const anonymousAccount = { role: null, isAuthenticated: false };
 
 async function getAccount(session) {
   const user = session?.user;
   if (!user) return anonymousAccount;
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('role, requested_role, full_name, studio_name')
-    .eq('id', user.id)
-    .maybeSingle();
+  const { data: role, error } = await supabase.rpc('get_my_kalasetu_role');
 
-  if (error) throw error;
+  if (error) throw new Error(`Unable to load your KalaSetu role: ${error.message}`);
+  if (!role) throw new Error('No KalaSetu user record is linked to this account.');
 
   return {
     id: user.id,
     email: user.email || null,
-    fullName: profile?.full_name || user.user_metadata?.full_name || null,
-    studioName: profile?.studio_name || user.user_metadata?.studio_name || null,
-    requestedRole: profile?.requested_role || 'buyer',
+    fullName: user.user_metadata?.full_name || null,
+    studioName: user.user_metadata?.studio_name || null,
+    requestedRole: user.user_metadata?.requested_role || 'buyer',
     phone: user.phone || user.user_metadata?.phone || null,
     createdAt: user.created_at || null,
-    role: profile?.role === 'artisan' ? 'artisan' : 'buyer',
+    role,
     isAuthenticated: true
   };
 }
@@ -65,13 +62,15 @@ export function AuthProvider({ children }) {
             id: nextSession.user.id,
             email: nextSession.user.email || null,
             fullName: nextSession.user.user_metadata?.full_name || null,
+            studioName: nextSession.user.user_metadata?.studio_name || null,
+            requestedRole: nextSession.user.user_metadata?.requested_role || 'buyer',
             phone: nextSession.user.phone || null,
             createdAt: nextSession.user.created_at || null,
-            role: 'buyer',
+            role: null,
             isAuthenticated: true
           }
         : anonymousAccount);
-      setAuthError('Unable to load your account profile. Please try again.');
+      setAuthError(error.message || 'Unable to verify your KalaSetu account role. Please try again.');
       setIsLoading(false);
     };
 
@@ -83,8 +82,11 @@ export function AuthProvider({ children }) {
 
     supabase.auth.getSession()
       .then(({ data, error }) => {
-        if (error) throw error;
-        return syncSession(data.session);
+        if (error) {
+          handleAuthError(error);
+          return;
+        }
+        syncSession(data.session).catch((syncError) => handleAuthError(syncError, data.session));
       })
       .catch((error) => handleAuthError(error));
 
@@ -122,7 +124,7 @@ export function AuthProvider({ children }) {
     ...session,
     isAuthenticated: Boolean(session?.isAuthenticated),
     isArtisan: session?.role === 'artisan',
-    role: session?.role || 'buyer',
+    role: session?.role ?? null,
     isLoading,
     authError,
     refreshAuth,

@@ -210,13 +210,10 @@ async function currentUser() {
 }
 async function requireArtisan() {
   const user = await currentUser();
-  const { data: profile, error } = await supabase.from('profiles').select('role, studio_name, full_name').eq('id', user.id).single();
-  if (error) throw error;
-  if (profile.role !== 'artisan') throw new Error('Artisan access is required.');
-  const { error: studioError } = await supabase.from('artisans').upsert({
-    id: user.id, name: profile.studio_name || profile.full_name || 'My Studio', craft: '', region: ''
-  }, { onConflict: 'id', ignoreDuplicates: true });
-  if (studioError) throw studioError;
+  const { data: role, error } = await supabase.rpc('get_my_kalasetu_role');
+  if (error) throw new Error(`Unable to verify your KalaSetu role: ${error.message}`);
+  if (!role) throw new Error('No KalaSetu user record is linked to this account.');
+  if (role !== 'artisan') throw new Error('Artisan access is required.');
   return user;
 }
 
@@ -436,14 +433,27 @@ export const api = {
     return data;
   },
 
-  async updateArtisanProfile(id, updates) {
+  async updateArtisanProfile(updates) {
     const user = await requireArtisan();
-    if (id !== user.id) throw new Error('You can only update your own studio.');
-    const { data, error } = await supabase.from('artisans').upsert({
-      id: user.id, name: updates.name, craft: updates.craft, region: updates.region,
-      experience: updates.experience, avatar: updates.avatar, bio: updates.bio
-    }).select().single();
+    const editableFields = {
+      name: updates.name,
+      craft: updates.craft,
+      region: updates.region,
+      experience: updates.experience,
+      bio: updates.bio,
+      avatar: updates.avatar
+    };
+    const { data, error } = await supabase.from('artisans')
+      .update(editableFields)
+      .eq('id', user.id)
+      .select()
+      .maybeSingle();
     if (error) throw error;
+
+    if (!data) {
+      throw new Error('Couldn’t update your studio profile. Check your account and profile permissions.');
+    }
+
     return { success: true, data, savedInSupabase: true };
   },
 

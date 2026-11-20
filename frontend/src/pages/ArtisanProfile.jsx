@@ -101,7 +101,7 @@ export default function ArtisanProfile() {
         bio: bio.trim()
       };
 
-      const result = await api.updateArtisanProfile(artisan.id, payload);
+      const result = await api.updateArtisanProfile(payload);
 
       if (result.success) {
         setArtisan(result.data);
@@ -209,7 +209,7 @@ export default function ArtisanProfile() {
           marginBottom: '2rem',
           position: 'relative',
           overflow: 'hidden',
-          background: 'linear-gradient(180deg, #ffffff 0%, #faf8f5 100%)',
+          background: 'var(--bg-card)',
           border: '1px solid var(--border-color)'
         }}
       >
@@ -390,7 +390,7 @@ export default function ArtisanProfile() {
             </div>
 
             {/* Multilingual Voice-to-Text Component for Artisan Bio */}
-            <div style={{ marginBottom: '1.5rem', background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ marginBottom: '1.5rem', background: 'var(--bg-card)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
               <VoiceTextInput
                 id="artisan-story"
                 label="Artisan Heritage Story & Biography (Speak or Type in your Native Tongue)"

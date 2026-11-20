@@ -1,6 +1,6 @@
 # Merged version
 
-Start with [MERGE_NOTES.md](MERGE_NOTES.md) for authentication, database upgrade, artisan approval and run instructions. The original main README follows.
+Start with [MERGE_NOTES.md](MERGE_NOTES.md) for authentication, database upgrade, self-service artisan registration and run instructions. The original main README follows.
 
 # AI-Driven Market Linkage and Smart Cataloging
 
@@ -42,7 +42,11 @@ npx supabase db push
 
 To load the sample artisans and products, run `supabase/seed.sql` in the Supabase Dashboard SQL Editor after the migrations. The migrations create `artisans`, `products`, and `enquiries`; products link to artisans, and enquiries can link to products.
 
-For the currently configured Supabase project, the existing `artisans` and `products` tables are empty and use an older schema. In the Supabase Dashboard SQL Editor, run `supabase/quick_setup.sql` first, then run `supabase/seed.sql`. The setup script drops and recreates those empty tables, so do not run it if you have added data you need to keep.
+The self-service artisan registration migration uses `public.users.user_id` to match `auth.users.id`, ensures email and Google signups receive a buyer row, and installs the authenticated role and artisan-registration RPCs. It also promotes confirmed artisan signups recorded before the migration and creates only missing seller rows, preserving existing studio data.
+
+For development, link the Supabase CLI to a development project and run `npx supabase db push`. To apply manually, run `supabase/migrations/202611200001_self_service_artisan_registration.sql` followed by `supabase/migrations/202611200002_artisan_profile_update_permissions.sql` in the SQL Editor after the `public.users`, `public.artisans`, `public.products`, `public.enquiries`, and Storage schemas exist. Do not apply them to production as part of this change.
+
+`supabase/quick_setup.sql` and `supabase/merge_upgrade.sql` are legacy `profiles`-based setup scripts. Do not use them to initialize the confirmed `public.users` schema. The old migration file is retained as history; the new migration replaces its role lookup and seller RLS behavior without editing applied history.
 
 If these migrations have already been applied to a database, make schema changes in a new migration rather than editing an applied migration.
 The image enhancement workflow uses `products.original_image_url` to retain the original photo alongside the selected listing image. Apply the new migration with `npx supabase db push` before publishing enhanced images to Supabase.
