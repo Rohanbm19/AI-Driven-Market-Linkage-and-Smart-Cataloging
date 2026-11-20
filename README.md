@@ -1,3 +1,7 @@
+# Merged version
+
+Start with [MERGE_NOTES.md](MERGE_NOTES.md) for authentication, database upgrade, artisan approval and run instructions. The original main README follows.
+
 # AI-Driven Market Linkage and Smart Cataloging
 
 An end-to-end platform empowering rural and traditional artisans with smart AI cataloging, market linkage, multilingual conversational assistance, image enhancement, and automated enquiry management.

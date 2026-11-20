@@ -1,4 +1,4 @@
-
+﻿
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -217,6 +217,39 @@ function normalizeArray(value) {
   return [];
 }
 
+async function currentUser() {
+  if (!isSupabaseConfigured()) throw new Error('Supabase is not configured.');
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error('Please sign in first.');
+  return user;
+}
+
+async function requireArtisan() {
+  const user = await currentUser();
+  const { data: profile, error } = await supabase.from('profiles')
+    .select('role, studio_name, full_name').eq('id', user.id).single();
+  if (error) throw error;
+  if (profile.role !== 'artisan') throw new Error('Artisan access is required.');
+  const { error: studioError } = await supabase.from('artisans').upsert({
+    id: user.id, name: profile.studio_name || profile.full_name || 'My Studio',
+    craft: '', region: ''
+  }, { onConflict: 'id', ignoreDuplicates: true });
+  if (studioError) throw studioError;
+  return user;
+}
+
+async function getAuthHeaders(includeContentType = true) {
+  await requireArtisan();
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  if (!session?.access_token) throw new Error('Please sign in again.');
+  return {
+    ...(includeContentType ? { 'Content-Type': 'application/json' } : {}),
+    Authorization: `Bearer ${session.access_token}`
+  };
+}
+
 export const api = {
   /**
    * Fetch products through the backend.
@@ -318,6 +351,7 @@ export const api = {
    * Create a product through the backend.
    */
   async createProduct(productData) {
+    const user = await currentUser();
     const id = productData.id || `prod-${Date.now()}`;
 
     const payload = {
@@ -326,7 +360,7 @@ export const api = {
       category: productData.category || 'other',
       price: Number(productData.price),
       artisan_name: productData.artisan_name || 'Master Artisan',
-      artisan_id: productData.artisan_id || 'art-1',
+      artisan_id: user.id,
       region: productData.region || '',
       description: productData.description || '',
       materials: normalizeArray(productData.materials),
@@ -350,7 +384,7 @@ export const api = {
 
     const response = await fetch(`${API_BASE_URL}/products`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify(payload)
     });
 
@@ -401,7 +435,7 @@ export const api = {
       `${API_BASE_URL}/products/${encodeURIComponent(id)}`,
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(updates)
       }
     );
@@ -429,7 +463,7 @@ export const api = {
   async deleteProduct(id) {
     const response = await fetch(
       `${API_BASE_URL}/products/${encodeURIComponent(id)}`,
-      { method: 'DELETE' }
+      { method: 'DELETE', headers: await getAuthHeaders(false) }
     );
 
     const result = await readResponse(response);
@@ -577,6 +611,14 @@ export const api = {
   /**
    * Submit an enquiry.
    */
+  async getBuyerEnquiries(buyerId) {
+    const { data, error } = await supabase.from('enquiries').select('*')
+      .eq('buyer_id', buyerId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+
   async submitEnquiry(enquiryData) {
     const id = enquiryData.id || `enq-${Date.now()}`;
 
@@ -639,10 +681,21 @@ export const api = {
   /**
    * Generate the catalog through Gemini.
    */
+  async replyToEnquiry(id, reply) {
+    await requireArtisan();
+    const { error } = await supabase.from('enquiries')
+      .update({ reply, status: 'responded', updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+  },
+
+  /**
+   * AI Catalog generator endpoint or local AI simulation
+   */
+
   async generateSmartCatalog(formData) {
     const response = await fetch(`${API_BASE_URL}/ai/catalog`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify(formData)
     });
 
@@ -741,3 +794,6 @@ export const api = {
     }
   }
 };
+
+
+

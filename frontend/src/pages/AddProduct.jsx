@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -21,6 +21,7 @@ import {
 import confetti from 'canvas-confetti';
 
 import { api } from '../services/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import {
   enhanceProductImage,
   IMAGE_BACKGROUND_PRESETS,
@@ -42,6 +43,7 @@ export default function AddProduct() {
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { id: userId, fullName, studioName } = useAuth();
   const { t, lang, formatNumber } = useLanguage();
 
   const fileInputRef = useRef(null);
@@ -736,7 +738,7 @@ export default function AddProduct() {
 
         // Replace null with the authenticated artisan ID
         // when real artisan authentication is implemented.
-        artisan_id: null,
+        artisan_id: userId,
 
         region: region.trim(),
         description: description.trim(),
@@ -1251,7 +1253,7 @@ export default function AddProduct() {
                   <div className="calc-stat-sub">
                     {a.totalCost}{' '}
                     <strong>
-                      ₹{formatNumber(computedTotalCost)}
+                      â‚¹{formatNumber(computedTotalCost)}
                     </strong>{' '}
 
                     {fill(a.breakdown, {
@@ -1264,7 +1266,7 @@ export default function AddProduct() {
                   <div className="calc-stat-main">
                     {a.fairPrice}{' '}
                     <strong>
-                      ₹{formatNumber(computedFairSellingPrice)}
+                      â‚¹{formatNumber(computedFairSellingPrice)}
                     </strong>{' '}
 
                     <span className="profit-tag">
@@ -1737,7 +1739,7 @@ export default function AddProduct() {
                     {region || a.defaultRegion}
                   </span>
 
-                  <span className="dot-sep">•</span>
+                  <span className="dot-sep">â€¢</span>
 
                   <span className="preview-artisan-name">
                     {artisanName || a.defaultMaker}
@@ -1760,12 +1762,12 @@ export default function AddProduct() {
                     </span>
 
                     <span className="price-amount">
-                      ₹{price ? formatNumber(price) : '0'}
+                      â‚¹{price ? formatNumber(price) : '0'}
                     </span>
                   </div>
 
                   <div className="preview-stock-badge">
-                    <span className="stock-check">✓</span>
+                    <span className="stock-check">âœ“</span>
 
                     <span>
                       {stock || 1} {a.available}
@@ -1792,3 +1794,4 @@ export default function AddProduct() {
     </div>
   );
 }
+

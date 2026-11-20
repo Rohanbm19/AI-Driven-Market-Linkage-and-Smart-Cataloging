@@ -56,7 +56,7 @@ export default function Enquiries() {
   const { t } = useLanguage();
   const text = t.enquiries;
 
-  const [enquiries, setEnquiries] = useState(INITIAL_ENQUIRIES);
+  const [enquiries, setEnquiries] = useState([]);
   const [filter, setFilter] = useState('all');
   const [replyText, setReplyText] = useState({});
   const [activeReplyId, setActiveReplyId] = useState(null);
@@ -68,19 +68,7 @@ export default function Enquiries() {
       try {
         const live = await api.getEnquiries();
 
-        if (isMounted && Array.isArray(live) && live.length > 0) {
-          const map = new Map();
-
-          live.forEach((e) => map.set(e.id, e));
-
-          INITIAL_ENQUIRIES.forEach((e) => {
-            if (!map.has(e.id)) {
-              map.set(e.id, e);
-            }
-          });
-
-          setEnquiries(Array.from(map.values()));
-        }
+        if (isMounted) setEnquiries(live);
       } catch (err) {
         console.warn('Enquiries fetch error:', err);
       }
@@ -99,7 +87,9 @@ export default function Enquiries() {
     return true;
   });
 
-  const handleSendReply = (id) => {
+  const handleSendReply = async (id) => {
+    try { await api.replyToEnquiry(id, replyText[id] || ''); }
+    catch (error) { window.alert(error.message); return; }
     setEnquiries((prev) =>
       prev.map((e) =>
         e.id === id ? { ...e, status: 'responded' } : e

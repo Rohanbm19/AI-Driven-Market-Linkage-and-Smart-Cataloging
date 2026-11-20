@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Logo from './components/Logo.jsx';
 import Marketplace from './pages/Marketplace.jsx';
@@ -13,6 +13,15 @@ import ArtisanProfile from './pages/ArtisanProfile.jsx';
 import Login from './pages/Login.jsx';
 import { useLanguage } from './i18n/index.js';
 
+import RequireArtisan from './components/RequireArtisan.jsx';
+import RequireBuyer from './components/RequireBuyer.jsx';
+import BuyerProfile from './pages/BuyerProfile.jsx';
+function LegacyLogin() {
+  const [params] = useSearchParams();
+  const role = params.get('role') === 'artisan' ? 'artisan' : 'buyer';
+  params.delete('role');
+  return <Navigate to={`/${role}/login?${params.toString()}`} replace />;
+}
 export default function App() {
   const { t } = useLanguage();
   const f = t.footer || {};
@@ -23,13 +32,22 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Marketplace />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/add-product" element={<AddProduct />} />
-          <Route path="/image-enhancer" element={<ImageEnhancer />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/market-insights" element={<MarketInsights />} />
-          <Route path="/enquiries" element={<Enquiries />} />
-          <Route path="/artisan-profile" element={<ArtisanProfile />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<LegacyLogin />} />
+          <Route path="/buyer/login" element={<Login key="buyer" role="buyer" />} />
+          <Route path="/artisan/login" element={<Login key="artisan" role="artisan" />} />
+          <Route element={<RequireBuyer />}>
+            <Route path="/buyer/profile" element={<BuyerProfile />} />
+          </Route>
+          <Route element={<RequireArtisan />}>
+            <Route path="/seller/dashboard" element={<Navigate to="/artisan-profile" replace />} />
+            <Route path="/add-product" element={<AddProduct />} />
+            <Route path="/edit-product/:id" element={<AddProduct />} />
+            <Route path="/image-enhancer" element={<ImageEnhancer />} />
+            <Route path="/enquiries" element={<Enquiries />} />
+            <Route path="/artisan-profile" element={<ArtisanProfile />} />
+          </Route>
         </Routes>
       </main>
 
