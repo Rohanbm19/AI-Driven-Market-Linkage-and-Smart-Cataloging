@@ -1,6 +1,5 @@
-
+import { requireAuth, requireArtisan } from '../middleware/auth.js';
 import express from 'express';
-
 import { generateSmartCatalog } from '../services/catalogService.js';
 import { handleAdvisorChat } from '../services/chatService.js';
 import { enhanceProductImage } from '../services/imageService.js';
@@ -8,85 +7,43 @@ import { calculateFairPrice } from '../services/marketService.js';
 
 const router = express.Router();
 
-/**
- * POST /api/ai/catalog
- * Generate a product catalog and translations in six languages.
- */
-router.post('/catalog', async (req, res) => {
+// 1. POST /api/ai/catalog - Smart AI Catalog generation
+router.post('/catalog', requireAuth, requireArtisan, (req, res) => {
   try {
-    const generated = await generateSmartCatalog(req.body || {});
-
+    const generated = generateSmartCatalog(req.body);
     return res.json(generated);
-  } catch (error) {
-    console.error('Catalog generation error:', error.message);
-
-    return res.status(500).json({
-      success: false,
-      error: 'Unable to generate catalog. Please try again.',
-      details: error.message
-    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * POST /api/ai/chat
- * Existing craft advisor endpoint.
- */
-router.post('/chat', async (req, res) => {
+// 2. POST /api/ai/chat - Multilingual Craft Advisor
+router.post('/chat', (req, res) => {
   try {
-    const result = await handleAdvisorChat(req.body || {});
-
+    const result = handleAdvisorChat(req.body);
     return res.json(result);
-  } catch (error) {
-    console.error('Craft advisor error:', error.message);
-
-    return res.status(500).json({
-      error: 'Unable to get an AI response. Please try again.'
-    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * POST /api/ai/enhance-image
- * Existing image enhancement endpoint.
- */
-router.post('/enhance-image', async (req, res) => {
+// 3. POST /api/ai/enhance-image - Studio image enhance simulation
+router.post('/enhance-image', (req, res) => {
   try {
-    if (!req.body?.imageData) {
-      return res.status(400).json({
-        success: false,
-        error: 'Image data is required.'
-      });
-    }
-
-    const result = await enhanceProductImage(req.body.imageData);
-
+    const result = enhanceProductImage(req.body.imageData);
     return res.json(result);
-  } catch (error) {
-    console.error('Image enhancement error:', error.message);
-
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Unable to enhance image.'
-    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * POST /api/ai/pricing
- * Existing fair price calculator endpoint.
- */
-router.post('/pricing', async (req, res) => {
+// 4. POST /api/ai/pricing - Fair pricing recommendation
+router.post('/pricing', (req, res) => {
   try {
-    const pricing = calculateFairPrice(req.body || {});
-
+    const pricing = calculateFairPrice(req.body);
     return res.json(pricing);
-  } catch (error) {
-    console.error('Fair price calculation error:', error.message);
-
-    return res.status(500).json({
-      error: error.message || 'Unable to calculate product price.'
-    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 

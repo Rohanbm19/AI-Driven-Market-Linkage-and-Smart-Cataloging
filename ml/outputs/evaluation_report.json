@@ -1,0 +1,308 @@
+{
+  "disclaimer": "Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.",
+  "demand": {
+    "model_path": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\models\\demand_random_forest.joblib",
+    "dataset_type": "synthetic",
+    "training_date_range": {
+      "training_start": "2022-01-01",
+      "training_end": "2024-03-21",
+      "testing_start": "2024-04-20",
+      "testing_end": "2024-11-16"
+    },
+    "reliable_for_live_use": false,
+    "metadata_path": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\models\\demand_random_forest.joblib.metadata.json",
+    "train_metrics": {
+      "mae": 1.8923,
+      "rmse": 2.462,
+      "r2": 0.9459,
+      "n_samples": 560,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    },
+    "test_metrics": {
+      "mae": 3.8156,
+      "rmse": 4.7793,
+      "r2": 0.7507,
+      "n_samples": 160,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    },
+    "demand_cuts": {
+      "low_max": 27.4354980489418,
+      "medium_max": 35.68185548941799
+    }
+  },
+  "price": {
+    "model_path": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\models\\price_random_forest.joblib",
+    "train_metrics": {
+      "mae": 66.1774,
+      "rmse": 126.9939,
+      "r2": 0.9971,
+      "n_samples": 336,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    },
+    "test_metrics": {
+      "mae": 149.9707,
+      "rmse": 217.0155,
+      "r2": 0.991,
+      "n_samples": 84,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    }
+  },
+  "segmentation": {
+    "model_path": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\models\\customer_kmeans.joblib",
+    "train_metrics": {
+      "n_clusters_found": 4,
+      "n_samples": 160,
+      "cluster_sizes": {
+        "0": 36,
+        "1": 34,
+        "2": 49,
+        "3": 41
+      },
+      "silhouette": 0.128,
+      "davies_bouldin": 2.3962,
+      "note": "Silhouette is closer to 1 when clusters separate well. Davies-Bouldin is lower when clusters are compact and apart. These scores describe this sample only."
+    },
+    "test_metrics": {
+      "n_clusters_found": 4,
+      "n_samples": 40,
+      "cluster_sizes": {
+        "0": 9,
+        "1": 14,
+        "2": 7,
+        "3": 10
+      },
+      "silhouette": 0.1035,
+      "davies_bouldin": 2.1835,
+      "note": "Silhouette is closer to 1 when clusters separate well. Davies-Bouldin is lower when clusters are compact and apart. These scores describe this sample only."
+    },
+    "cluster_profiles": {
+      "0": {
+        "n_customers": 45,
+        "avg_total_purchases": 4.91,
+        "avg_order_value": 7937.28,
+        "avg_purchase_frequency": 2.07,
+        "common_categories": [
+          "mixed"
+        ],
+        "behaviour_insight": "Buys less often but spends more per order (premium / gift buyer)."
+      },
+      "1": {
+        "n_customers": 48,
+        "avg_total_purchases": 36.4,
+        "avg_order_value": 925.2,
+        "avg_purchase_frequency": 14.21,
+        "common_categories": [
+          "Pottery",
+          "Paintings",
+          "Brass/Metalware",
+          "Other Handmade Products"
+        ],
+        "behaviour_insight": "Shops often and prefers lower-priced handmade pieces."
+      },
+      "2": {
+        "n_customers": 56,
+        "avg_total_purchases": 2.66,
+        "avg_order_value": 1100.5,
+        "avg_purchase_frequency": 1.25,
+        "common_categories": [
+          "mixed"
+        ],
+        "behaviour_insight": "Infrequent buyer; may need reminders around festivals."
+      },
+      "3": {
+        "n_customers": 51,
+        "avg_total_purchases": 36.35,
+        "avg_order_value": 895.17,
+        "avg_purchase_frequency": 14.12,
+        "common_categories": [
+          "Wooden Crafts",
+          "Jewellery",
+          "Textiles"
+        ],
+        "behaviour_insight": "Shops often and prefers lower-priced handmade pieces."
+      }
+    }
+  },
+  "trends": {
+    "model_path": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\models\\product_trend_summary.joblib",
+    "trending_categories": [
+      "Wooden Crafts",
+      "Brass/Metalware",
+      "Other Handmade Products",
+      "Paintings",
+      "Jewellery",
+      "Pottery"
+    ],
+    "decreasing_categories": [
+      "Baskets"
+    ],
+    "categories": [
+      {
+        "product_category": "Wooden Crafts",
+        "months_observed": 34,
+        "total_units_sold": 10586,
+        "avg_monthly_units": 311.35,
+        "avg_monthly_views": 3894.88,
+        "avg_monthly_enquiries": 34.71,
+        "units_slope_per_month": 1.1921,
+        "recent_3m_vs_prior_3m_growth": 0.1787,
+        "demand_direction": "increasing",
+        "seasonal_average_units": {
+          "Autumn": 326.8,
+          "Monsoon": 309.67,
+          "Summer": 308.44,
+          "Winter": 307.5
+        },
+        "peak_season": "Autumn",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 345
+      },
+      {
+        "product_category": "Brass/Metalware",
+        "months_observed": 34,
+        "total_units_sold": 5991,
+        "avg_monthly_units": 176.21,
+        "avg_monthly_views": 2235.82,
+        "avg_monthly_enquiries": 21.94,
+        "units_slope_per_month": 0.8047,
+        "recent_3m_vs_prior_3m_growth": 0.4217,
+        "demand_direction": "increasing",
+        "seasonal_average_units": {
+          "Autumn": 210.4,
+          "Monsoon": 164.75,
+          "Summer": 178.44,
+          "Winter": 169.5
+        },
+        "peak_season": "Autumn",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 226
+      },
+      {
+        "product_category": "Textiles",
+        "months_observed": 34,
+        "total_units_sold": 12830,
+        "avg_monthly_units": 377.35,
+        "avg_monthly_views": 4659.91,
+        "avg_monthly_enquiries": 45.82,
+        "units_slope_per_month": 0.7374,
+        "recent_3m_vs_prior_3m_growth": 0.1086,
+        "demand_direction": "stable",
+        "seasonal_average_units": {
+          "Autumn": 407.0,
+          "Monsoon": 371.67,
+          "Summer": 383.78,
+          "Winter": 360.12
+        },
+        "peak_season": "Autumn",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 416
+      },
+      {
+        "product_category": "Other Handmade Products",
+        "months_observed": 34,
+        "total_units_sold": 5474,
+        "avg_monthly_units": 161.0,
+        "avg_monthly_views": 2167.85,
+        "avg_monthly_enquiries": 18.15,
+        "units_slope_per_month": 0.4526,
+        "recent_3m_vs_prior_3m_growth": 0.247,
+        "demand_direction": "increasing",
+        "seasonal_average_units": {
+          "Autumn": 180.6,
+          "Monsoon": 158.58,
+          "Summer": 160.0,
+          "Winter": 153.5
+        },
+        "peak_season": "Autumn",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 169
+      },
+      {
+        "product_category": "Paintings",
+        "months_observed": 34,
+        "total_units_sold": 5350,
+        "avg_monthly_units": 157.35,
+        "avg_monthly_views": 2000.79,
+        "avg_monthly_enquiries": 18.41,
+        "units_slope_per_month": 0.3114,
+        "recent_3m_vs_prior_3m_growth": 0.2464,
+        "demand_direction": "increasing",
+        "seasonal_average_units": {
+          "Autumn": 175.4,
+          "Monsoon": 141.75,
+          "Summer": 165.67,
+          "Winter": 160.12
+        },
+        "peak_season": "Autumn",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 167
+      },
+      {
+        "product_category": "Jewellery",
+        "months_observed": 34,
+        "total_units_sold": 6687,
+        "avg_monthly_units": 196.68,
+        "avg_monthly_views": 2488.12,
+        "avg_monthly_enquiries": 25.03,
+        "units_slope_per_month": 0.2119,
+        "recent_3m_vs_prior_3m_growth": 0.1313,
+        "demand_direction": "increasing",
+        "seasonal_average_units": {
+          "Autumn": 199.2,
+          "Monsoon": 194.67,
+          "Summer": 200.11,
+          "Winter": 194.25
+        },
+        "peak_season": "Summer",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 223
+      },
+      {
+        "product_category": "Pottery",
+        "months_observed": 34,
+        "total_units_sold": 8370,
+        "avg_monthly_units": 246.18,
+        "avg_monthly_views": 3188.44,
+        "avg_monthly_enquiries": 29.68,
+        "units_slope_per_month": 0.0807,
+        "recent_3m_vs_prior_3m_growth": 0.1625,
+        "demand_direction": "increasing",
+        "seasonal_average_units": {
+          "Autumn": 253.0,
+          "Monsoon": 237.67,
+          "Summer": 248.0,
+          "Winter": 252.62
+        },
+        "peak_season": "Autumn",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 248
+      },
+      {
+        "product_category": "Baskets",
+        "months_observed": 34,
+        "total_units_sold": 5793,
+        "avg_monthly_units": 170.38,
+        "avg_monthly_views": 2150.09,
+        "avg_monthly_enquiries": 19.79,
+        "units_slope_per_month": -3.1913,
+        "recent_3m_vs_prior_3m_growth": 0.2641,
+        "demand_direction": "decreasing",
+        "seasonal_average_units": {
+          "Autumn": 183.4,
+          "Monsoon": 152.17,
+          "Summer": 174.56,
+          "Winter": 184.88
+        },
+        "peak_season": "Winter",
+        "latest_year_month": "2025-10",
+        "latest_units_sold": 130
+      }
+    ]
+  },
+  "charts": {
+    "demand": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\outputs\\demand_actual_vs_predicted.png",
+    "price": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\outputs\\price_actual_vs_predicted.png",
+    "clusters": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\outputs\\customer_clusters_pca.png",
+    "trends": "D:\\Projects\\AI-Driven-Market-Linkage-and-Smart-Cataloging\\ml\\outputs\\category_monthly_trends.png"
+  }
+}

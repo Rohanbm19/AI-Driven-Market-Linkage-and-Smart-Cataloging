@@ -1,14 +1,18 @@
-
+﻿
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const configuredApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api')
+  .trim()
+  .replace(/\/+$/, '');
+
+const API_BASE_URL = /\/api$/i.test(configuredApiUrl)
+  ? configuredApiUrl
+  : `${configuredApiUrl}/api`;
 
 const LOCAL_STORAGE_PRODUCTS_KEY = 'kalasetu_custom_products';
 const LOCAL_STORAGE_ARTISAN_KEY = 'kalasetu_artisan_profile';
 const LOCAL_STORAGE_ENQUIRIES_KEY = 'kalasetu_enquiries';
 
-// Retained for compatibility with any existing imports.
-// These are NOT used as marketplace fallback products.
 export const MOCK_PRODUCTS = [
   {
     id: 'prod-1',
@@ -121,6 +125,8 @@ export const MOCK_ARTISAN = {
   badges: ['Master Craftsman']
 };
 
+// LOCAL STORAGE HELPERS
+
 function getLocalProducts() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_PRODUCTS_KEY);
@@ -164,7 +170,6 @@ function removeProductLocally(productId) {
   }
 }
 
-// Remove the previously deleted demo product from old browser storage.
 function cleanDeletedLocalProducts() {
   removeProductLocally('prod-6');
 }
@@ -188,6 +193,8 @@ function saveLocalArtisan(artisan) {
     console.error('Failed to save artisan locally:', error);
   }
 }
+
+// RESPONSE AND DATA HELPERS
 
 async function readResponse(response) {
   const result = await response.json().catch(() => ({}));
@@ -217,11 +224,140 @@ function normalizeArray(value) {
   return [];
 }
 
+// SUPABASE AUTH HELPERS
+
+async function currentUser() {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error) throw error;
+  if (!user) throw new Error('Please sign in first.');
+
+  return user;
+}
+
+async function requireArtisan() {
+  const user = await currentUser();
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role, studio_name, full_name')
+    .eq('id', user.id)
+    .single();
+
+  if (error) throw error;
+
+  if (profile.role !== 'artisan') {
+    throw new Error('Artisan access is required.');
+  }
+
+  const { error: studioError } = await supabase
+    .from('artisans')
+    .upsert({
+      id: user.id,
+      name: profile.studio_name || profile.full_name || 'My Studio',
+      craft: '',
+      region: ''
+    }, {
+      onConflict: 'id',
+      ignoreDuplicates: true
+    });
+
+  if (studioError) throw studioError;
+
+  return user;
+}
+
+async function getAuthHeaders(includeContentType = true) {
+  await requireArtisan();
+
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  if (error) throw error;
+  if (!session?.access_token) throw new Error('Please sign in again.');
+
+  return {
+    ...(includeContentType ? { 'Content-Type': 'application/json' } : {}),
+    Authorization: `Bearer ${session.access_token}`
+  };
+}
+
+// API METHODS
+
 export const api = {
-  /**
-   * Fetch products through the backend.
-   * Supabase/backend is the single source of truth.
-   */
+
+  // ==========================================
+  // MARKET INSIGHTS
+  // ==========================================
+
+  async getMarketInsights() {
+    const response = await fetch(`${API_BASE_URL}/market/insights`);
+    return await readResponse(response);
+  },
+
+  // Existing live marketplace demand forecast (GET)
+  async getLiveDemandForecast(category) {
+    const response = await fetch(
+      `${API_BASE_URL}/market/ml/demand?category=${encodeURIComponent(category)}`
+    );
+
+    return await readResponse(response);
+  },
+
+  // ==========================================
+  // ML MODEL INSIGHTS
+  // ==========================================
+
+  async getMlInsights() {
+    const response = await fetch(`${API_BASE_URL}/market/ml/insights`);
+    return await readResponse(response);
+  },
+
+  async getMlTrends() {
+    const response = await fetch(`${API_BASE_URL}/market/ml/trends`);
+    return await readResponse(response);
+  },
+
+  // Exploratory demand prediction (POST)
+  async predictMlDemand(data) {
+    const response = await fetch(`${API_BASE_URL}/market/ml/demand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    return await readResponse(response);
+  },
+
+  // Exploratory price prediction (POST)
+  async predictMlPrice(data) {
+    const response = await fetch(`${API_BASE_URL}/market/ml/price`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    return await readResponse(response);
+  },
+
+  // Exploratory customer segmentation (POST)
+  async predictMlSegment(data) {
+    const response = await fetch(`${API_BASE_URL}/market/ml/segment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    return await readResponse(response);
+  },
+
+  // ==========================================
+  // PRODUCTS
+  // ==========================================
+
   async getProducts(language = 'en') {
     const lang = language || 'en';
 
@@ -240,10 +376,6 @@ export const api = {
     return products;
   },
 
-  /**
-   * Fetch one product through the backend.
-   * Never return deleted products from local or mock storage.
-   */
   async getProductById(id, language = 'en') {
     cleanDeletedLocalProducts();
 
@@ -254,9 +386,19 @@ export const api = {
     return await readResponse(response);
   },
 
-  /**
-   * Upload an image to Supabase Storage.
-   */
+  async trackProductView(id) {
+    const response = await fetch(
+      `${API_BASE_URL}/market/products/${encodeURIComponent(id)}/view`,
+      { method: 'POST' }
+    );
+
+    return await readResponse(response);
+  },
+
+  // ==========================================
+  // PRODUCT IMAGE UPLOAD
+  // ==========================================
+
   async uploadProductImage(file) {
     if (!file) return null;
 
@@ -314,10 +456,12 @@ export const api = {
     });
   },
 
-  /**
-   * Create a product through the backend.
-   */
+  // ==========================================
+  // CREATE PRODUCT
+  // ==========================================
+
   async createProduct(productData) {
+    const user = await currentUser();
     const id = productData.id || `prod-${Date.now()}`;
 
     const payload = {
@@ -326,7 +470,7 @@ export const api = {
       category: productData.category || 'other',
       price: Number(productData.price),
       artisan_name: productData.artisan_name || 'Master Artisan',
-      artisan_id: productData.artisan_id || 'art-1',
+      artisan_id: user.id,
       region: productData.region || '',
       description: productData.description || '',
       materials: normalizeArray(productData.materials),
@@ -350,7 +494,7 @@ export const api = {
 
     const response = await fetch(`${API_BASE_URL}/products`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify(payload)
     });
 
@@ -375,9 +519,10 @@ export const api = {
     };
   },
 
-  /**
-   * Update a product through the backend.
-   */
+  // ==========================================
+  // UPDATE PRODUCT
+  // ==========================================
+
   async updateProduct(id, productData) {
     const updates = { ...productData };
 
@@ -401,7 +546,7 @@ export const api = {
       `${API_BASE_URL}/products/${encodeURIComponent(id)}`,
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(updates)
       }
     );
@@ -423,13 +568,17 @@ export const api = {
     };
   },
 
-  /**
-   * Delete a product through the backend.
-   */
+  // ==========================================
+  // DELETE PRODUCT
+  // ==========================================
+
   async deleteProduct(id) {
     const response = await fetch(
       `${API_BASE_URL}/products/${encodeURIComponent(id)}`,
-      { method: 'DELETE' }
+      {
+        method: 'DELETE',
+        headers: await getAuthHeaders(false)
+      }
     );
 
     const result = await readResponse(response);
@@ -447,9 +596,10 @@ export const api = {
     };
   },
 
-  /**
-   * Get the artisan profile in the selected language.
-   */
+  // ==========================================
+  // ARTISAN PROFILE
+  // ==========================================
+
   async getArtisanProfile(id = 'art-1', language = 'en') {
     const lang = language || 'en';
 
@@ -470,9 +620,7 @@ export const api = {
     } catch (error) {
       console.error('Artisan profile fetch failed:', error.message);
 
-      if (lang !== 'en') {
-        throw error;
-      }
+      if (lang !== 'en') throw error;
 
       const local = getLocalArtisan();
 
@@ -488,9 +636,7 @@ export const api = {
             .eq('id', id)
             .maybeSingle();
 
-          if (!dbError && data) {
-            return data;
-          }
+          if (!dbError && data) return data;
         } catch (dbError) {
           console.warn(
             'Supabase artisan lookup failed:',
@@ -503,9 +649,6 @@ export const api = {
     }
   },
 
-  /**
-   * Update the original artisan profile through the backend.
-   */
   async updateArtisanProfile(id, updatedData) {
     const response = await fetch(
       `${API_BASE_URL}/artisans/${encodeURIComponent(id)}`,
@@ -536,9 +679,10 @@ export const api = {
     };
   },
 
-  /**
-   * Fetch enquiries.
-   */
+  // ==========================================
+  // ENQUIRIES
+  // ==========================================
+
   async getEnquiries() {
     if (isSupabaseConfigured()) {
       try {
@@ -574,9 +718,18 @@ export const api = {
     }
   },
 
-  /**
-   * Submit an enquiry.
-   */
+  async getBuyerEnquiries(buyerId) {
+    const { data, error } = await supabase
+      .from('enquiries')
+      .select('*')
+      .eq('buyer_id', buyerId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+  },
+
   async submitEnquiry(enquiryData) {
     const id = enquiryData.id || `enq-${Date.now()}`;
 
@@ -636,13 +789,29 @@ export const api = {
     };
   },
 
-  /**
-   * Generate the catalog through Gemini.
-   */
+  async replyToEnquiry(id, reply) {
+    await requireArtisan();
+
+    const { error } = await supabase
+      .from('enquiries')
+      .update({
+        reply,
+        status: 'responded',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  // ==========================================
+  // AI CATALOG GENERATOR
+  // ==========================================
+
   async generateSmartCatalog(formData) {
     const response = await fetch(`${API_BASE_URL}/ai/catalog`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify(formData)
     });
 
@@ -655,9 +824,10 @@ export const api = {
     return result;
   },
 
-  /**
-   * Calculate fair price.
-   */
+  // ==========================================
+  // FAIR PRICE CALCULATOR
+  // ==========================================
+
   async calculateFairPrice(costData) {
     try {
       const response = await fetch(`${API_BASE_URL}/market/fair-price`, {
@@ -679,10 +849,12 @@ export const api = {
     const packagingCost = Number(costData.packagingCost) || 0;
 
     const laborCost = laborHours * hourlyWage;
+
     const totalProductionCost =
       materialCost + laborCost + packagingCost;
 
     const artisanMargin = Math.round(totalProductionCost * 0.3);
+
     const suggestedSellingPrice =
       Math.round(totalProductionCost + artisanMargin);
 
@@ -700,9 +872,10 @@ export const api = {
     };
   },
 
-  /**
-   * Ask the craft advisor.
-   */
+  // ==========================================
+  // CRAFT ADVISOR
+  // ==========================================
+
   async askAssistant(message, language = 'en') {
     try {
       const response = await fetch(`${API_BASE_URL}/ai/chat`, {
@@ -722,9 +895,10 @@ export const api = {
     }
   },
 
-  /**
-   * Enhance a product image.
-   */
+  // ==========================================
+  // IMAGE ENHANCEMENT
+  // ==========================================
+
   async enhanceImage(imageData) {
     try {
       const response = await fetch(`${API_BASE_URL}/ai/enhance-image`, {
