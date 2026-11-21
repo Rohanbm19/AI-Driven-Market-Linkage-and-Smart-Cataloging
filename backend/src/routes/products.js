@@ -8,6 +8,7 @@ import {
 
 import {
   translateProduct,
+  saveProductTranslations,
   SUPPORTED_LANGUAGES
 } from '../services/translationService.js';
 
@@ -241,25 +242,65 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { translations: _translations, ...productFields } = req.body;
+    const { translations, ...productFields } = req.body;
     const payload = { ...productFields, id: req.body.id || crypto.randomUUID(), artisan_id: req.user.id,
       is_verified: false, rating: 0, reviews_count: 0 };
     if (!payload.title || !Number.isFinite(Number(payload.price)) || Number(payload.price) < 0)
       return res.status(400).json({ error: 'A title and valid non-negative price are required.' });
     const { data, error } = await req.db.from('products').insert(payload).select().single();
     if (error) return res.status(400).json({ error: error.message });
-    return res.status(201).json({ success: true, data, savedInSupabase: true });
+
+    if (translations) {
+      try {
+        await saveProductTranslations(data.id, translations, data);
+      } catch (translationError) {
+        return res.status(201).json({
+          success: true,
+          data,
+          savedInSupabase: true,
+          translationsSaved: false,
+          translationError: translationError.message
+        });
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      data,
+      savedInSupabase: true,
+      translationsSaved: Boolean(translations)
+    });
   } catch (error) { return res.status(500).json({ error: error.message }); }
 });
 router.put('/:id', async (req, res) => {
   try {
-    const { translations: _translations, ...updates } = req.body;
+    const { translations, ...updates } = req.body;
     delete updates.id; delete updates.artisan_id;
     const { data, error } = await req.db.from('products').update(updates)
       .eq('id', req.params.id).eq('artisan_id', req.user.id).select().single();
     if (error) return res.status(400).json({ error: error.message });
     await clearProductTranslationCache(req.params.id);
-    return res.json({ success: true, data, savedInSupabase: true });
+
+    if (translations) {
+      try {
+        await saveProductTranslations(data.id, translations, data);
+      } catch (translationError) {
+        return res.json({
+          success: true,
+          data,
+          savedInSupabase: true,
+          translationsSaved: false,
+          translationError: translationError.message
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      data,
+      savedInSupabase: true,
+      translationsSaved: Boolean(translations)
+    });
   } catch (error) { return res.status(500).json({ error: error.message }); }
 });
 router.delete('/:id', async (req, res) => {

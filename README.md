@@ -10,127 +10,19 @@ The platform combines AI-assisted catalog generation, image enhancement, market 
 
 ---
 
-## Table of Contents
-
-- [Problem Statement](#problem-statement)
-- [Our Solution](#our-solution)
-- [Key Features](#key-features)
-- [Technology Stack](#technology-stack)
-- [Project Architecture](#project-architecture)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Environment Configuration](#environment-configuration)
-- [API Endpoints](#api-endpoints)
-- [Image Enhancement](#image-enhancement)
-- [Future Enhancements](#future-enhancements)
-
-## Problem Statement
-
-Many rural and traditional artisans face challenges when trying to sell their products online:
-
-- Limited access to digital marketplaces.
-- Difficulty creating attractive product descriptions and catalogs.
-- Language barriers when using digital platforms.
-- Lack of professional product photography.
-- Limited access to market information.
-- Difficulty managing customer enquiries.
-
-These challenges reduce their visibility and opportunities to reach customers.
-
-## Our Solution
-
-KalaSetu provides a unified digital platform where artisans can register, showcase their products, generate product catalog content, enhance product images and manage customer enquiries.
-
-AI-assisted tools reduce the effort required to create professional product listings, while multilingual support makes the platform more accessible.
-
-## Key Features
-
-### 1. AI-Powered Smart Cataloging
-- Generate product descriptions and catalog content using AI.
-- Assist artisans in creating structured product listings.
-- Provide automatic suggestions for product information.
-- Reduce manual effort during product registration.
-
-### 2. Digital Marketplace
-- Browse artisan products.
-- Explore product details and listings.
-- Connect buyers with artisans.
-- Submit and manage product enquiries.
-
-### 3. Multilingual Support
-- Language-aware interface.
-- Support for English, Kannada, Hindi, Tamil, Telugu and Malayalam.
-- Help users interact with the platform in their preferred language.
-
-### 4. Product Image Enhancement
-- Improve product presentation using image processing.
-- Apply background presets.
-- Upload custom backgrounds.
-- Compare original and enhanced images before accepting changes.
-- Preserve the original uploaded image.
-
-### 5. Artisan Authentication and Approval
-- Separate buyer and artisan authentication flows.
-- Authenticated artisan access.
-- Artisan profile and ownership management.
-- Artisan approval workflow.
-
-### 6. Market Insights and Pricing
-- Access market trend information.
-- AI-assisted pricing support.
-- Help artisans make more informed product listing decisions.
-
-### 7. Conversational AI Assistance
-- AI-powered conversational assistance.
-- Help users with catalog-related queries.
-- Support artisan workflows through the AI services.
-
-### 8. Enquiry Management
-- Manage customer enquiries.
-- Connect enquiries with products and artisans.
-- Support enquiry status and response workflows.
-
-## Technology Stack
-
-| Layer | Technologies |
-|---|---|
-| Frontend | React, Vite, JavaScript |
-| Backend | Node.js, Express.js |
-| Database | PostgreSQL, Supabase |
-| Authentication | Supabase Auth |
-| AI Integration | Google Gemini |
-| Image Processing | Python, FastAPI, OpenCV |
-| API Communication | REST APIs |
-| Development Tools | Git, GitHub, Supabase CLI |
-
-## Project Architecture
-
-KalaSetu uses a modular architecture with separate frontend, backend, database and image-processing components.
-
-```text
-                 USERS
-                   |
-                   v
-          React + Vite Frontend
-                   |
-                   v
-            Express Backend
-             /     |      \
-            /      |       \
-           v       v        v
-       Supabase  Gemini   Market &
-       Database   AI      AI Services
-           |
-           v
-      PostgreSQL
-
-       React Frontend
-             |
-             v
-       FastAPI Service
-             |
-             v
-       OpenCV Processing
+```
+frontend/                 React + Vite application
+backend/                  Express API (ES modules)
+    src/index.js             API startup and route registration
+    src/routes/              Products, artisans, enquiries, AI, and market endpoints
+    src/services/            Catalog, chat, image, and pricing logic
+    image_enhancer/           FastAPI + OpenCV image enhancement service
+supabase/
+    config.toml              Supabase CLI project configuration
+    migrations/              Database migrations, applied in filename order
+    seed.sql                 Sample artisan and product data
+    functions/               Optional Supabase Edge Functions
+ml/                          Model training module; live demand inference is served by the backend
 ```
 
 ## Project Structure
@@ -201,9 +93,11 @@ npx supabase link --project-ref YOUR_PROJECT_REF
 
 Apply database migrations:
 
-```bash
-npx supabase db push
-```
+**How Market Insights works:** The frontend requests summaries from the backend, which reads Supabase product listings, enquiries, and recorded product views. Database views calculate category prices and compare recent buyer activity with the previous 30 days. ML CSVs are used only to train models, not for live insights.
+
+Apply `supabase/migrations/202611210002_market_insights_live_data.sql` after the products and enquiries tables exist. It creates the product-view table and summary views. Use `npx supabase db push` after linking the project, or run the migration file in the Supabase Dashboard SQL Editor. Product-view counts start after migration; existing listings and enquiries are analyzed immediately.
+
+`supabase/quick_setup.sql` is a destructive development shortcut that drops and recreates tables. Do not run it against a database containing data; it can delete products, artisans, and enquiries. Prefer applying migrations to an existing project. Run `supabase/seed.sql` only when you intentionally want to add its sample records.
 
 For additional authentication, database upgrade and artisan approval instructions, refer to [MERGE_NOTES.md](MERGE_NOTES.md).
 
@@ -335,34 +229,43 @@ For detailed image enhancement options and troubleshooting, see the [Image Enhan
 
 Use the `.env.example` files as templates wherever available. Never commit actual credentials.
 
+### ML Training and Live Demand Estimates
+
+The CSV datasets under `ml/datasets/` are training/evaluation samples; they are not imported into Supabase. Market Insights continues to calculate its listings, prices, views, and enquiries directly from live database records. Its optional **Estimate demand** control sends the selected category's live views and enquiries to the trained demand model through `GET /api/market/ml/demand?category=<database-category>`.
+
+The API reads the category and its recent activity from Supabase, then invokes the model in `ml/`. The demand model currently supports pottery, woodwork, textiles, jewellery, baskets, and paintings; unsupported live categories return HTTP 422 rather than a misleading estimate. Training remains sample-based for now. KalaSetu does not yet store completed sales history, so the model's `historical_units_sold` input is explicitly set to zero; treat this output as exploratory, not a production forecast. The price and customer-segmentation models remain command-line tools until the app has reliable cost and purchase-history inputs.
+
+In PowerShell, from the repository root:
+
+```powershell
+cd ml
+.\.venv\Scripts\Activate.ps1
+python train.py
+python predict.py trends
+```
+
+If the ML virtual environment has not been created, set it up first:
+
+```powershell
+cd ml
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python train.py
+```
+
+Training saves model artifacts in `ml/models/` and evaluation reports in `ml/outputs/`. The backend uses `ml/.venv` when it exists; create it, install `ml/requirements.txt`, and run `python train.py` before using the live demand estimate. See [ml/README.md](ml/README.md) for setup and offline prediction commands.
+
 ## API Endpoints
 
-### Express Backend
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/api/health` | Backend health |
-| GET, POST, PUT, DELETE | `/api/products` | Product management |
-| GET, POST, PUT | `/api/artisans` | Artisan management |
-| GET, POST, PATCH | `/api/enquiries` | Enquiry management |
-| POST | `/api/ai/catalog` | AI catalog generation |
-| POST | `/api/ai/chat` | Conversational assistance |
-| POST | `/api/ai/enhance-image` | AI image-related endpoint |
-| POST | `/api/ai/pricing` | AI-assisted pricing |
-| GET | `/api/market/trends` | Market trends |
-
-### FastAPI Image Service
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/health` | Image service health |
-| POST | `/api/enhance` | Product image enhancement |
-
-Actual access to endpoints may depend on authentication and artisan authorization.
-
-## Image Enhancement
-
-The image enhancement service uses FastAPI and OpenCV.
+- `GET`, `POST`, `PUT`, `DELETE /api/products`
+- `GET`, `POST`, `PUT /api/artisans`
+- `GET`, `POST`, `PATCH /api/enquiries`
+- `POST /api/ai/catalog`, `/api/ai/chat`, `/api/ai/enhance-image`, `/api/ai/pricing`
+- `GET /api/market/insights`, `/api/market/trends`
+- `GET /api/market/ml/demand?category=<database-category>`
+- `POST /api/market/products/:id/view`
+- `POST http://localhost:8000/api/enhance` (FastAPI image service)
 
 Supported features include:
 

@@ -1,7 +1,10 @@
 ﻿
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const configuredApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').trim().replace(/\/+$/, '');
+const API_BASE_URL = /\/api$/i.test(configuredApiUrl)
+  ? configuredApiUrl
+  : `${configuredApiUrl}/api`;
 
 const LOCAL_STORAGE_PRODUCTS_KEY = 'kalasetu_custom_products';
 const LOCAL_STORAGE_ARTISAN_KEY = 'kalasetu_artisan_profile';
@@ -284,6 +287,26 @@ export const api = {
       `${API_BASE_URL}/products/${encodeURIComponent(id)}?lang=${encodeURIComponent(language || 'en')}`
     );
 
+    return await readResponse(response);
+  },
+
+  async getMarketInsights() {
+    const response = await fetch(`${API_BASE_URL}/market/insights`);
+    return await readResponse(response);
+  },
+
+  async getLiveDemandForecast(category) {
+    const response = await fetch(
+      `${API_BASE_URL}/market/ml/demand?category=${encodeURIComponent(category)}`
+    );
+    return await readResponse(response);
+  },
+
+  async trackProductView(id) {
+    const response = await fetch(
+      `${API_BASE_URL}/market/products/${encodeURIComponent(id)}/view`,
+      { method: 'POST' }
+    );
     return await readResponse(response);
   },
 
