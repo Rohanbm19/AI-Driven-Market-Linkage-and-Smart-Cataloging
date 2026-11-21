@@ -1,0 +1,48 @@
+{
+  "model_version": "demand-v2",
+  "training_date": "2026-11-21T08:39:23.244721+00:00",
+  "dataset_type": "synthetic",
+  "training_date_range": {
+    "training_start": "2022-01-01",
+    "training_end": "2024-04-20",
+    "testing_start": "2024-04-20",
+    "testing_end": "2024-11-16"
+  },
+  "feature_names": [
+    "historical_units_sold",
+    "product_views",
+    "buyer_enquiries",
+    "month",
+    "is_festival_period",
+    "product_category",
+    "location",
+    "season",
+    "festival_name"
+  ],
+  "evaluation_metrics": {
+    "train": {
+      "mae": 1.8866,
+      "rmse": 2.4385,
+      "r2": 0.9463,
+      "n_samples": 576,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    },
+    "test": {
+      "mae": 3.8943,
+      "rmse": 4.8607,
+      "r2": 0.7439,
+      "n_samples": 144,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    }
+  },
+  "library_versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.5.5",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2",
+    "joblib": "1.6.0"
+  },
+  "python_version": "3.14.6",
+  "preprocessing_logic": "median/nmost-frequent imputation; one-hot categorical encoding; chronological split"
+}

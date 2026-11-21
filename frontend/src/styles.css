@@ -4324,3 +4324,285 @@ html[data-theme="dark"] .footer-badge {
     transition: none;
   }
 }
+
+
+/* ==========================================
+   KALASETU - ML MARKET INTELLIGENCE
+   ========================================== */
+
+.insights-ai-section {
+  display: grid;
+  gap: 1.2rem;
+  min-width: 0;
+}
+
+.insights-ai-section-heading {
+  padding: 0.5rem 0;
+}
+
+.insights-ai-section-heading h2 {
+  margin: 0.55rem 0 0.4rem;
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.insights-ai-section-heading > p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.insights-ai-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #ead6a6;
+  border-radius: var(--radius-md);
+  color: #805b17;
+  background: #fff9e9;
+}
+
+.insights-ai-notice > svg {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
+.insights-ai-notice p {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+.insights-ai-notice-small {
+  margin-top: 1rem;
+  padding: 0.8rem;
+}
+
+.insights-ai-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.insights-ai-panel .insights-panel-heading {
+  margin-bottom: 0;
+}
+
+.insights-ai-panel .insights-panel-heading h2 {
+  margin-bottom: 0.4rem;
+}
+
+.insights-ai-panel .insights-panel-heading p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.insights-ai-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.insights-ai-form > label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--text-main);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.insights-ai-form .form-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 43px;
+}
+
+.insights-ai-form-action {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 0.2rem;
+}
+
+.insights-ai-form-action .btn {
+  min-height: 43px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.insights-ai-result {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.insights-ai-result-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.insights-ai-result-heading > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent-emerald);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.insights-ai-status {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full);
+  color: #176d50;
+  background: #e5f5eb;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.insights-ai-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.insights-ai-primary > span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.insights-ai-primary > strong {
+  color: var(--maroon-deep);
+  font-size: clamp(1.8rem, 4vw, 2.3rem);
+  line-height: 1.2;
+}
+
+.insights-ai-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.insights-ai-metrics > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+
+.insights-ai-metrics > div > span {
+  color: var(--text-muted);
+  font-size: 0.73rem;
+}
+
+.insights-ai-metrics > div > strong {
+  color: var(--text-main);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.insights-ai-disclaimer {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.insights-ai-raw {
+  min-width: 0;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+}
+
+.insights-ai-raw summary {
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.insights-ai-raw pre {
+  max-width: 100%;
+  max-height: 350px;
+  overflow: auto;
+  margin: 0.8rem 0 0;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  background: var(--bg-main);
+  font-family: monospace;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.insights-ai-empty {
+  margin: 0;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  font-size: 0.85rem;
+}
+
+.insights-ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .insights-ai-form {
+    grid-template-columns: 1fr;
+  }
+
+  .insights-ai-form-action {
+    grid-column: 1;
+  }
+
+  .insights-ai-form-action .btn {
+    width: 100%;
+  }
+
+  .insights-ai-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insights-ai-notice {
+    padding: 0.85rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .insights-ai-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .insights-ai-result {
+    padding: 0.8rem;
+  }
+}

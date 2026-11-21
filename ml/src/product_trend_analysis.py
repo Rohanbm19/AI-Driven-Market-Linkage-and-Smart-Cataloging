@@ -21,6 +21,7 @@ if str(ML_ROOT) not in sys.path:
 from config import TREND_SUMMARY_PATH
 
 from data_preprocessing import clean_dataframe, read_csv_file
+from model_metadata import model_metadata, validate_model_metadata, write_model_metadata
 
 
 def load_trend_table(csv_path: Path) -> pd.DataFrame:
@@ -119,6 +120,18 @@ def train_trend_summary(csv_path: Path, model_path: Path = TREND_SUMMARY_PATH) -
     }
     model_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(payload, model_path)
+    metadata = model_metadata(
+        model_version="trend-v2",
+        dataset_type="synthetic",
+        training_date_range={
+            "training_start": str(frame["year_month"].min()),
+            "training_end": str(frame["year_month"].max()),
+        },
+        feature_names=["year_month", "product_category", "units_sold", "product_views", "buyer_enquiries"],
+        evaluation_metrics={"method": "descriptive_slope_and_growth"},
+        preprocessing_logic="group by category and year_month; synthetic monthly observations",
+    )
+    write_model_metadata(model_path, metadata)
     return {
         "model_path": str(model_path),
         "summary": payload,
@@ -130,7 +143,15 @@ def train_trend_summary(csv_path: Path, model_path: Path = TREND_SUMMARY_PATH) -
 def load_trend_summary(model_path: Path = TREND_SUMMARY_PATH) -> dict:
     if not Path(model_path).exists():
         raise FileNotFoundError(f"Trend summary not found. Train first: {model_path}")
-    return joblib.load(model_path)
+    summary = joblib.load(model_path)
+    metadata_path = Path(model_path).with_suffix(Path(model_path).suffix + ".metadata.json")
+    if not metadata_path.exists():
+        raise ValueError("Saved trend summary has no metadata. Retrain it with the current ML module.")
+    import json
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    validate_model_metadata(Path(model_path), metadata)
+    summary["metadata"] = metadata
+    return summary
 
 
 def get_trend_report(model_path: Path = TREND_SUMMARY_PATH) -> dict:

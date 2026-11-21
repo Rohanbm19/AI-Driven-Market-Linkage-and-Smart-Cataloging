@@ -1,0 +1,29 @@
+{
+  "model_version": "trend-v2",
+  "training_date": "2026-11-21T08:47:08.374206+00:00",
+  "dataset_type": "synthetic",
+  "training_date_range": {
+    "training_start": "2023-01",
+    "training_end": "2025-10"
+  },
+  "feature_names": [
+    "year_month",
+    "product_category",
+    "units_sold",
+    "product_views",
+    "buyer_enquiries"
+  ],
+  "evaluation_metrics": {
+    "method": "descriptive_slope_and_growth"
+  },
+  "library_versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.5.5",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2",
+    "joblib": "1.6.0"
+  },
+  "python_version": "3.14.6",
+  "preprocessing_logic": "group by category and year_month; synthetic monthly observations"
+}

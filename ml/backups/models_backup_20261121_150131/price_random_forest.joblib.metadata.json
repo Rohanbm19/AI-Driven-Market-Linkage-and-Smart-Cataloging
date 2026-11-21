@@ -1,0 +1,41 @@
+{
+  "model_version": "price-v2",
+  "training_date": "2026-11-21T08:47:07.748205+00:00",
+  "dataset_type": "synthetic",
+  "training_date_range": null,
+  "feature_names": [
+    "raw_material_cost",
+    "labour_cost",
+    "product_size_cm",
+    "production_time_hours",
+    "market_price",
+    "product_category",
+    "product_size"
+  ],
+  "evaluation_metrics": {
+    "train": {
+      "mae": 66.1774,
+      "rmse": 126.9939,
+      "r2": 0.9971,
+      "n_samples": 336,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    },
+    "test": {
+      "mae": 149.9707,
+      "rmse": 217.0155,
+      "r2": 0.991,
+      "n_samples": 84,
+      "note": "Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy."
+    }
+  },
+  "library_versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.5.5",
+    "scikit-learn": "1.9.1",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2",
+    "joblib": "1.6.0"
+  },
+  "python_version": "3.14.6",
+  "preprocessing_logic": "median/nmost-frequent imputation; one-hot categorical encoding"
+}

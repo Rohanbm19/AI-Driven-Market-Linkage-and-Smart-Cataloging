@@ -20,6 +20,7 @@ RANDOM_STATE = 42
 TEST_SIZE = 0.20
 
 DEMAND_CSV = RAW_DATA_DIR / "artisan_product_demand_sample.csv"
+SALES_HISTORY_CSV = RAW_DATA_DIR / "sales_history.csv"
 PRICE_CSV = RAW_DATA_DIR / "artisan_product_pricing_sample.csv"
 CUSTOMER_CSV = RAW_DATA_DIR / "artisan_customer_behaviour_sample.csv"
 TRENDS_CSV = RAW_DATA_DIR / "artisan_monthly_trends_sample.csv"
@@ -37,6 +38,8 @@ PRODUCT_CATEGORIES = [
     "Textiles",
     "Baskets",
     "Paintings",
+    "Brass/Metalware",
+    "Other Handmade Products",
 ]
 
 LOCATIONS = [

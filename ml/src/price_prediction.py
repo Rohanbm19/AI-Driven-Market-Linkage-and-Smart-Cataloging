@@ -36,6 +36,7 @@ from data_preprocessing import (
     split_features_and_target,
 )
 from evaluation import regression_metrics
+from model_metadata import model_metadata, validate_model_metadata, write_model_metadata
 
 NUMERIC_FEATURES = [
     "raw_material_cost",
@@ -100,6 +101,16 @@ def train_price_model(csv_path: Path, model_path: Path = PRICE_MODEL_PATH) -> di
     )
     pipeline = Pipeline(steps=[("preprocess", preprocessor), ("model", model)])
     pipeline.fit(x_train, y_train)
+    train_metrics = regression_metrics(y_train, pipeline.predict(x_train))
+    test_metrics = regression_metrics(y_test, pipeline.predict(x_test))
+    metadata = model_metadata(
+        model_version="price-v2",
+        dataset_type="synthetic",
+        training_date_range=None,
+        feature_names=FEATURE_COLUMNS,
+        evaluation_metrics={"train": train_metrics, "test": test_metrics},
+        preprocessing_logic="median/nmost-frequent imputation; one-hot categorical encoding",
+    )
 
     bundle = {
         "pipeline": pipeline,
@@ -107,15 +118,18 @@ def train_price_model(csv_path: Path, model_path: Path = PRICE_MODEL_PATH) -> di
         "numeric_features": NUMERIC_FEATURES,
         "categorical_features": CATEGORICAL_FEATURES,
         "target_column": TARGET_COLUMN,
+        "dataset_type": "synthetic",
+        "metadata": metadata,
         "data_note": "Trained on sample/synthetic artisan pricing rows unless you pass another CSV.",
     }
     model_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(bundle, model_path)
+    write_model_metadata(model_path, metadata)
 
     return {
         "model_path": str(model_path),
-        "train_metrics": regression_metrics(y_train, pipeline.predict(x_train)),
-        "test_metrics": regression_metrics(y_test, pipeline.predict(x_test)),
+        "train_metrics": train_metrics,
+        "test_metrics": test_metrics,
         "y_test": y_test,
         "y_pred_test": pipeline.predict(x_test),
     }
@@ -124,7 +138,17 @@ def train_price_model(csv_path: Path, model_path: Path = PRICE_MODEL_PATH) -> di
 def load_price_bundle(model_path: Path = PRICE_MODEL_PATH) -> dict:
     if not Path(model_path).exists():
         raise FileNotFoundError(f"Price model not found. Train first: {model_path}")
-    return joblib.load(model_path)
+    bundle = joblib.load(model_path)
+    metadata_path = Path(model_path).with_suffix(Path(model_path).suffix + ".metadata.json")
+    if not metadata_path.exists():
+        raise ValueError("Saved price model has no metadata. Retrain it with the current ML module.")
+    import json
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    validate_model_metadata(Path(model_path), metadata)
+    if bundle.get("feature_columns") != metadata["feature_names"]:
+        raise ValueError("Saved price model preprocessing/features are incompatible. Retrain it.")
+    bundle["metadata"] = metadata
+    return bundle
 
 
 def predict_price(input_row: dict, model_path: Path = PRICE_MODEL_PATH) -> dict:
@@ -148,6 +172,9 @@ def predict_price(input_row: dict, model_path: Path = PRICE_MODEL_PATH) -> dict:
     expected_profit = suggested - cost_block["estimated_production_cost"]
 
     return {
+        "prediction_status": "exploratory",
+        "dataset_type": "synthetic",
+        "synthetic_model": True,
         "model_estimated_price": round(model_price, 2),
         "suggested_selling_price": round(suggested, 2),
         "estimated_production_cost": cost_block["estimated_production_cost"],
