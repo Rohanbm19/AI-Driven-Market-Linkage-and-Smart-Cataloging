@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import sys
+import argparse
 from pathlib import Path
 
 ML_ROOT = Path(__file__).resolve().parent
@@ -36,14 +37,30 @@ from src.product_trend_analysis import train_trend_summary
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Train KalaSetu ML models.")
+    parser.add_argument(
+        "--demand-csv",
+        type=Path,
+        default=DEMAND_CSV,
+        help="Demand training CSV. Default: synthetic development CSV.",
+    )
+    args = parser.parse_args()
     print(DATA_DISCLAIMER)
     ensure_sample_datasets()
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 
     print("\n=== Demand prediction (Random Forest) ===")
-    demand = train_demand_model(DEMAND_CSV)
-    print(format_metrics_block("Train", demand["train_metrics"]))
-    print(format_metrics_block("Test", demand["test_metrics"]))
+    try:
+        demand = train_demand_model(args.demand_csv)
+    except ValueError as error:
+        print("WARNING: Demand training blocked.")
+        print(f"  {error}")
+        print("  No demand model was overwritten.")
+        demand = None
+
+    if demand is not None:
+        print(format_metrics_block("Train", demand["train_metrics"]))
+        print(format_metrics_block("Test", demand["test_metrics"]))
 
     print("\n=== Price recommendation (Random Forest) ===")
     price = train_price_model(PRICE_CSV)
@@ -62,12 +79,14 @@ def main() -> int:
     print("Trending categories:", trends["summary"]["trending_categories"])
     print("Decreasing categories:", trends["summary"]["decreasing_categories"])
 
-    demand_plot = save_actual_vs_predicted(
-        demand["y_test"],
-        demand["y_pred_test"],
-        "Demand model: actual vs predicted (test split, sample data)",
-        OUTPUTS_DIR / "demand_actual_vs_predicted.png",
-    )
+    demand_plot = None
+    if demand is not None:
+        demand_plot = save_actual_vs_predicted(
+            demand["y_test"],
+            demand["y_pred_test"],
+            "Demand model: actual vs predicted (test split)",
+            OUTPUTS_DIR / "demand_actual_vs_predicted.png",
+        )
     price_plot = save_actual_vs_predicted(
         price["y_test"],
         price["y_pred_test"],
@@ -86,12 +105,24 @@ def main() -> int:
 
     report = {
         "disclaimer": DATA_DISCLAIMER,
-        "demand": {
-            "model_path": demand["model_path"],
-            "train_metrics": demand["train_metrics"],
-            "test_metrics": demand["test_metrics"],
-            "demand_cuts": demand["demand_cuts"],
-        },
+        "demand": (
+            {
+                "model_path": demand["model_path"],
+                "dataset_type": demand["dataset_type"],
+                "training_date_range": demand["training_date_range"],
+                "reliable_for_live_use": demand["reliable_for_live_use"],
+                "metadata_path": demand["metadata_path"],
+                "train_metrics": demand["train_metrics"],
+                "test_metrics": demand["test_metrics"],
+                "demand_cuts": demand["demand_cuts"],
+            }
+            if demand is not None
+            else {
+                "status": "blocked",
+                "reason": "Real sales_history.csv is empty or has insufficient real rows.",
+                "model_overwritten": False,
+            }
+        ),
         "price": {
             "model_path": price["model_path"],
             "train_metrics": price["train_metrics"],
@@ -110,7 +141,7 @@ def main() -> int:
             "categories": trends["summary"]["categories"],
         },
         "charts": {
-            "demand": str(demand_plot),
+            "demand": str(demand_plot) if demand_plot is not None else None,
             "price": str(price_plot),
             "clusters": str(cluster_plot),
             "trends": str(trend_plot),
@@ -124,8 +155,16 @@ def main() -> int:
                 "KalaSetu ML evaluation report",
                 DATA_DISCLAIMER,
                 "",
-                format_metrics_block("Demand train", demand["train_metrics"]),
-                format_metrics_block("Demand test", demand["test_metrics"]),
+                (
+                    "\n".join(
+                        [
+                            format_metrics_block("Demand train", demand["train_metrics"]),
+                            format_metrics_block("Demand test", demand["test_metrics"]),
+                        ]
+                    )
+                    if demand is not None
+                    else "Demand training: BLOCKED - sales_history.csv is empty or insufficient."
+                ),
                 "",
                 format_metrics_block("Price train", price["train_metrics"]),
                 format_metrics_block("Price test", price["test_metrics"]),

@@ -29,6 +29,7 @@ from data_preprocessing import (
     read_csv_file,
 )
 from evaluation import clustering_metrics
+from model_metadata import model_metadata, validate_model_metadata, write_model_metadata
 
 BASE_FEATURES = [
     "total_purchases",
@@ -123,10 +124,22 @@ def train_segmentation_model(csv_path: Path, model_path: Path = SEGMENT_MODEL_PA
         "feature_columns": columns,
         "cluster_profiles": cluster_profiles,
         "n_clusters": N_CLUSTERS,
+        "dataset_type": "synthetic",
         "data_note": "K-Means groups on sample customer behaviour only.",
     }
     model_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(bundle, model_path)
+    train_metrics = clustering_metrics(scaled_train, train_labels)
+    test_metrics = clustering_metrics(scaled_test, test_labels)
+    metadata = model_metadata(
+        model_version="segmentation-v2",
+        dataset_type="synthetic",
+        training_date_range=None,
+        feature_names=columns,
+        evaluation_metrics={"train": train_metrics, "test": test_metrics},
+        preprocessing_logic="standard scaling; K-Means; synthetic customer behaviour only",
+    )
+    write_model_metadata(model_path, metadata)
 
     processed_dir = ML_ROOT / "datasets" / "processed"
     processed_dir.mkdir(parents=True, exist_ok=True)
@@ -145,7 +158,17 @@ def train_segmentation_model(csv_path: Path, model_path: Path = SEGMENT_MODEL_PA
 def load_segment_bundle(model_path: Path = SEGMENT_MODEL_PATH) -> dict:
     if not Path(model_path).exists():
         raise FileNotFoundError(f"Segmentation model not found. Train first: {model_path}")
-    return joblib.load(model_path)
+    bundle = joblib.load(model_path)
+    metadata_path = Path(model_path).with_suffix(Path(model_path).suffix + ".metadata.json")
+    if not metadata_path.exists():
+        raise ValueError("Saved segmentation model has no metadata. Retrain it with the current ML module.")
+    import json
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    validate_model_metadata(Path(model_path), metadata)
+    if bundle.get("feature_columns") != metadata["feature_names"]:
+        raise ValueError("Saved segmentation model features are incompatible. Retrain it.")
+    bundle["metadata"] = metadata
+    return bundle
 
 
 def predict_customer_segment(input_row: dict, model_path: Path = SEGMENT_MODEL_PATH) -> dict:
@@ -157,6 +180,9 @@ def predict_customer_segment(input_row: dict, model_path: Path = SEGMENT_MODEL_P
     cluster = int(bundle["pipeline"].predict(row[bundle["feature_columns"]])[0])
     profile = bundle["cluster_profiles"].get(str(cluster), {})
     return {
+        "prediction_status": "exploratory",
+        "dataset_type": "synthetic",
+        "synthetic_model": True,
         "cluster": cluster,
         "segment_profile": profile,
         "disclaimer": (

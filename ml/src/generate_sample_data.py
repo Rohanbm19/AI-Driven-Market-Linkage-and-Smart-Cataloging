@@ -38,6 +38,8 @@ CATEGORY_BASE_DEMAND = {
     "Textiles": 28,
     "Baskets": 16,
     "Paintings": 10,
+    "Brass/Metalware": 12,
+    "Other Handmade Products": 11,
 }
 
 CATEGORY_MATERIAL = {
@@ -47,6 +49,8 @@ CATEGORY_MATERIAL = {
     "Textiles": (250, 2800),
     "Baskets": (40, 220),
     "Paintings": (150, 900),
+    "Brass/Metalware": (300, 2200),
+    "Other Handmade Products": (100, 1200),
 }
 
 CATEGORY_LABOUR = {
@@ -56,6 +60,8 @@ CATEGORY_LABOUR = {
     "Textiles": (400, 4000),
     "Baskets": (150, 800),
     "Paintings": (400, 2500),
+    "Brass/Metalware": (500, 3000),
+    "Other Handmade Products": (200, 1800),
 }
 
 SIZE_CM = {"Small": 12, "Medium": 28, "Large": 48}
@@ -229,6 +235,8 @@ def build_trends_frame(rng: np.random.Generator) -> pd.DataFrame:
                     "Textiles": 1.1,
                     "Baskets": -2.8,
                     "Paintings": 0.55,
+                    "Brass/Metalware": 0.35,
+                    "Other Handmade Products": 0.25,
                 }[category]
                 festival_boost = 40 if is_festival else 0
                 units = int(

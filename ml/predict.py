@@ -43,7 +43,12 @@ def build_parser() -> argparse.ArgumentParser:
     demand = sub.add_parser("demand", help="Predict sales quantity and Low/Medium/High demand.")
     demand.add_argument("--category", required=True)
     demand.add_argument("--location", required=True)
-    demand.add_argument("--historical-units", type=float, required=True)
+    demand.add_argument(
+        "--historical-units",
+        type=float,
+        default=None,
+        help="Completed historical units. Omit or pass 0 when unavailable.",
+    )
     demand.add_argument("--views", type=float, required=True)
     demand.add_argument("--enquiries", type=float, required=True)
     demand.add_argument("--month", type=int, required=True)

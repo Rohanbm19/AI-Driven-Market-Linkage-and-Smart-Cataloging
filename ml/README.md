@@ -85,11 +85,34 @@ python src\generate_sample_data.py
    GET http://localhost:5000/api/market/ml/demand?category=<database-category>
    ```
 
-The backend reads recent category views and enquiries from `market_insights_by_category`, picks the most common product location, and passes those live values to `predict.py`. Categories map to the model's supported training classes (pottery, woodwork, textiles, jewellery, baskets, and paintings); unsupported live categories return HTTP 422. The response includes the live inputs and prediction.
+The backend reads recent category views and enquiries from `market_insights_by_category`, picks the most common product location, and passes those live values to `predict.py`. One-hot category encoding learns categories dynamically and safely ignores unseen category levels. The prediction command refuses estimates for categories with fewer than five training observations.
 
-KalaSetu currently has no completed-sales history table. For transparency, `historical_units_sold` is set to `0`, and the API response and UI state that limitation. The sample-trained model should not be used for business decisions until it is retrained and evaluated on representative, consented marketplace sales data.
+KalaSetu currently has no completed-sales history table. The existing backend sets `historical_units_sold` to `0` as a missing-data sentinel. The prediction layer interprets zero, null, and missing values as unavailable history rather than real sales, and returns an insufficient-data warning. It does not display false confidence. The sample-trained model should not be used for business decisions until it is retrained and evaluated on representative, consented marketplace sales data.
 
 The existing price predictor and customer-segmentation model remain offline CLI workflows: the app does not yet store consistent production-cost or completed-purchase history needed to feed them with reliable live inputs. The website's SQL-based Market Insights remain database aggregations and do not depend on these sample model outputs.
+
+## Real completed-sales training
+
+Place an anonymized export at `datasets/raw/sales_history.csv`. The file
+schema and status policy are documented in `datasets/raw/README.md`.
+
+Train demand from completed sales:
+
+```powershell
+python train.py --demand-csv datasets\raw\sales_history.csv
+```
+
+The current `train.py` defaults to the synthetic development CSV. It must not
+be pointed at real sales until `sales_history.csv` contains authorized,
+anonymized rows. Cancelled, returned, incomplete, and unknown statuses are
+excluded. Monthly aggregation creates lagged historical units so the same
+period's target sales are not used as a feature.
+
+The demand pipeline uses chronological train/test separation, never a random
+train/test split. Results include MAE, RMSE, R², date ranges, dataset type,
+feature names, dependency versions, and compatibility metadata. If real
+observations are insufficient, predictions are labelled exploratory or
+insufficient-data and no false confidence score is shown.
 
 ## Kaggle e-commerce files
 

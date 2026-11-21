@@ -31,8 +31,7 @@ from config import (
     TEST_SIZE,
 )
 
-from generate_sample_data import write_sample_datasets
-
+from src.generate_sample_data import write_sample_datasets
 
 def ensure_sample_datasets() -> None:
     write_sample_datasets()
@@ -127,6 +126,247 @@ def aggregate_kaggle_to_demand(frame: pd.DataFrame) -> pd.DataFrame:
     grouped["is_festival_period"] = 0
     grouped["festival_name"] = "Unknown"
     return grouped
+
+
+
+def aggregate_completed_sales_to_demand(
+    csv_path: Path,
+    period: str = "monthly",
+) -> tuple[pd.DataFrame, dict]:
+    """
+    Aggregate completed sales separately for each product.
+
+    Historical units are taken from the previous observed sales period
+    for the same product. Missing sales periods are not assumed to be
+    zero because product availability is not yet known.
+    """
+
+    required = {
+        "order_id",
+        "product_id",
+        "product_category",
+        "order_date",
+        "quantity",
+        "product_location",
+        "unit_price",
+        "order_status",
+    }
+
+    if period not in {"monthly", "weekly"}:
+        raise ValueError("period must be either 'monthly' or 'weekly'.")
+
+    work = clean_dataframe(read_csv_file(csv_path))
+
+    missing = sorted(required - set(work.columns))
+    if missing:
+        raise ValueError(
+            f"sales_history.csv missing required columns: {missing}"
+        )
+
+    original_rows = len(work)
+
+    # Clean and validate values.
+    work["order_date"] = pd.to_datetime(
+        work["order_date"], errors="coerce"
+    )
+    work["quantity"] = pd.to_numeric(
+        work["quantity"], errors="coerce"
+    )
+    work["unit_price"] = pd.to_numeric(
+        work["unit_price"], errors="coerce"
+    )
+
+    for column in [
+        "product_id",
+        "product_category",
+        "product_location",
+        "order_status",
+    ]:
+        work[column] = work[column].astype("string").str.strip()
+
+    work = work.dropna(
+        subset=[
+            "order_id",
+            "product_id",
+            "product_category",
+            "product_location",
+            "order_date",
+            "quantity",
+            "order_status",
+        ]
+    )
+
+    work = work[
+        (work["product_id"] != "")
+        & (work["quantity"] > 0)
+    ].copy()
+
+    # Only completed or delivered orders count as sales.
+    statuses = work["order_status"].str.lower()
+
+    completed = work[
+        statuses.isin({"completed", "complete", "delivered"})
+    ].copy()
+
+    if completed.empty:
+        raise ValueError(
+            "No completed sales rows found. Check order_status values."
+        )
+
+    # Create monthly or weekly periods.
+    if period == "monthly":
+        completed["period_start"] = (
+            completed["order_date"]
+            .dt.to_period("M")
+            .dt.to_timestamp()
+        )
+    else:
+        completed["period_start"] = (
+            completed["order_date"]
+            .dt.to_period("W-SUN")
+            .dt.start_time
+        )
+
+    # Aggregate sales independently for every product.
+    group_columns = [
+        "product_id",
+        "product_category",
+        "product_location",
+        "period_start",
+    ]
+
+    grouped = (
+        completed.groupby(group_columns, dropna=False)
+        .agg(
+            units_sold=("quantity", "sum"),
+            completed_orders=("order_id", "nunique"),
+            average_selling_price=("unit_price", "mean"),
+        )
+        .reset_index()
+        .sort_values(group_columns)
+    )
+
+    # Get the previous observed sales quantity for the same product.
+    product_groups = [
+        "product_id",
+        "product_category",
+        "product_location",
+    ]
+
+    grouped["historical_units_sold"] = (
+        grouped.groupby(product_groups)["units_sold"].shift(1)
+    )
+
+    # First observed period has no previous sales history.
+    grouped = grouped.dropna(
+        subset=["historical_units_sold"]
+    ).copy()
+
+    if grouped.empty:
+        raise ValueError(
+            "Not enough historical periods per product. "
+            "Each product needs sales in at least two different periods."
+        )
+
+    grouped["observation_date"] = grouped["period_start"]
+    grouped["month"] = grouped["period_start"].dt.month
+    grouped["season"] = grouped["month"].map(SEASONS)
+
+    # These engagement values are unavailable in the sales CSV.
+    grouped["product_views"] = np.nan
+    grouped["buyer_enquiries"] = np.nan
+
+    grouped["is_festival_period"] = np.nan
+    grouped["festival_name"] = "Unknown"
+    grouped["location"] = grouped["product_location"]
+    grouped["data_source"] = "real_completed_sales"
+
+    summary = {
+        "dataset_type": "real",
+        "period": period,
+        "original_rows": int(original_rows),
+        "completed_rows": int(len(completed)),
+        "excluded_rows": int(original_rows - len(completed)),
+        "unique_products": int(completed["product_id"].nunique()),
+        "observations": int(len(grouped)),
+        "training_date_range": None,
+        "testing_date_range": None,
+        "note": (
+            "Sales are grouped by product and period. "
+            "Missing sales periods are not assumed to be zero."
+        ),
+    }
+
+    return grouped, summary
+
+
+
+
+def chronological_split(
+    frame: pd.DataFrame,
+    date_column: str = "observation_date",
+    test_fraction: float = 0.20,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Split data chronologically using unique dates.
+
+    All observations from the same date remain in either
+    training or testing, never both.
+    """
+
+    if not 0 < test_fraction < 1:
+        raise ValueError("test_fraction must be between 0 and 1.")
+
+    work = frame.copy()
+
+    work[date_column] = pd.to_datetime(
+        work[date_column], errors="coerce"
+    )
+
+    work = (
+        work.dropna(subset=[date_column])
+        .sort_values(date_column)
+        .reset_index(drop=True)
+    )
+
+    if len(work) < 10:
+        raise ValueError(
+            f"Insufficient chronological data: {len(work)} observations. "
+            "At least 10 are required."
+        )
+
+    unique_dates = sorted(work[date_column].unique())
+
+    if len(unique_dates) < 2:
+        raise ValueError(
+            "At least two different dates are required "
+            "for chronological train/test splitting."
+        )
+
+    test_date_count = max(
+        1,
+        int(np.ceil(len(unique_dates) * test_fraction))
+    )
+
+    test_start_date = unique_dates[-test_date_count]
+
+    train = work[
+        work[date_column] < test_start_date
+    ].copy()
+
+    test = work[
+        work[date_column] >= test_start_date
+    ].copy()
+
+    if train.empty or test.empty:
+        raise ValueError(
+            "Insufficient data for chronological train/test split."
+        )
+
+    assert train[date_column].max() < test[date_column].min()
+
+    return train, test
+
 
 
 def split_features_and_target(
