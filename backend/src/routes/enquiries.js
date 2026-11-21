@@ -87,11 +87,11 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Find numeric user ID using Supabase Auth UUID
-    const { data: user, error: userError } = await req.db
-      .from("users")
-      .select("user_id")
-      .eq("auth_user_id", req.user.id)
+    // User IDs match Supabase Auth UUIDs directly.
+    const { data: profile, error: userError } = await req.db
+      .from("profiles")
+      .select("id")
+      .eq("id", req.user.id)
       .maybeSingle();
 
     if (userError) {
@@ -100,13 +100,13 @@ router.post("/", async (req, res) => {
       });
     }
 
-    if (!user) {
+    if (!profile) {
       return res.status(404).json({
-        error: "User profile not found in public.users"
+        error: "User profile not found in public.profiles"
       });
     }
 
-    // Insert enquiry with numeric buyer ID
+    // Store the Auth UUID as the enquiry's buyer ID.
     const { data, error } = await req.db
       .from("enquiries")
       .insert({

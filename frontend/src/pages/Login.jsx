@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -22,8 +22,23 @@ export default function Login({ role: requestedRole }) {
   const { lang } = useLanguage();
   const copy = loginTranslations[lang] || loginTranslations.en;
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, role, isLoading: authLoading, authError, refreshAuth, signOut } = useAuth();
+  const {
+    isAuthenticated,
+    role,
+    requestedRole: accountRequestedRole,
+    fullName: accountFullName,
+    studioName: accountStudioName,
+    isLoading: authLoading,
+    authError,
+    refreshAuth
+  } = useAuth();
   const requestedRedirect = searchParams.get('redirect');
+  const isArtisanRegistrationCallback = requestedRole === 'artisan'
+    && searchParams.get('register') === 'artisan';
+  const shouldResumeArtisanRegistration = isArtisanRegistrationCallback
+    && role !== 'artisan'
+    && accountRequestedRole === 'artisan';
+  const registrationStarted = useRef(false);
   const isAllowedArtisanRedirect = allowedArtisanRedirects.some((pattern) => (
     pattern.test(requestedRedirect || '')
   ));
@@ -41,17 +56,76 @@ export default function Login({ role: requestedRole }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const navigateForRole = (accountRole) => {
-    navigate(accountRole === requestedRole
+  const navigateForRole = (accountRole) => navigate(
+    accountRole === requestedRole
       ? redirectTo
-      : (accountRole === 'artisan' ? '/seller/dashboard' : '/'), { replace: true });
+      : (accountRole === 'artisan' ? '/seller/dashboard' : '/'),
+    { replace: true }
+  );
+
+  useEffect(() => {
+    if (authLoading || !isAuthenticated || shouldResumeArtisanRegistration) return;
+
+    if (role === requestedRole) {
+      navigate(redirectTo, { replace: true });
+    } else if (role) {
+      setMessage(`This account is registered as a ${role}; it does not have ${requestedRole} portal access.`);
+    }
+  }, [
+    authLoading,
+    isAuthenticated,
+    role,
+    requestedRole,
+    redirectTo,
+    navigate,
+    isArtisanRegistrationCallback,
+    shouldResumeArtisanRegistration
+  ]);
+
+  const completeArtisanRegistration = async (name, studio, session = null) => {
+    const fullNameValue = name.trim();
+    const studioNameValue = studio.trim();
+    if (!fullNameValue || !studioNameValue) {
+      throw new Error('Your name and studio or artisan name are required to complete registration.');
+    }
+
+    const { error } = await supabase.rpc('register_artisan_account', {
+      p_full_name: fullNameValue,
+      p_studio_name: studioNameValue
+    });
+    if (error) throw error;
+
+    const account = await refreshAuth(session);
+    if (!account.isAuthenticated || account.role !== 'artisan') {
+      throw new Error('Artisan registration could not be verified. Please try again.');
+    }
+    navigateForRole(account.role);
   };
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated && role === requestedRole) {
-      navigate(redirectTo, { replace: true });
-    }
-  }, [authLoading, isAuthenticated, role, requestedRole, redirectTo, navigate]);
+    if (
+      !shouldResumeArtisanRegistration
+      || authLoading
+      || !isAuthenticated
+      || registrationStarted.current
+    ) return;
+
+    registrationStarted.current = true;
+    setLoading(true);
+    setMessage('');
+    completeArtisanRegistration(accountFullName || '', accountStudioName || '')
+      .catch((error) => {
+        setMessage(error.message || 'Unable to complete artisan registration. Please try again.');
+      })
+      .finally(() => setLoading(false));
+  }, [
+    shouldResumeArtisanRegistration,
+    authLoading,
+    isAuthenticated,
+    accountRequestedRole,
+    accountFullName,
+    accountStudioName
+  ]);
 
   const completeSignIn = async (session) => {
     const account = await refreshAuth(session);
@@ -59,10 +133,7 @@ export default function Login({ role: requestedRole }) {
       throw new Error('No active session was returned. Please try signing in again.');
     }
     if (account.role !== requestedRole) {
-      await signOut();
-      setMessage(requestedRole === 'artisan' && isSignup && account.requestedRole === 'artisan'
-        ? 'Registration received. Artisan access is pending review; your account remains a buyer account until approved.'
-        : `This account is registered as a ${account.role}; it does not have ${requestedRole} portal access.`);
+      setMessage(`This account is registered as a ${account.role}; it does not have ${requestedRole} portal access.`);
       return;
     }
     navigateForRole(account.role);
@@ -113,11 +184,19 @@ export default function Login({ role: requestedRole }) {
           throw new Error('Enter your studio or artisan name to register.');
         }
 
+        const emailCallbackUrl = new URL(`/${requestedRole}/login`, window.location.origin);
+        if (requestedRole === 'artisan') {
+          emailCallbackUrl.searchParams.set('register', 'artisan');
+          if (isAllowedArtisanRedirect) {
+            emailCallbackUrl.searchParams.set('redirect', requestedRedirect);
+          }
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/${requestedRole}/login`,
+            emailRedirectTo: emailCallbackUrl.toString(),
             data: {
               full_name: fullName.trim(),
               ...(requestedRole === 'artisan' && {
@@ -130,10 +209,14 @@ export default function Login({ role: requestedRole }) {
         if (error) throw error;
 
         if (data.session) {
-          await completeSignIn(data.session);
+          if (requestedRole === 'artisan') {
+            await completeArtisanRegistration(fullName, studioName, data.session);
+          } else {
+            await completeSignIn(data.session);
+          }
         } else {
           setMessage(requestedRole === 'artisan'
-            ? 'Registration received. Confirm your email, then contact KalaSetu support to have your artisan access reviewed. Artisan access is granted after approval.'
+            ? 'Registration received. Confirm your email to activate your artisan role and studio profile; then you can open the seller dashboard.'
             : 'Account created. Check your email to confirm your address, then sign in.');
           setEmailAction('login');
         }
@@ -166,13 +249,13 @@ export default function Login({ role: requestedRole }) {
           <p>
             {isSignup
               ? requestedRole === 'artisan'
-                ? copy.registerInfo
+                ? 'Create an account with your studio details. Your seller dashboard is available after registration and any required email confirmation.'
                 : 'Create an account to save your KalaSetu buyer details.'
               : requestedRole === 'artisan' ? copy.subtitle : copy.buyerSubtitle}
           </p>
         </div>
 
-        {isAuthenticated && role !== requestedRole && (
+        {isAuthenticated && role && role !== requestedRole && (
           <div className="auth-message" role="status">
             You are signed in as a {role}. Sign out before using another portal account.
           </div>
@@ -197,13 +280,7 @@ export default function Login({ role: requestedRole }) {
 
         {requestedRole === 'artisan' && !isSignup && (
           <div className="auth-message" role="note">
-            {copy.approved}
-          </div>
-        )}
-
-        {requestedRole === 'artisan' && isSignup && (
-          <div className="auth-message" role="note">
-            {copy.review}
+            Sign in with your artisan account, or create an account to register your studio and access seller tools.
           </div>
         )}
 
@@ -222,12 +299,12 @@ export default function Login({ role: requestedRole }) {
             {isSignup && (
               <>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="signup-full-name">Your Name</label>
+                  <label className="form-label" htmlFor="signup-full-name">{copy.name}</label>
                   <input id="signup-full-name" type="text" required autoComplete="name" className="form-input" value={fullName} onChange={(event) => setFullName(event.target.value)} />
                 </div>
                 {requestedRole === 'artisan' && (
                   <div className="form-group">
-                    <label className="form-label" htmlFor="signup-studio-name">Studio / Artisan Name</label>
+                    <label className="form-label" htmlFor="signup-studio-name">{copy.studio}</label>
                     <input id="signup-studio-name" type="text" required autoComplete="organization" className="form-input" value={studioName} onChange={(event) => setStudioName(event.target.value)} />
                   </div>
                 )}
@@ -263,6 +340,3 @@ export default function Login({ role: requestedRole }) {
     </div>
   );
 }
-
-
-

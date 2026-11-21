@@ -51,6 +51,8 @@ export default function AddProduct() {
   const touchedRef = useRef(new Set());
   const translationsRef = useRef(null);
   const translationSourceRef = useRef('');
+  const autoFillTimerRef = useRef(null);
+  const generationRequestRef = useRef(0);
 
   const cf = t?.catalogForm || {};
   const a = t?.addCraft || {};
@@ -93,6 +95,7 @@ export default function AddProduct() {
   const [autoMode, setAutoMode] = useState(true);
   const [autoWorking, setAutoWorking] = useState(false);
   const [autoCount, setAutoCount] = useState(null);
+  const [autoFeedbackSource, setAutoFeedbackSource] = useState(null);
   const [aiFilled, setAiFilled] = useState({});
 
   // SUBMISSION STATE
@@ -111,7 +114,14 @@ export default function AddProduct() {
   const formError = errText(formErr);
 
   // MANUAL EDIT PROTECTION
+  const invalidatePendingAiGeneration = () => {
+    if (!loadingAi) return;
+    generationRequestRef.current += 1;
+    setLoadingAi(false);
+  };
+
   const editField = (field, setter) => (value) => {
+    invalidatePendingAiGeneration();
     touchedRef.current.add(field);
 
     translationsRef.current = null;
@@ -207,16 +217,22 @@ export default function AddProduct() {
 
   // GEMINI CATALOG GENERATION
   const generateCatalogWithAI = async ({ applyFields = true } = {}) => {
-    if (description.trim().length < MIN_STORY_LENGTH) {
-      throw new Error(
-        af.writeFirst || 'Please enter a longer craft story first.'
-      );
+    const requestId = ++generationRequestRef.current;
+    if (autoFillTimerRef.current) {
+      clearTimeout(autoFillTimerRef.current);
+      autoFillTimerRef.current = null;
+      setAutoWorking(false);
     }
-
     setLoadingAi(true);
     setFormErr(null);
 
     try {
+      if (description.trim().length < MIN_STORY_LENGTH) {
+        throw new Error(
+          af.writeFirst || 'Please enter a longer craft story first.'
+        );
+      }
+
       const response = await api.generateSmartCatalog({
         description: description.trim(),
         story: description.trim(),
@@ -227,6 +243,8 @@ export default function AddProduct() {
         materials: materials.trim(),
         language: lang
       });
+
+      if (requestId !== generationRequestRef.current) return null;
 
       if (!response?.success) {
         throw new Error(
@@ -244,32 +262,36 @@ export default function AddProduct() {
       let finalRegion = region.trim();
       let finalMaterials = materials.trim();
       let finalTags = tags.trim();
+      let filledFieldCount = 0;
 
       if (applyFields) {
         if (!touchedRef.current.has('title') && catalog.title) {
           finalTitle = String(catalog.title);
           setTitle(finalTitle);
+          filledFieldCount += 1;
           setAiFilled((previous) => ({
             ...previous,
-            title: true
+            title: 'ai'
           }));
         }
 
         if (!touchedRef.current.has('category') && catalog.category) {
           finalCategory = String(catalog.category);
           setCraftCategory(finalCategory);
+          filledFieldCount += 1;
           setAiFilled((previous) => ({
             ...previous,
-            category: true
+            category: 'ai'
           }));
         }
 
         if (!touchedRef.current.has('region') && catalog.region) {
           finalRegion = String(catalog.region);
           setRegion(finalRegion);
+          filledFieldCount += 1;
           setAiFilled((previous) => ({
             ...previous,
-            region: true
+            region: 'ai'
           }));
         }
 
@@ -279,9 +301,10 @@ export default function AddProduct() {
         ) {
           finalMaterials = catalog.materials.join(', ');
           setMaterials(finalMaterials);
+          if (catalog.materials.length > 0) filledFieldCount += 1;
           setAiFilled((previous) => ({
             ...previous,
-            materials: true
+            materials: 'ai'
           }));
         }
 
@@ -291,9 +314,10 @@ export default function AddProduct() {
           if (Array.isArray(generatedTags)) {
             finalTags = generatedTags.join(', ');
             setTags(finalTags);
+            if (generatedTags.length > 0) filledFieldCount += 1;
             setAiFilled((previous) => ({
               ...previous,
-              tags: true
+              tags: 'ai'
             }));
           }
         }
@@ -317,23 +341,32 @@ export default function AddProduct() {
       translationsRef.current = generatedTranslations;
       translationSourceRef.current = getTranslationSourceKey(finalProduct);
 
-      setAutoCount(
-        Object.values(catalog).filter(
-          (value) => value !== null && value !== undefined
-        ).length
-      );
+      if (applyFields) {
+        setAutoCount(filledFieldCount);
+        setAutoFeedbackSource('ai');
+      }
 
       return {
         catalog,
         translations: generatedTranslations
       };
+    } catch (error) {
+      const generationError = new Error(
+        `AI catalog generation failed: ${error.message || 'Unknown error.'}`
+      );
+      if (requestId === generationRequestRef.current) {
+        setFormErr({ raw: generationError.message });
+      }
+      throw generationError;
     } finally {
-      setLoadingAi(false);
+      if (requestId === generationRequestRef.current) {
+        setLoadingAi(false);
+      }
     }
   };
 
   // LOCAL AUTOFILL WHILE TYPING
-  const runAutofill = ({ force = false, silent = false } = {}) => {
+  const runAutofill = ({ force = false } = {}) => {
     const result = analyzeStory(description, {
       lang,
       t,
@@ -349,7 +382,7 @@ export default function AddProduct() {
       if (touchedRef.current.has(field)) return;
 
       fieldSetters[field]?.(value);
-      applied[field] = true;
+      applied[field] = 'suggestion';
     });
 
     setAiFilled((previous) => (
@@ -358,9 +391,8 @@ export default function AddProduct() {
 
     const count = Object.keys(applied).length;
 
-    if (!silent || count > 0) {
-      setAutoCount(count);
-    }
+    setAutoCount(count > 0 ? count : null);
+    setAutoFeedbackSource(count > 0 ? 'suggestions' : null);
   };
 
   useEffect(() => {
@@ -368,18 +400,27 @@ export default function AddProduct() {
 
     if (description.trim().length < MIN_STORY_LENGTH) {
       setAutoWorking(false);
+      setAutoCount(null);
+      setAutoFeedbackSource(null);
       return undefined;
     }
 
+    setAutoCount(null);
+    setAutoFeedbackSource(null);
     setAutoWorking(true);
 
     const timer = setTimeout(() => {
-      runAutofill({ silent: true });
+      autoFillTimerRef.current = null;
+      runAutofill();
       setAutoWorking(false);
     }, 900);
+    autoFillTimerRef.current = timer;
 
     return () => {
       clearTimeout(timer);
+      if (autoFillTimerRef.current === timer) {
+        autoFillTimerRef.current = null;
+      }
       setAutoWorking(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -648,16 +689,16 @@ export default function AddProduct() {
 
   // GEMINI BUTTON
   const handleAutofillClick = async () => {
-    setFormErr(null);
+    const generation = generateCatalogWithAI({ applyFields: true });
+    const requestId = generationRequestRef.current;
 
     try {
-      await generateCatalogWithAI({ applyFields: true });
+      await generation;
     } catch (error) {
       console.error('AI catalog generation failed:', error);
-
-      setFormErr({
-        raw: error.message || 'AI catalog generation failed.'
-      });
+      if (requestId === generationRequestRef.current) {
+        setFormErr({ raw: error.message || 'AI catalog generation failed.' });
+      }
     }
   };
 
@@ -721,6 +762,7 @@ export default function AddProduct() {
           applyFields: false
         });
 
+        if (!aiResult) return;
         translations = aiResult.translations;
       }
 
@@ -840,6 +882,7 @@ export default function AddProduct() {
 
     setAiFilled({});
     setAutoCount(null);
+    setAutoFeedbackSource(null);
     setSaveStatus(null);
     setFormErr(null);
     setEnhErr(null);
@@ -970,9 +1013,14 @@ export default function AddProduct() {
         <div className="ai-feedback-banner">
           <Sparkles size={16} />
           <span>
-            {autoCount > 0
-              ? fill(af.done, { n: autoCount })
-              : af.nothing}
+            {autoFeedbackSource === 'suggestions'
+              ? fill(
+                  af.suggestions || 'Local suggestions filled {n} fields from your story. Review them before using.',
+                  { n: autoCount }
+                )
+              : autoCount > 0
+                ? fill(af.done, { n: autoCount })
+                : af.nothing}
           </span>
         </div>
       )}
@@ -1020,7 +1068,10 @@ export default function AddProduct() {
                   label={a.storyLabel}
                   value={description}
                   onChange={(value) => {
+                    invalidatePendingAiGeneration();
                     setDescription(value);
+                    setAutoCount(null);
+                    setAutoFeedbackSource(null);
                     translationsRef.current = null;
                     translationSourceRef.current = '';
                   }}

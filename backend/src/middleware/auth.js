@@ -47,18 +47,28 @@ export async function requireAuth(req, res, next) {
 
 export async function requireArtisan(req, res, next) {
   try {
-    const { data, error } = await req.db
+    const { data: profile, error } = await req.db
       .from('profiles')
       .select('role')
       .eq('id', req.user.id)
-      .single();
+      .maybeSingle();
 
-    if (error || data?.role !== 'artisan') {
+    if (error) {
+      console.error('Unable to verify KalaSetu profile:', error.message);
+      return res.status(500).json({ error: 'Unable to verify KalaSetu role.' });
+    }
+
+    if (!profile) {
+      return res.status(404).json({ error: 'No KalaSetu profile is linked to this account.' });
+    }
+
+    if (profile.role !== 'artisan') {
       return res.status(403).json({ error: 'Artisan access required.' });
     }
 
     return next();
   } catch (error) {
+    console.error('Unable to verify KalaSetu role:', error.message);
     return res.status(500).json({ error: error.message });
   }
 }
