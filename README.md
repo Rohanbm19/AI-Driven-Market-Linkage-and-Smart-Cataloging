@@ -17,9 +17,10 @@ backend/                  Express API (ES modules)
     image_enhancer/           FastAPI + OpenCV image enhancement service
 supabase/
     config.toml              Supabase CLI project configuration
-    migrations/              Three basic table migrations, applied in filename order
+    migrations/              Database migrations, applied in filename order
     seed.sql                 Sample artisan and product data
     functions/               Optional Supabase Edge Functions
+ml/                          Model training module; live demand inference is served by the backend
 ```
 
 ## Requirements
@@ -42,7 +43,11 @@ npx supabase db push
 
 To load the sample artisans and products, run `supabase/seed.sql` in the Supabase Dashboard SQL Editor after the migrations. The migrations create `artisans`, `products`, and `enquiries`; products link to artisans, and enquiries can link to products.
 
-For the currently configured Supabase project, the existing `artisans` and `products` tables are empty and use an older schema. In the Supabase Dashboard SQL Editor, run `supabase/quick_setup.sql` first, then run `supabase/seed.sql`. The setup script drops and recreates those empty tables, so do not run it if you have added data you need to keep.
+**How Market Insights works:** The frontend requests summaries from the backend, which reads Supabase product listings, enquiries, and recorded product views. Database views calculate category prices and compare recent buyer activity with the previous 30 days. ML CSVs are used only to train models, not for live insights.
+
+Apply `supabase/migrations/202611210002_market_insights_live_data.sql` after the products and enquiries tables exist. It creates the product-view table and summary views. Use `npx supabase db push` after linking the project, or run the migration file in the Supabase Dashboard SQL Editor. Product-view counts start after migration; existing listings and enquiries are analyzed immediately.
+
+`supabase/quick_setup.sql` is a destructive development shortcut that drops and recreates tables. Do not run it against a database containing data; it can delete products, artisans, and enquiries. Prefer applying migrations to an existing project. Run `supabase/seed.sql` only when you intentionally want to add its sample records.
 
 If these migrations have already been applied to a database, make schema changes in a new migration rather than editing an applied migration.
 The image enhancement workflow uses `products.original_image_url` to retain the original photo alongside the selected listing image. Apply the new migration with `npx supabase db push` before publishing enhanced images to Supabase.
@@ -108,13 +113,42 @@ Copy `frontend/.env.example` to `frontend/.env` and set the Supabase project URL
 npm run dev
 ```
 
+### ML Training and Live Demand Estimates
+
+The CSV datasets under `ml/datasets/` are training/evaluation samples; they are not imported into Supabase. Market Insights continues to calculate its listings, prices, views, and enquiries directly from live database records. Its optional **Estimate demand** control sends the selected category's live views and enquiries to the trained demand model through `GET /api/market/ml/demand?category=<database-category>`.
+
+The API reads the category and its recent activity from Supabase, then invokes the model in `ml/`. The demand model currently supports pottery, woodwork, textiles, jewellery, baskets, and paintings; unsupported live categories return HTTP 422 rather than a misleading estimate. Training remains sample-based for now. KalaSetu does not yet store completed sales history, so the model's `historical_units_sold` input is explicitly set to zero; treat this output as exploratory, not a production forecast. The price and customer-segmentation models remain command-line tools until the app has reliable cost and purchase-history inputs.
+
+In PowerShell, from the repository root:
+
+```powershell
+cd ml
+.\.venv\Scripts\Activate.ps1
+python train.py
+python predict.py trends
+```
+
+If the ML virtual environment has not been created, set it up first:
+
+```powershell
+cd ml
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python train.py
+```
+
+Training saves model artifacts in `ml/models/` and evaluation reports in `ml/outputs/`. The backend uses `ml/.venv` when it exists; create it, install `ml/requirements.txt`, and run `python train.py` before using the live demand estimate. See [ml/README.md](ml/README.md) for setup and offline prediction commands.
+
 ## API Endpoints
 
 - `GET`, `POST`, `PUT`, `DELETE /api/products`
 - `GET`, `POST`, `PUT /api/artisans`
 - `GET`, `POST`, `PATCH /api/enquiries`
 - `POST /api/ai/catalog`, `/api/ai/chat`, `/api/ai/enhance-image`, `/api/ai/pricing`
-- `GET /api/market/trends`
+- `GET /api/market/insights`, `/api/market/trends`
+- `GET /api/market/ml/demand?category=<database-category>`
+- `POST /api/market/products/:id/view`
 - `POST http://localhost:8000/api/enhance` (FastAPI image service)
 
 ### Image enhancement smoke test

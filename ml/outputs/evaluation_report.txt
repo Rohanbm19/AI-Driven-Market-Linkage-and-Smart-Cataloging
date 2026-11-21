@@ -1,0 +1,46 @@
+KalaSetu ML evaluation report
+Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+
+Demand train
+  mae: 1.8998
+  rmse: 2.4317
+  r2: 0.9468
+  n_samples: 576
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+Demand test
+  mae: 3.9533
+  rmse: 5.0482
+  r2: 0.7638
+  n_samples: 144
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+
+Price train
+  mae: 64.8128
+  rmse: 139.4606
+  r2: 0.9972
+  n_samples: 336
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+Price test
+  mae: 152.3202
+  rmse: 300.2257
+  r2: 0.9865
+  n_samples: 84
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+
+Segmentation train
+  n_clusters_found: 4
+  n_samples: 160
+  cluster_sizes: {'0': 32, '1': 49, '2': 44, '3': 35}
+  silhouette: 0.1872
+  davies_bouldin: 1.9619
+  note: Silhouette is closer to 1 when clusters separate well. Davies-Bouldin is lower when clusters are compact and apart. These scores describe this sample only.
+Segmentation test
+  n_clusters_found: 4
+  n_samples: 40
+  cluster_sizes: {'0': 8, '1': 7, '2': 16, '3': 9}
+  silhouette: 0.1541
+  davies_bouldin: 1.9491
+  note: Silhouette is closer to 1 when clusters separate well. Davies-Bouldin is lower when clusters are compact and apart. These scores describe this sample only.
+
+Trending categories: Textiles, Wooden Crafts, Paintings, Jewellery
+Decreasing categories: Baskets

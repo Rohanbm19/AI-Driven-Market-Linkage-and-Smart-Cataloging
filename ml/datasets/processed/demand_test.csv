@@ -1,0 +1,145 @@
+historical_units_sold,product_views,buyer_enquiries,month,is_festival_period,product_category,location,season,festival_name,target
+22,296,25,2,0,Baskets,Jaipur,Winter,,35
+11,607,29,4,1,Jewellery,Jaipur,Summer,Ugadi / Vishu,40
+31,232,2,12,1,Pottery,Kutch,Winter,Christmas,30
+14,109,12,4,1,Pottery,Madurai,Summer,Ugadi / Vishu,27
+17,615,0,5,0,Textiles,Bankura,Summer,,24
+25,179,37,6,0,Paintings,Mysuru,Monsoon,,31
+26,545,22,4,1,Textiles,Bankura,Summer,Ugadi / Vishu,43
+9,467,14,2,0,Wooden Crafts,Mysuru,Winter,,23
+7,777,36,12,1,Baskets,Channapatna,Winter,Christmas,47
+21,754,28,1,1,Pottery,Jaipur,Winter,Pongal / Makar Sankranti,45
+11,427,34,11,1,Baskets,Moradabad,Autumn,Diwali,38
+22,174,39,9,1,Baskets,Madurai,Monsoon,Ganesh Chaturthi / Onam,40
+34,262,19,6,0,Textiles,Kolkata,Monsoon,,42
+21,449,26,2,0,Paintings,Varanasi,Winter,,36
+7,81,9,2,0,Baskets,Jaipur,Winter,,11
+16,463,28,3,1,Baskets,Madurai,Summer,Holi,29
+1,142,6,1,1,Jewellery,Moradabad,Winter,Pongal / Makar Sankranti,27
+44,537,26,1,1,Textiles,Srinagar,Winter,Pongal / Makar Sankranti,47
+9,754,16,9,1,Wooden Crafts,Kolkata,Monsoon,Ganesh Chaturthi / Onam,33
+36,98,22,2,0,Textiles,Bankura,Winter,,32
+8,191,25,3,1,Jewellery,Moradabad,Summer,Holi,29
+22,562,1,12,1,Wooden Crafts,Srinagar,Winter,Christmas,38
+29,291,25,10,1,Textiles,Bankura,Autumn,Navratri / Durga Puja,55
+19,537,16,1,1,Jewellery,Moradabad,Winter,Pongal / Makar Sankranti,36
+30,581,2,5,0,Baskets,Madurai,Summer,,20
+10,96,17,1,1,Paintings,Bankura,Winter,Pongal / Makar Sankranti,27
+5,886,14,2,0,Jewellery,Kutch,Winter,,22
+21,425,7,6,0,Pottery,Jaipur,Monsoon,,21
+26,699,32,2,0,Pottery,Jaipur,Winter,,42
+15,759,8,8,1,Wooden Crafts,Bankura,Monsoon,Raksha Bandhan / Independence Day,22
+23,651,2,6,0,Textiles,Srinagar,Monsoon,,24
+28,779,8,2,0,Textiles,Bankura,Winter,,32
+32,749,18,5,0,Pottery,Moradabad,Summer,,33
+32,464,19,5,0,Textiles,Mysuru,Summer,,33
+15,669,4,7,0,Wooden Crafts,Varanasi,Monsoon,,21
+28,888,0,7,0,Pottery,Moradabad,Monsoon,,19
+20,350,17,11,1,Jewellery,Moradabad,Autumn,Diwali,41
+5,25,15,6,0,Paintings,Kolkata,Monsoon,,10
+32,219,7,5,0,Wooden Crafts,Bankura,Summer,,26
+23,616,36,2,0,Wooden Crafts,Bankura,Winter,,42
+23,499,17,11,1,Pottery,Jaipur,Autumn,Diwali,39
+36,103,22,6,0,Textiles,Mysuru,Monsoon,,32
+25,489,1,4,1,Wooden Crafts,Kolkata,Summer,Ugadi / Vishu,24
+22,582,21,8,1,Baskets,Channapatna,Monsoon,Raksha Bandhan / Independence Day,44
+32,64,0,8,1,Jewellery,Moradabad,Monsoon,Raksha Bandhan / Independence Day,20
+8,112,19,12,1,Pottery,Channapatna,Winter,Christmas,31
+22,588,33,10,1,Pottery,Channapatna,Autumn,Navratri / Durga Puja,58
+28,882,13,3,1,Textiles,Srinagar,Summer,Holi,39
+31,150,11,5,0,Textiles,Varanasi,Summer,,28
+11,748,12,8,1,Paintings,Srinagar,Monsoon,Raksha Bandhan / Independence Day,28
+25,894,4,10,1,Pottery,Channapatna,Autumn,Navratri / Durga Puja,39
+26,59,4,4,1,Pottery,Channapatna,Summer,Ugadi / Vishu,30
+1,568,39,6,0,Paintings,Srinagar,Monsoon,,18
+13,152,28,10,1,Textiles,Varanasi,Autumn,Navratri / Durga Puja,38
+10,854,11,6,0,Paintings,Varanasi,Monsoon,,25
+22,482,17,9,1,Baskets,Channapatna,Monsoon,Ganesh Chaturthi / Onam,35
+20,38,36,2,0,Wooden Crafts,Varanasi,Winter,,36
+14,809,30,11,1,Paintings,Mysuru,Autumn,Diwali,44
+19,491,38,10,1,Pottery,Kutch,Autumn,Navratri / Durga Puja,42
+1,570,8,6,0,Paintings,Kolkata,Monsoon,,12
+13,597,27,4,1,Baskets,Channapatna,Summer,Ugadi / Vishu,40
+15,186,27,10,1,Baskets,Jaipur,Autumn,Navratri / Durga Puja,37
+12,790,21,9,1,Pottery,Madurai,Monsoon,Ganesh Chaturthi / Onam,35
+31,194,38,4,1,Textiles,Bankura,Summer,Ugadi / Vishu,54
+11,479,18,6,0,Baskets,Jaipur,Monsoon,,23
+16,478,24,4,1,Wooden Crafts,Srinagar,Summer,Ugadi / Vishu,35
+1,251,13,4,1,Pottery,Kutch,Summer,Ugadi / Vishu,31
+1,32,3,6,0,Paintings,Mysuru,Monsoon,,0
+14,173,20,4,1,Paintings,Srinagar,Summer,Ugadi / Vishu,29
+9,48,10,10,1,Jewellery,Moradabad,Autumn,Navratri / Durga Puja,27
+1,240,1,10,1,Jewellery,Madurai,Autumn,Navratri / Durga Puja,12
+25,405,33,5,0,Pottery,Madurai,Summer,,35
+31,626,3,11,1,Textiles,Varanasi,Autumn,Diwali,45
+3,479,17,12,1,Baskets,Channapatna,Winter,Christmas,34
+22,29,30,5,0,Baskets,Madurai,Summer,,31
+12,29,23,2,0,Jewellery,Moradabad,Winter,,22
+9,658,34,12,1,Paintings,Varanasi,Winter,Christmas,37
+29,209,18,5,0,Jewellery,Kutch,Summer,,22
+17,30,12,4,1,Pottery,Kutch,Summer,Ugadi / Vishu,29
+2,234,18,9,1,Jewellery,Madurai,Monsoon,Ganesh Chaturthi / Onam,23
+4,728,0,1,1,Paintings,Bankura,Winter,Pongal / Makar Sankranti,28
+27,738,22,8,1,Pottery,Moradabad,Monsoon,Raksha Bandhan / Independence Day,41
+13,819,39,11,1,Pottery,Channapatna,Autumn,Diwali,57
+16,765,34,8,1,Paintings,Kolkata,Monsoon,Raksha Bandhan / Independence Day,38
+8,655,12,11,1,Wooden Crafts,Varanasi,Autumn,Diwali,38
+3,592,36,4,1,Paintings,Bankura,Summer,Ugadi / Vishu,36
+32,714,3,11,1,Textiles,Kolkata,Autumn,Diwali,31
+31,488,29,7,0,Textiles,Varanasi,Monsoon,,42
+18,403,19,3,1,Wooden Crafts,Srinagar,Summer,Holi,29
+38,78,28,1,1,Pottery,Jaipur,Winter,Pongal / Makar Sankranti,43
+12,379,30,6,0,Pottery,Kutch,Monsoon,,26
+18,343,23,10,1,Wooden Crafts,Mysuru,Autumn,Navratri / Durga Puja,38
+12,237,37,9,1,Paintings,Kolkata,Monsoon,Ganesh Chaturthi / Onam,31
+13,388,4,4,1,Jewellery,Madurai,Summer,Ugadi / Vishu,20
+22,725,17,7,0,Pottery,Kutch,Monsoon,,30
+1,114,18,10,1,Jewellery,Jaipur,Autumn,Navratri / Durga Puja,24
+11,173,17,3,1,Baskets,Moradabad,Summer,Holi,31
+13,711,33,9,1,Jewellery,Channapatna,Monsoon,Ganesh Chaturthi / Onam,44
+10,691,7,11,1,Jewellery,Madurai,Autumn,Diwali,30
+5,440,23,11,1,Wooden Crafts,Kolkata,Autumn,Diwali,37
+18,728,7,8,1,Textiles,Varanasi,Monsoon,Raksha Bandhan / Independence Day,30
+33,750,9,7,0,Wooden Crafts,Mysuru,Monsoon,,30
+11,845,5,12,1,Paintings,Varanasi,Winter,Christmas,32
+38,867,30,8,1,Textiles,Varanasi,Monsoon,Raksha Bandhan / Independence Day,58
+4,233,34,8,1,Baskets,Madurai,Monsoon,Raksha Bandhan / Independence Day,39
+38,47,23,3,1,Textiles,Srinagar,Summer,Holi,48
+2,481,13,9,1,Wooden Crafts,Varanasi,Monsoon,Ganesh Chaturthi / Onam,35
+23,432,5,11,1,Wooden Crafts,Mysuru,Autumn,Diwali,31
+8,655,2,7,0,Paintings,Srinagar,Monsoon,,7
+30,205,34,2,0,Textiles,Srinagar,Winter,,51
+5,553,38,10,1,Baskets,Madurai,Autumn,Navratri / Durga Puja,38
+12,227,13,6,0,Pottery,Jaipur,Monsoon,,17
+32,534,37,12,1,Paintings,Bankura,Winter,Christmas,49
+31,491,19,6,0,Pottery,Jaipur,Monsoon,,33
+24,179,5,8,1,Baskets,Kutch,Monsoon,Raksha Bandhan / Independence Day,23
+38,537,10,2,0,Textiles,Srinagar,Winter,,35
+7,133,4,6,0,Paintings,Srinagar,Monsoon,,10
+25,727,3,11,1,Pottery,Jaipur,Autumn,Diwali,38
+27,60,3,12,1,Textiles,Kolkata,Winter,Christmas,32
+10,259,17,9,1,Pottery,Jaipur,Monsoon,Ganesh Chaturthi / Onam,30
+23,124,14,11,1,Textiles,Kolkata,Autumn,Diwali,43
+12,421,11,6,0,Jewellery,Madurai,Monsoon,,17
+21,787,30,4,1,Baskets,Channapatna,Summer,Ugadi / Vishu,50
+16,267,29,2,0,Jewellery,Kutch,Winter,,32
+20,613,29,4,1,Pottery,Kutch,Summer,Ugadi / Vishu,45
+1,593,10,2,0,Baskets,Jaipur,Winter,,28
+23,641,20,3,1,Baskets,Madurai,Summer,Holi,38
+1,692,24,2,0,Baskets,Channapatna,Winter,,31
+18,208,17,4,1,Pottery,Madurai,Summer,Ugadi / Vishu,34
+19,274,8,3,1,Pottery,Channapatna,Summer,Holi,25
+20,763,14,1,1,Wooden Crafts,Bankura,Winter,Pongal / Makar Sankranti,40
+25,603,37,6,0,Pottery,Jaipur,Monsoon,,35
+1,46,15,11,1,Baskets,Jaipur,Autumn,Diwali,25
+2,662,20,9,1,Pottery,Channapatna,Monsoon,Ganesh Chaturthi / Onam,30
+1,25,22,8,1,Paintings,Mysuru,Monsoon,Raksha Bandhan / Independence Day,18
+10,822,38,4,1,Jewellery,Jaipur,Summer,Ugadi / Vishu,48
+13,637,23,8,1,Baskets,Moradabad,Monsoon,Raksha Bandhan / Independence Day,37
+27,331,17,9,1,Pottery,Moradabad,Monsoon,Ganesh Chaturthi / Onam,32
+23,609,27,8,1,Wooden Crafts,Bankura,Monsoon,Raksha Bandhan / Independence Day,43
+2,290,22,6,0,Jewellery,Kutch,Monsoon,,19
+20,482,25,1,1,Textiles,Mysuru,Winter,Pongal / Makar Sankranti,39
+20,142,1,12,1,Wooden Crafts,Kolkata,Winter,Christmas,17
+20,396,16,8,1,Pottery,Channapatna,Monsoon,Raksha Bandhan / Independence Day,32
+17,858,27,3,1,Textiles,Varanasi,Summer,Holi,43

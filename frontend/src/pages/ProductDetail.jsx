@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -16,7 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { api, MOCK_PRODUCTS } from '../services/api.js';
+import { api } from '../services/api.js';
 import Badge from '../components/Badge.jsx';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import { useLanguage } from '../i18n/index.js';
@@ -27,11 +27,10 @@ export default function ProductDetail() {
   const { id } = useParams();
   const { id: userId, isArtisan, fullName, email } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
-  const [product, setProduct] = useState(
-    () => MOCK_PRODUCTS.find((p) => p.id === id) || MOCK_PRODUCTS[0]
-  );
+  const { lang } = useLanguage();
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const [showSlider, setShowSlider] = useState(false);
   const [enquirySent, setEnquirySent] = useState(false);
@@ -40,17 +39,24 @@ export default function ProductDetail() {
   const [buyerName, setBuyerName] = useState(fullName || '');
   const [buyerEmail, setBuyerEmail] = useState(email || '');
   const [deleting, setDeleting] = useState(false);
+  const trackedViews = useRef(new Set());
 
   useEffect(() => {
     let isMounted = true;
     async function loadItem() {
       try {
-        const item = await api.getProductById(id);
+        setLoading(true);
+        setLoadError('');
+        const item = await api.getProductById(id, lang);
         if (isMounted && item) {
           setProduct(item);
         }
       } catch (err) {
         console.error('Error fetching product by id:', err);
+        if (isMounted) {
+          setProduct(null);
+          setLoadError(err.message || 'Unable to load product details.');
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -59,7 +65,42 @@ export default function ProductDetail() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, lang]);
+
+  useEffect(() => {
+    if (
+      !product ||
+      trackedViews.current.has(id) ||
+      (isArtisan && product.artisan_id === userId)
+    ) {
+      return;
+    }
+
+    trackedViews.current.add(id);
+    api.trackProductView(id).catch((error) => {
+      trackedViews.current.delete(id);
+      console.warn('Could not record product view:', error.message);
+    });
+  }, [id, product, isArtisan, userId]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+        <div className="spinner" style={{ margin: '0 auto 1rem auto' }} />
+        <p style={{ color: 'var(--text-muted)' }}>Loading product details...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !product) {
+    return (
+      <div className="empty-market-state">
+        <p className="empty-title">Product not found</p>
+        <p className="empty-subtitle">{loadError || 'This product is unavailable or has been removed.'}</p>
+        <Link to="/" className="btn btn-primary">Back to Marketplace</Link>
+      </div>
+    );
+  }
 
   const handleSendEnquiry = async (e) => {
     e.preventDefault();

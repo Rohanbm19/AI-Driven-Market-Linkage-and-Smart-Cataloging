@@ -1,0 +1,421 @@
+record_id,product_category,raw_material_cost,labour_cost,product_size,product_size_cm,production_time_hours,market_price,selling_price,data_source,disclaimer
+PRC-0001,Pottery,91.47,817.67,Small,12,33.2,1296.04,1638.19,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0002,Wooden Crafts,349.72,361.88,Medium,28,6.6,1145.05,1268.19,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0003,Jewellery,2686.09,2753.03,Large,48,40.0,7485.89,8749.61,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0004,Textiles,2440.36,840.24,Small,12,44.6,,4463.06,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0005,Baskets,53.81,276.51,Medium,28,2.2,652.52,631.28,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0006,Paintings,488.32,1244.98,Large,48,37.3,2605.96,3189.44,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0007,Pottery,417.93,288.73,Small,12,20.7,1032.41,1245.27,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0008,Wooden Crafts,507.09,985.12,Medium,28,36.7,,2236.15,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0009,Jewellery,2918.22,1197.66,Large,48,32.6,5827.78,6707.81,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0010,Textiles,1506.74,3182.42,Small,12,14.5,6437.53,7346.67,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0011,Baskets,188.15,736.4,Medium,28,42.4,1502.73,1824.63,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0012,Paintings,578.41,1287.24,Large,48,27.8,2836.18,3429.56,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0013,Pottery,110.5,696.56,Small,12,42.8,1160.03,1422.97,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0014,Wooden Crafts,389.35,613.92,Medium,28,39.9,1551.85,1851.43,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0015,Jewellery,2756.96,3088.78,Large,48,15.4,8284.56,9326.93,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0016,Textiles,1944.68,3446.83,Small,12,47.7,7375.58,8381.29,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0017,Baskets,121.52,752.52,Medium,28,20.1,1383.02,1539.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0018,Paintings,780.52,1232.76,Large,48,20.1,2926.13,3407.33,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0019,Pottery,411.21,270.11,Small,12,28.4,1025.68,1184.82,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0020,Wooden Crafts,351.21,1007.82,Medium,28,28.8,2029.12,2301.61,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0021,Jewellery,3457.16,1524.14,Large,48,38.8,7021.67,8050.05,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0022,Textiles,977.55,3061.02,Small,12,13.0,5488.67,6258.12,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0023,Baskets,210.76,397.85,Medium,28,42.3,1038.22,1249.7,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0024,Paintings,444.98,2228.54,Large,48,33.7,3882.22,4484.87,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0025,Pottery,342.54,668.41,Small,12,43.1,1363.69,1790.43,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0026,Wooden Crafts,683.76,670.88,Medium,28,13.5,,2046.07,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0027,Jewellery,1328.23,2009.54,Large,48,47.6,,4843.02,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0028,Textiles,1556.34,3306.81,Small,12,18.3,6577.46,7442.6,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0029,Baskets,181.25,238.83,Medium,28,20.1,685.52,828.44,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0030,Paintings,566.28,1101.6,Large,48,14.5,2512.47,2945.65,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0031,Pottery,341.48,775.29,Small,12,6.3,1646.27,1776.13,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0032,Wooden Crafts,329.13,1474.14,Medium,28,11.5,2413.9,2899.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0033,Jewellery,1323.72,2672.04,Large,48,40.5,,5732.85,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0034,Textiles,2283.67,3530.86,Small,12,34.1,7901.27,9077.41,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0035,Baskets,205.44,215.34,Medium,28,16.5,,820.85,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0036,Paintings,483.95,1818.22,Large,48,40.7,3412.11,4007.03,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0037,Pottery,408.35,248.88,Small,12,36.7,915.95,1214.14,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0038,Wooden Crafts,270.65,502.83,Medium,28,7.4,,1184.84,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0039,Jewellery,1840.78,1149.9,Large,48,33.8,4287.76,4968.67,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0040,Textiles,1232.81,3409.11,Small,12,5.5,6202.44,7226.1,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0041,Baskets,144.34,557.4,Medium,28,18.3,1048.54,1433.42,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0042,Paintings,519.35,528.74,Large,48,29.4,,1689.2,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0043,Pottery,201.65,931.03,Small,12,10.5,,1572.38,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0044,Wooden Crafts,626.48,1340.26,Medium,28,3.8,,2636.05,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0045,Jewellery,1558.39,2290.18,Large,48,22.0,5502.09,6329.43,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0046,Textiles,387.84,3841.1,Small,12,47.1,5820.2,6674.66,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0047,Baskets,186.25,628.63,Medium,28,12.2,1281.68,1500.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0048,Paintings,662.88,1750.65,Large,48,31.9,3749.04,4205.12,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0049,Pottery,371.17,633.0,Small,12,22.2,1342.74,1696.88,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0050,Wooden Crafts,254.88,396.31,Medium,28,37.3,994.59,1262.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0051,Jewellery,3741.68,1462.51,Large,48,36.9,7264.35,8471.26,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0052,Textiles,2156.86,2048.43,Small,12,21.1,5763.01,6511.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0053,Baskets,114.67,230.51,Medium,28,20.9,517.55,753.84,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0054,Paintings,616.09,1361.24,Large,48,2.9,2903.81,3300.64,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0055,Pottery,181.59,601.31,Small,12,26.3,,1159.66,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0056,Wooden Crafts,174.27,1124.51,Medium,28,17.1,1750.09,2191.79,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0057,Jewellery,4259.6,824.92,Large,48,7.8,,7137.2,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0058,Textiles,1825.03,2597.04,Small,12,47.4,,6149.27,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0059,Baskets,76.72,555.0,Medium,28,21.3,1017.17,1216.14,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0060,Paintings,897.8,1196.16,Large,48,31.8,3153.28,3704.03,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0061,Pottery,290.09,904.4,Small,12,8.9,1715.46,1972.65,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0062,Wooden Crafts,209.89,666.18,Medium,28,41.3,,1412.95,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0063,Jewellery,4497.5,522.45,Large,48,9.4,6985.75,7908.38,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0064,Textiles,1994.2,2517.33,Small,12,18.8,6029.97,7014.92,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0065,Baskets,141.36,723.24,Medium,28,32.7,1233.01,1528.96,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0066,Paintings,333.47,423.49,Large,48,47.4,1258.92,1631.45,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0067,Pottery,184.93,618.28,Small,12,16.9,1215.6,1358.51,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0068,Wooden Crafts,209.08,1465.03,Medium,28,8.8,2353.45,2673.39,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0069,Jewellery,1043.8,535.43,Large,48,13.4,2358.91,2738.99,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0070,Textiles,506.94,2531.84,Small,12,13.8,4207.04,4710.72,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0071,Baskets,143.29,269.16,Medium,28,23.6,680.1,941.2,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0072,Paintings,529.29,2121.01,Large,48,32.1,4008.94,4524.12,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0073,Pottery,307.03,478.22,Small,12,6.6,1246.56,1232.03,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0074,Wooden Crafts,155.21,1123.33,Medium,28,9.4,1794.47,2078.57,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0075,Jewellery,1669.13,2146.86,Large,48,27.9,5406.66,6208.89,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0076,Textiles,2747.07,753.09,Small,12,40.1,4546.05,5416.55,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0077,Baskets,55.21,653.37,Medium,28,29.1,,1262.19,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0078,Paintings,713.13,1015.17,Large,48,42.9,2741.21,3190.94,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0079,Pottery,342.31,1148.15,Small,12,6.2,2028.56,2188.63,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0080,Wooden Crafts,395.06,1156.1,Medium,28,16.5,,2252.84,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0081,Jewellery,3924.69,2307.25,Large,48,19.4,8634.22,9890.29,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0082,Textiles,836.76,3947.31,Small,12,34.5,6495.9,7546.29,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0083,Baskets,154.4,396.82,Medium,28,44.5,889.59,1134.24,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0084,Paintings,631.89,2329.2,Large,48,13.4,4401.09,4897.36,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0085,Pottery,369.65,814.61,Small,12,24.8,1655.59,2058.32,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0086,Wooden Crafts,276.54,1196.67,Medium,28,22.3,2104.11,2624.02,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0087,Jewellery,2228.73,1729.1,Large,48,10.4,5688.63,6384.38,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0088,Textiles,2708.23,3336.75,Small,12,35.3,8179.49,9377.4,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0089,Baskets,149.97,545.73,Medium,28,14.3,1247.98,1268.68,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0090,Paintings,735.69,1998.0,Large,48,16.5,3920.0,4614.15,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0091,Pottery,420.06,1074.82,Small,12,44.1,1960.06,2595.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0092,Wooden Crafts,147.53,425.34,Medium,28,20.0,849.8,1137.8,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0093,Jewellery,1201.22,3378.14,Large,48,37.0,6507.88,7393.67,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0094,Textiles,1898.39,1072.09,Small,12,45.1,4042.48,4720.26,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0095,Baskets,158.16,443.34,Medium,28,31.1,,1024.4,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0096,Paintings,352.96,972.96,Large,48,9.5,2141.11,2479.54,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0097,Pottery,150.46,393.01,Small,12,26.9,,851.36,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0098,Wooden Crafts,667.49,940.19,Medium,28,43.5,,2418.94,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0099,Jewellery,3357.61,2783.06,Large,48,40.8,,8551.88,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0100,Textiles,1210.17,1492.02,Small,12,10.0,3620.33,4246.48,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0101,Baskets,155.11,627.8,Medium,28,34.7,1108.35,1475.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0102,Paintings,598.9,1143.1,Large,48,7.7,2543.0,3009.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0103,Pottery,101.06,1116.03,Small,12,16.4,1610.64,1971.2,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0104,Wooden Crafts,534.66,1201.21,Medium,28,33.8,,2516.4,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0105,Jewellery,714.22,2312.4,Large,48,47.4,4527.0,5202.97,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0106,Textiles,1978.93,544.65,Small,12,41.9,3441.18,4078.53,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0107,Baskets,208.66,317.26,Medium,28,24.6,,939.02,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0108,Paintings,210.41,1926.72,Large,48,41.7,,3333.59,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0109,Pottery,152.16,226.86,Small,12,27.5,578.36,761.94,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0110,Wooden Crafts,441.91,441.15,Medium,28,9.1,1308.72,1547.67,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0111,Jewellery,4158.39,2448.18,Large,48,44.7,9203.02,10544.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0112,Textiles,529.19,743.27,Small,12,18.2,1800.82,2190.0,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0113,Baskets,66.36,636.14,Medium,28,18.3,,1144.96,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0114,Paintings,397.95,975.92,Large,48,39.3,2276.86,2626.24,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0115,Pottery,378.9,877.18,Small,12,11.0,1687.05,1953.99,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0116,Wooden Crafts,185.03,1077.46,Medium,28,6.6,,1813.09,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0117,Jewellery,4311.84,1354.59,Large,48,18.3,7956.92,8983.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0118,Textiles,2593.86,1479.73,Small,12,7.3,5594.44,6347.75,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0119,Baskets,198.3,457.17,Medium,28,46.7,1019.05,1385.85,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0120,Paintings,177.98,2088.4,Large,48,6.7,3384.81,3850.9,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0121,Pottery,109.35,896.12,Small,12,5.3,1288.42,1499.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0122,Wooden Crafts,229.49,1445.12,Medium,28,45.8,,2600.1,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0123,Jewellery,2838.53,2424.98,Large,48,34.7,7339.84,8554.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0124,Textiles,1610.06,1565.78,Small,12,6.8,4365.76,4936.8,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0125,Baskets,56.96,273.97,Medium,28,31.4,623.09,730.08,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0126,Paintings,475.03,1140.76,Large,48,35.1,2640.04,3026.91,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0127,Pottery,437.53,956.29,Small,12,24.9,1942.06,2247.68,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0128,Wooden Crafts,305.12,683.91,Medium,28,48.0,1504.44,1780.02,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0129,Jewellery,504.56,2298.86,Large,48,5.3,4025.84,4640.99,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0130,Textiles,1822.43,1450.82,Small,12,4.9,4547.98,5013.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0131,Baskets,96.02,158.1,Medium,28,22.0,395.56,532.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0132,Paintings,785.16,1253.65,Large,48,41.0,2919.98,3651.69,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0133,Pottery,181.74,226.2,Small,12,13.2,520.59,695.72,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0134,Wooden Crafts,632.21,738.51,Medium,28,26.0,1931.24,2359.74,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0135,Jewellery,824.39,2008.99,Large,48,32.9,4191.58,4777.27,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0136,Textiles,1251.41,518.32,Small,12,7.3,,2466.56,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0137,Baskets,129.19,381.61,Medium,28,27.8,871.07,1016.59,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0138,Paintings,388.55,1127.05,Large,48,28.9,2411.92,2748.06,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0139,Pottery,336.8,847.41,Small,12,8.2,1683.0,1857.53,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0140,Wooden Crafts,616.0,544.77,Medium,28,25.3,1699.16,2053.96,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0141,Jewellery,2265.19,3362.8,Large,48,15.2,7919.06,8994.28,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0142,Textiles,766.83,2866.89,Small,12,27.3,4997.33,5698.51,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0143,Baskets,64.89,604.11,Medium,28,46.8,,1173.48,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0144,Paintings,845.2,557.04,Large,48,7.1,2186.27,2537.58,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0145,Pottery,388.74,723.42,Small,12,43.7,1487.51,1912.15,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0146,Wooden Crafts,265.99,1058.96,Medium,28,6.6,1913.18,2168.73,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0147,Jewellery,622.97,1398.54,Large,48,12.7,2981.18,3498.57,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0148,Textiles,2418.22,3498.76,Small,12,17.7,8048.45,9147.99,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0149,Baskets,135.16,206.13,Medium,28,42.4,646.8,809.98,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0150,Paintings,568.2,2467.68,Large,48,13.4,,4316.2,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0151,Pottery,201.65,522.34,Small,12,2.3,1034.63,1105.51,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0152,Wooden Crafts,143.45,846.54,Medium,28,42.4,1480.73,1847.18,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0153,Jewellery,1745.21,2964.92,Large,48,33.8,6638.01,7608.68,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0154,Textiles,2776.71,3216.22,Small,12,45.1,8148.52,9395.39,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0155,Baskets,121.21,663.21,Medium,28,2.3,1177.09,1312.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0156,Paintings,614.79,1032.64,Large,48,16.3,2440.38,2831.19,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0157,Pottery,284.36,609.5,Small,12,27.4,1098.05,1478.24,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0158,Wooden Crafts,660.62,1146.44,Medium,28,22.3,2438.28,2896.55,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0159,Jewellery,3269.92,2749.19,Large,48,33.1,8445.27,9638.55,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0160,Textiles,2432.7,2596.09,Small,12,7.9,6740.4,7728.54,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0161,Baskets,110.57,705.23,Medium,28,21.0,1221.97,1467.73,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0162,Paintings,688.63,1590.93,Large,48,24.8,3387.87,3940.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0163,Pottery,434.86,907.27,Small,12,47.4,1824.6,2305.03,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0164,Wooden Crafts,473.47,558.26,Medium,28,27.0,1490.11,1942.4,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0165,Jewellery,849.59,1642.82,Large,48,25.3,3733.23,4224.08,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0166,Textiles,2385.92,2143.78,Small,12,4.2,,5943.23,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0167,Baskets,69.59,608.33,Medium,28,38.6,967.5,1347.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0168,Paintings,377.69,2266.47,Large,48,27.0,3736.6,4373.38,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0169,Pottery,254.25,680.08,Small,12,47.9,,1375.11,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0170,Wooden Crafts,620.94,1129.8,Medium,28,17.8,2571.14,2929.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0171,Jewellery,2442.94,3277.53,Large,48,30.6,8093.67,9183.87,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0172,Textiles,2556.49,1064.01,Small,12,46.8,4997.62,5844.19,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0173,Baskets,190.7,349.4,Medium,28,37.0,,926.69,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0174,Paintings,484.3,1076.87,Large,48,19.8,2384.24,2847.69,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0175,Pottery,107.27,965.74,Small,12,38.4,1594.33,1906.47,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0176,Wooden Crafts,584.41,885.67,Medium,28,24.3,2140.43,2523.67,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0177,Jewellery,1745.09,2917.97,Large,48,6.0,,6526.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0178,Textiles,2467.12,3578.25,Small,12,45.8,8236.97,9457.93,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0179,Baskets,130.22,293.03,Medium,28,45.0,,862.45,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0180,Paintings,334.86,817.81,Large,48,12.4,1730.22,2024.44,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0181,Pottery,409.4,802.56,Small,12,33.9,1704.3,2076.26,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0182,Wooden Crafts,679.28,1232.72,Medium,28,14.8,2636.07,3116.47,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0183,Jewellery,2698.68,3155.49,Large,48,32.9,8131.2,9471.56,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0184,Textiles,2711.11,2555.89,Small,12,21.1,7055.68,8207.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0185,Baskets,79.0,672.95,Medium,28,26.6,1167.91,1442.33,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0186,Paintings,282.35,508.79,Large,48,36.8,1334.45,1772.95,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0187,Pottery,397.9,497.33,Small,12,11.7,1316.63,1515.39,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0188,Wooden Crafts,168.1,537.8,Medium,28,21.2,1024.3,1186.96,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0189,Jewellery,4124.22,3170.04,Large,48,33.3,10178.85,11708.37,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0190,Textiles,577.9,1767.99,Small,12,28.5,3125.06,3745.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0191,Baskets,102.25,663.94,Medium,28,42.4,1298.44,1543.83,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0192,Paintings,190.0,1949.5,Large,48,9.9,3026.33,3686.4,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0193,Pottery,114.99,548.01,Small,12,45.8,940.66,1310.73,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0194,Wooden Crafts,468.16,438.39,Medium,28,27.0,1395.45,1601.53,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0195,Jewellery,594.28,574.33,Large,48,21.8,1709.41,2228.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0196,Textiles,1994.98,618.99,Small,12,9.0,3595.12,4032.55,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0197,Baskets,172.16,713.94,Medium,28,36.9,1319.94,1598.13,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0198,Paintings,774.27,1933.56,Large,48,38.9,3883.35,4604.25,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0199,Pottery,270.53,1051.04,Small,12,21.8,1843.11,2078.28,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0200,Wooden Crafts,264.37,1364.43,Medium,28,36.8,2296.96,2691.52,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0201,Jewellery,2774.53,1001.87,Large,48,46.8,5492.5,6314.72,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0202,Textiles,1375.1,1160.3,Small,12,10.7,3444.16,4066.43,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0203,Baskets,169.06,312.61,Medium,28,42.3,735.9,1075.42,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0204,Paintings,533.65,1346.55,Large,48,36.6,2679.52,3336.7,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0205,Pottery,182.91,1127.85,Small,12,9.6,1700.64,2186.91,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0206,Wooden Crafts,264.24,387.62,Medium,28,38.3,949.35,1328.9,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0207,Jewellery,2985.65,3319.62,Large,48,46.2,8695.1,10140.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0208,Textiles,1502.82,2936.05,Small,12,5.6,5877.37,6726.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0209,Baskets,190.5,756.44,Medium,28,12.4,1313.41,1549.17,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0210,Paintings,245.91,1132.91,Large,48,34.1,2183.2,2567.04,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0211,Pottery,136.8,762.33,Small,12,32.0,1291.46,1604.66,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0212,Wooden Crafts,278.62,323.37,Medium,28,11.5,994.22,1142.21,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0213,Jewellery,1045.54,2498.3,Large,48,31.0,5138.99,5922.89,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0214,Textiles,600.77,2430.66,Small,12,4.8,4155.0,4701.16,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0215,Baskets,90.37,595.79,Medium,28,40.7,1052.0,1339.91,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0216,Paintings,173.31,1918.16,Large,48,27.1,2976.49,3563.71,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0217,Pottery,311.01,675.91,Small,12,30.6,1239.0,1720.28,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0218,Wooden Crafts,375.11,1328.39,Medium,28,3.8,2405.49,2792.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0219,Jewellery,3035.17,2457.88,Large,48,30.0,7679.71,8741.47,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0220,Textiles,2048.9,1250.56,Small,12,15.0,4518.51,5175.98,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0221,Baskets,110.37,542.51,Medium,28,12.1,1075.59,1242.62,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0222,Paintings,211.08,1386.93,Large,48,3.3,2524.55,2726.73,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0223,Pottery,199.93,763.81,Small,12,13.8,1371.06,1468.75,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0224,Wooden Crafts,238.14,467.28,Medium,28,7.5,1045.97,1244.36,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0225,Jewellery,4307.01,559.94,Large,48,21.3,6820.4,7866.62,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0226,Textiles,1432.25,3907.99,Small,12,3.8,7164.89,8231.3,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0227,Baskets,85.86,242.6,Medium,28,32.5,587.51,846.92,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0228,Paintings,615.06,1053.23,Large,48,20.4,,2598.15,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0229,Pottery,133.04,1010.29,Small,12,34.4,1675.39,1911.38,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0230,Wooden Crafts,631.12,1120.52,Medium,28,39.7,2561.42,3068.95,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0231,Jewellery,1984.13,1687.74,Large,48,16.0,5305.36,6008.53,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0232,Textiles,1347.78,1184.21,Small,12,41.9,3443.96,4040.88,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0233,Baskets,140.81,498.8,Medium,28,40.1,,1125.61,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0234,Paintings,548.57,1630.83,Large,48,25.5,,3382.59,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0235,Pottery,177.51,542.69,Small,12,31.9,1081.58,1247.8,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0236,Wooden Crafts,227.68,586.33,Medium,28,30.0,,1334.98,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0237,Jewellery,1260.02,773.39,Large,48,42.3,3056.69,3540.07,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0238,Textiles,2658.14,2973.7,Small,12,5.2,7555.58,8655.81,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0239,Baskets,59.08,407.38,Medium,28,16.5,,748.39,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0240,Paintings,355.39,1124.22,Large,48,6.2,2245.17,2530.37,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0241,Pottery,133.04,1153.85,Small,12,8.7,1889.83,2080.74,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0242,Wooden Crafts,237.34,382.16,Medium,28,8.4,923.24,1098.3,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0243,Jewellery,2208.18,2243.74,Large,48,12.8,6205.58,7182.62,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0244,Textiles,1440.22,3965.59,Small,12,47.8,7363.53,8533.84,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0245,Baskets,98.24,304.51,Medium,28,2.6,,810.11,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0246,Paintings,404.75,778.74,Large,48,34.9,1985.92,2442.49,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0247,Pottery,279.21,384.14,Small,12,24.8,,1008.24,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0248,Wooden Crafts,475.09,695.68,Medium,28,9.9,1675.25,1895.16,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0249,Jewellery,2647.88,1251.83,Large,48,22.8,,5444.91,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0250,Textiles,815.33,1096.19,Small,12,16.5,2648.66,3100.71,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0251,Baskets,157.35,580.9,Medium,28,24.1,1122.09,1460.08,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0252,Paintings,630.28,1546.89,Large,48,7.7,3275.42,3754.05,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0253,Pottery,220.17,1021.56,Small,12,22.3,1713.13,1992.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0254,Wooden Crafts,398.72,689.7,Medium,28,13.1,1668.43,1745.76,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0255,Jewellery,4293.37,2507.11,Large,48,27.2,9565.41,10894.26,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0256,Textiles,997.25,3832.31,Small,12,20.2,6480.32,7415.3,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0257,Baskets,69.08,530.99,Medium,28,7.5,948.86,1190.22,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0258,Paintings,832.57,780.12,Large,48,20.1,2516.68,2923.22,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0259,Pottery,90.76,606.6,Small,12,31.9,916.96,1204.29,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0260,Wooden Crafts,334.29,711.3,Medium,28,35.5,1554.22,1831.02,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0261,Jewellery,2611.03,2351.07,Large,48,5.4,,6914.97,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0262,Textiles,2200.27,3409.32,Small,12,10.6,7684.56,8661.44,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0263,Baskets,151.92,596.39,Medium,28,43.6,1167.79,1428.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0264,Paintings,379.38,2305.57,Large,48,6.4,4042.51,4469.57,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0265,Pottery,271.87,521.62,Small,12,40.1,1111.63,1446.32,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0266,Wooden Crafts,275.37,1184.26,Medium,28,41.8,2013.32,2498.18,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0267,Jewellery,3672.67,3161.12,Large,48,19.7,9468.69,10844.79,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0268,Textiles,1472.15,3274.36,Small,12,43.8,6446.38,7427.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0269,Baskets,131.86,481.05,Medium,28,2.9,831.95,1009.13,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0270,Paintings,746.78,1220.02,Large,48,26.3,,2998.19,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0271,Pottery,255.53,455.21,Small,12,3.4,1045.27,1172.81,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0272,Wooden Crafts,264.99,1106.75,Medium,28,22.1,2018.95,2327.08,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0273,Jewellery,4121.55,713.26,Large,48,22.7,6821.51,7812.24,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0274,Textiles,2443.02,1826.9,Small,12,31.4,5786.82,6676.18,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0275,Baskets,136.57,448.71,Medium,28,46.3,701.15,1177.24,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0276,Paintings,741.79,1566.67,Large,48,30.1,3402.65,3950.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0277,Pottery,348.53,327.39,Small,12,34.2,917.19,1268.97,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0278,Wooden Crafts,180.4,500.87,Medium,28,5.2,1083.87,1099.38,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0279,Jewellery,2664.67,3007.66,Large,48,14.9,7982.84,9042.21,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0280,Textiles,696.26,768.5,Small,12,11.4,1823.94,2374.96,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0281,Baskets,174.31,638.2,Medium,28,10.7,,1202.1,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0282,Paintings,301.86,1868.47,Large,48,18.4,3287.92,3678.44,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0283,Pottery,148.64,878.99,Small,12,5.3,1455.84,1683.51,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0284,Wooden Crafts,128.17,801.69,Medium,28,9.0,1297.13,1643.52,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0285,Jewellery,1123.48,2169.98,Large,48,13.8,4677.44,5474.06,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0286,Textiles,2221.14,641.79,Small,12,9.9,4181.28,4507.92,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0287,Baskets,180.94,688.28,Medium,28,23.9,1453.0,1585.9,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0288,Paintings,790.87,443.65,Large,48,11.0,1879.49,2199.88,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0289,Pottery,149.1,730.76,Small,12,40.9,,1412.83,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0290,Wooden Crafts,389.8,1734.28,Medium,28,14.8,2969.46,3454.05,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0291,Jewellery,3749.49,2557.6,Large,48,25.5,8879.49,10088.46,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0292,Textiles,2180.19,3993.72,Small,12,24.0,8289.11,9510.28,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0293,Baskets,47.57,413.09,Medium,28,41.4,838.25,1044.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0294,Paintings,416.52,1692.59,Large,48,8.0,3159.26,3551.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0295,Pottery,160.06,1194.28,Small,12,29.8,,1996.41,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0296,Wooden Crafts,163.45,1184.84,Medium,28,39.2,1809.04,2225.05,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0297,Jewellery,2585.47,2564.19,Large,48,23.7,7401.65,8377.82,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0298,Textiles,281.15,852.25,Small,12,27.5,1542.61,1893.28,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0299,Baskets,133.66,668.73,Medium,28,13.9,1207.31,1505.59,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0300,Paintings,851.07,2054.51,Large,48,41.3,4332.37,4983.62,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0301,Pottery,308.86,258.92,Small,12,11.3,838.28,1083.07,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0302,Wooden Crafts,607.23,1680.54,Medium,28,6.7,3131.61,3724.21,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0303,Jewellery,3845.03,710.93,Large,48,2.8,,6301.74,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0304,Textiles,2319.57,858.74,Small,12,7.7,4262.84,4846.53,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0305,Baskets,210.93,647.92,Medium,28,42.4,1319.51,1604.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0306,Paintings,201.26,1777.5,Large,48,4.4,2804.41,3284.99,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0307,Pottery,196.14,686.16,Small,12,36.1,1201.55,1564.83,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0308,Wooden Crafts,687.71,1417.05,Medium,28,7.4,2907.73,3339.09,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0309,Jewellery,2171.06,1352.02,Large,48,7.5,4934.46,5639.42,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0310,Textiles,682.73,3004.94,Small,12,11.0,5079.65,5704.8,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0311,Baskets,97.62,296.3,Medium,28,23.7,715.62,826.14,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0312,Paintings,265.68,1912.29,Large,48,28.8,3209.83,3790.83,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0313,Pottery,321.76,559.34,Small,12,22.2,1235.47,1515.34,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0314,Wooden Crafts,571.42,1497.01,Medium,28,36.3,,2987.08,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0315,Jewellery,2320.18,2286.63,Large,48,44.3,6499.22,7550.8,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0316,Textiles,1196.77,588.22,Small,12,36.2,,2561.36,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0317,Baskets,179.54,497.57,Medium,28,2.6,,1022.33,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0318,Paintings,378.72,778.65,Large,48,30.2,1785.18,2217.41,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0319,Pottery,149.1,338.1,Small,12,12.9,,803.86,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0320,Wooden Crafts,643.13,1547.04,Medium,28,19.1,2981.38,3635.9,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0321,Jewellery,1368.79,1389.16,Large,48,15.9,,3963.79,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0322,Textiles,2488.68,3683.16,Small,12,7.0,8365.5,9444.07,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0323,Baskets,139.85,163.17,Medium,28,40.7,561.65,818.53,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0324,Paintings,545.98,1101.97,Large,48,8.9,2422.55,2813.68,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0325,Pottery,235.74,614.75,Small,12,17.0,1216.36,1441.94,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0326,Wooden Crafts,216.01,1287.79,Medium,28,47.6,2185.99,2636.36,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0327,Jewellery,3056.39,621.5,Large,48,24.8,5154.25,6125.84,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0328,Textiles,2362.67,3892.49,Small,12,23.1,8446.67,9588.3,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0329,Baskets,195.6,332.13,Medium,28,37.7,,1029.59,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0330,Paintings,550.21,1502.34,Large,48,41.1,3178.7,3662.06,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0331,Pottery,212.31,678.92,Small,12,24.7,1263.18,1521.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0332,Wooden Crafts,383.91,1227.11,Medium,28,23.2,,2323.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0333,Jewellery,2087.79,1063.15,Large,48,36.8,4491.11,5293.19,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0334,Textiles,2487.44,839.25,Small,12,7.3,4590.74,5107.57,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0335,Baskets,177.37,309.42,Medium,28,5.9,806.53,991.58,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0336,Paintings,700.01,1571.56,Large,48,35.3,3266.31,3970.92,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0337,Pottery,365.13,517.12,Small,12,32.1,1226.78,1433.71,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0338,Wooden Crafts,506.41,1598.53,Medium,28,8.5,3029.5,3365.82,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0339,Jewellery,4457.6,1980.41,Large,48,18.4,8798.65,10178.54,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0340,Textiles,2100.56,1421.53,Small,12,5.2,4796.37,5516.04,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0341,Baskets,85.07,634.97,Medium,28,37.4,1124.54,1442.82,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0342,Paintings,892.61,909.51,Large,48,14.6,2729.83,3156.87,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0343,Pottery,359.36,237.16,Small,12,27.5,888.38,1083.69,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0344,Wooden Crafts,214.39,846.29,Medium,28,41.0,1491.9,2035.52,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0345,Jewellery,2405.84,725.99,Large,48,33.2,4466.64,5278.9,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0346,Textiles,1963.64,3168.62,Small,12,25.3,6986.9,7980.01,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0347,Baskets,82.38,472.88,Medium,28,35.6,843.98,1245.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0348,Paintings,475.96,781.81,Large,48,17.2,1868.15,2269.17,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0349,Pottery,445.04,851.7,Small,12,34.2,1877.45,2108.75,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0350,Wooden Crafts,181.7,1759.88,Medium,28,41.8,2660.49,3215.03,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0351,Jewellery,1724.83,1360.32,Large,48,8.3,4385.06,5052.98,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0352,Textiles,799.16,3779.0,Small,12,31.4,6081.41,7073.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0353,Baskets,75.13,322.26,Medium,28,14.6,561.49,780.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0354,Paintings,636.38,511.37,Large,48,17.7,1852.67,2260.23,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0355,Pottery,154.25,200.93,Small,12,23.8,,633.98,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0356,Wooden Crafts,696.99,1677.59,Medium,28,11.9,3177.46,3726.61,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0357,Jewellery,3690.85,878.72,Large,48,7.7,6548.35,7336.93,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0358,Textiles,523.78,2467.47,Small,12,9.2,4106.86,4752.74,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0359,Baskets,54.95,526.52,Medium,28,20.8,804.43,1140.45,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0360,Paintings,379.86,473.32,Large,48,14.9,1441.24,1505.05,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0361,Pottery,128.98,277.55,Small,12,42.2,624.49,854.04,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0362,Wooden Crafts,547.55,1795.36,Medium,28,18.0,3317.94,3854.0,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0363,Jewellery,3387.23,1914.87,Large,48,13.2,7498.71,8441.79,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0364,Textiles,1954.89,1840.76,Small,12,24.0,5201.54,5968.84,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0365,Baskets,119.99,372.5,Medium,28,19.2,,907.4,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0366,Paintings,214.84,1298.58,Large,48,9.7,2352.2,2719.62,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0367,Pottery,306.4,1101.18,Small,12,28.1,2091.47,2382.73,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0368,Wooden Crafts,413.83,522.93,Medium,28,22.6,1399.8,1604.72,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0369,Jewellery,687.66,1509.82,Large,48,39.0,3405.88,3841.69,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0370,Textiles,1056.97,3698.07,Small,12,17.8,6379.08,7517.49,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0371,Baskets,162.72,182.2,Medium,28,8.0,653.33,819.66,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0372,Paintings,734.35,1000.44,Large,48,5.3,,2531.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0373,Pottery,308.34,1068.89,Small,12,7.1,1924.32,2106.58,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0374,Wooden Crafts,399.87,1686.19,Medium,28,27.1,3057.74,3417.4,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0375,Jewellery,4221.67,2004.99,Large,48,25.2,8681.29,9868.88,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0376,Textiles,944.85,2771.74,Small,12,28.2,5091.54,5809.65,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0377,Baskets,111.52,152.86,Medium,28,22.5,,532.97,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0378,Paintings,472.96,572.03,Large,48,14.7,1635.16,2122.05,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0379,Pottery,419.03,785.31,Small,12,46.5,1602.9,1925.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0380,Wooden Crafts,517.04,1036.62,Medium,28,2.8,2323.11,2554.82,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0381,Jewellery,1143.96,1062.59,Large,48,24.0,3266.91,3753.29,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0382,Textiles,782.25,565.83,Small,12,23.3,1739.87,2173.6,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0383,Baskets,147.05,433.56,Medium,28,28.6,844.37,1134.5,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0384,Paintings,855.46,1298.86,Large,48,2.7,3188.97,3661.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0385,Pottery,284.38,914.55,Small,12,14.6,1704.58,1969.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0386,Wooden Crafts,353.26,568.39,Medium,28,21.0,1319.36,1695.55,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0387,Jewellery,1627.42,2546.87,Large,48,36.0,5886.65,6852.3,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0388,Textiles,277.42,842.69,Small,12,9.2,1523.62,1803.31,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0389,Baskets,117.23,406.65,Medium,28,15.9,,863.47,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0390,Paintings,252.45,2028.39,Large,48,11.3,3328.07,3840.55,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0391,Pottery,112.1,1149.57,Small,12,23.3,1721.6,2061.78,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0392,Wooden Crafts,413.13,1629.33,Medium,28,14.5,2937.58,3248.12,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0393,Jewellery,1602.84,1213.59,Large,48,22.4,4122.6,4631.11,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0394,Textiles,2024.49,2504.1,Small,12,25.9,6074.64,7012.71,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0395,Baskets,109.75,386.25,Medium,28,8.9,886.05,969.76,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0396,Paintings,794.89,2175.46,Large,48,7.0,4305.97,4719.24,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0397,Pottery,183.79,642.11,Small,12,14.4,1086.96,1279.67,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0398,Wooden Crafts,413.7,1633.18,Medium,28,38.5,2815.27,3436.21,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0399,Jewellery,4001.37,2630.5,Large,48,28.3,9391.52,10604.9,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0400,Textiles,802.62,834.08,Small,12,23.4,2340.85,2604.03,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0401,Baskets,186.68,636.74,Medium,28,32.7,1197.53,1535.21,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0402,Paintings,356.82,2247.53,Large,48,23.8,3689.6,4496.9,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0403,Pottery,345.17,486.69,Small,12,36.9,1132.08,1472.87,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0404,Wooden Crafts,486.0,530.6,Medium,28,18.7,1480.63,1802.99,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0405,Jewellery,3919.2,660.05,Large,48,29.4,6415.12,7464.66,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0406,Textiles,1767.71,3219.12,Small,12,32.2,6621.03,7681.73,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0407,Baskets,82.82,787.42,Medium,28,12.5,1236.09,1389.5,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0408,Paintings,420.68,1900.74,Large,48,9.3,,3325.96,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0409,Pottery,170.17,435.66,Small,12,2.4,930.06,1027.84,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0410,Wooden Crafts,480.32,1239.98,Medium,28,5.3,2605.38,2699.73,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0411,Jewellery,2089.1,1895.31,Large,48,11.6,5616.63,6420.72,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0412,Textiles,821.03,1518.66,Small,12,9.4,3128.95,3645.22,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0413,Baskets,74.14,747.61,Medium,28,6.7,,1163.61,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0414,Paintings,677.83,1146.26,Large,48,29.4,2706.98,3282.36,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0415,Pottery,210.68,815.23,Small,12,12.0,1446.74,1627.51,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0416,Wooden Crafts,145.44,959.38,Medium,28,37.6,1738.93,1998.09,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0417,Jewellery,1363.28,2095.34,Large,48,11.4,4882.45,5577.76,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0418,Textiles,1541.69,2152.16,Small,12,29.6,4991.04,5672.8,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0419,Baskets,198.24,559.19,Medium,28,31.2,1241.78,1493.58,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+PRC-0420,Paintings,594.0,453.62,Large,48,2.3,1734.32,1954.77,synthetic_sample,Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.

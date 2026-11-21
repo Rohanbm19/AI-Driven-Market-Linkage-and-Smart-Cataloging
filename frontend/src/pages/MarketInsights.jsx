@@ -1,89 +1,389 @@
-import React from 'react';
-import { useLanguage } from '../i18n/index.js';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  TrendingUp, DollarSign, Globe, ArrowUpRight, ShieldCheck, BarChart3
+  ArrowUpRight,
+  BarChart3,
+  DollarSign,
+  Eye,
+  Package,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  TrendingDown,
+  TrendingUp
 } from 'lucide-react';
+import { api } from '../services/api.js';
+import { useLanguage } from '../i18n/index.js';
 
-const INSIGHTS = {
-  en: [
-    ['Bankura Terracotta Horses & Sculptures','West Bengal','High','Germany, USA, Domestic Urban'],
-    ['Kanjivaram Handwoven Pure Silk','Tamil Nadu','Very High','UK, Singapore, Wedding Retail'],
-    ['Channapatna Eco Wooden Toys','Karnataka','Surging','Montessori Schools, Scandinavia, Japan'],
-    ['Moradabad Hand-Chiseled Brassware','Uttar Pradesh','Steady High','UAE, North America, Hospitality'],
-    ['Jaipur Blue Pottery Glazed Ceramics','Rajasthan','High','Interior Designers, France, Australia']
-  ],
-  kn: [
-    ['ಬಂಕುರಾ ಟೆರಾಕೋಟಾ ಕುದುರೆಗಳು ಮತ್ತು ಶಿಲ್ಪಗಳು','ಪಶ್ಚಿಮ ಬಂಗಾಳ','high','ಜರ್ಮನಿ, ಅಮೆರಿಕಾ, ಭಾರತದ ನಗರ ಮಾರುಕಟ್ಟೆ'],
-    ['ಕಾಂಜೀವರಂ ಕೈಮಗ್ಗದ ಶುದ್ಧ ರೇಷ್ಮೆ','ತಮಿಳುನಾಡು','veryHigh','ಯುಕೆ, ಸಿಂಗಾಪುರ, ಮದುವೆ ಉಡುಪು ಮಾರುಕಟ್ಟೆ'],
-    ['ಚನ್ನಪಟ್ಟಣದ ಪರಿಸರ ಸ್ನೇಹಿ ಮರದ ಆಟಿಕೆಗಳು','ಕರ್ನಾಟಕ','surging','ಮಾಂಟೆಸ್ಸೋರಿ ಶಾಲೆಗಳು, ಸ್ಕ್ಯಾಂಡಿನೇವಿಯಾ, ಜಪಾನ್'],
-    ['ಮೊರಾದಾಬಾದ್ ಕೈಕೆತ್ತನೆಯ ಹಿತ್ತಾಳೆ ವಸ್ತುಗಳು','ಉತ್ತರ ಪ್ರದೇಶ','steadyHigh','ಯುಎಇ, ಉತ್ತರ ಅಮೆರಿಕಾ, ಆತಿಥ್ಯ ಕ್ಷೇತ್ರ'],
-    ['ಜೈಪುರ ನೀಲಿ ಕುಂಬಾರಿಕೆಯ ಮೆರುಗು ಸೆರಾಮಿಕ್ ವಸ್ತುಗಳು','ರಾಜಸ್ಥಾನ','high','ಒಳಾಂಗಣ ವಿನ್ಯಾಸಕರು, ಫ್ರಾನ್ಸ್, ಆಸ್ಟ್ರೇಲಿಯಾ']
-  ],
-  hi: [
-    ['बांकुरा टेराकोटा घोड़े और मूर्तियां','पश्चिम बंगाल','high','जर्मनी, अमेरिका, भारत के शहरी बाजार'],
-    ['कांचीवरम हाथ से बुना शुद्ध रेशम','तमिलनाडु','veryHigh','ब्रिटेन, सिंगापुर, शादी के परिधान विक्रेता'],
-    ['चन्नपटना के पर्यावरण-अनुकूल लकड़ी के खिलौने','कर्नाटक','surging','मोंटेसरी स्कूल, स्कैंडिनेविया, जापान'],
-    ['मुरादाबाद की हाथ से उकेरी पीतल की वस्तुएं','उत्तर प्रदेश','steadyHigh','यूएई, उत्तरी अमेरिका, आतिथ्य क्षेत्र'],
-    ['जयपुर की नीली मिट्टी के चमकदार सिरेमिक उत्पाद','राजस्थान','high','इंटीरियर डिजाइनर, फ्रांस, ऑस्ट्रेलिया']
-  ],
-  ta: [
-    ['பாங்குரா டெரகோட்டா குதிரைகள் மற்றும் சிற்பங்கள்','மேற்கு வங்காளம்','high','ஜெர்மனி, அமெரிக்கா, இந்திய நகரச் சந்தை'],
-    ['காஞ்சிபுரம் கைத்தறி தூய பட்டுப் புடவை','தமிழ்நாடு','veryHigh','இங்கிலாந்து, சிங்கப்பூர், திருமண ஆடை விற்பனை'],
-    ['சன்னப்பட்டணா சுற்றுச்சூழலுக்கு உகந்த மர பொம்மைகள்','கர்நாடகம்','surging','மாண்டிசோரி பள்ளிகள், ஸ்காண்டிநேவியா, ஜப்பான்'],
-    ['மொராதாபாத் கையால் செதுக்கிய பித்தளைப் பொருட்கள்','உத்தரப் பிரதேசம்','steadyHigh','ஐக்கிய அரபு அமீரகம், வட அமெரிக்கா, விருந்தோம்பல் துறை'],
-    ['ஜெய்ப்பூர் நீல மட்பாண்ட மெருகூட்டிய செராமிக் பொருட்கள்','ராஜஸ்தான்','high','உள் அலங்கார வடிவமைப்பாளர்கள், பிரான்ஸ், ஆஸ்திரேலியா']
-  ],
-  te: [
-    ['బంకురా టెర్రకోట గుర్రాలు మరియు శిల్పాలు','పశ్చిమ బెంగాల్','high','జర్మనీ, అమెరికా, భారత పట్టణ మార్కెట్'],
-    ['కాంచీపురం చేతితో నేసిన స్వచ్ఛమైన పట్టు','తమిళనాడు','veryHigh','యూకే, సింగపూర్, వివాహ వస్త్రాల విక్రేతలు'],
-    ['చన్నపట్నం పర్యావరణహిత చెక్క బొమ్మలు','కర్ణాటక','surging','మాంటిస్సోరి పాఠశాలలు, స్కాండినేవియా, జపాన్'],
-    ['మొరాదాబాద్ చేతితో చెక్కిన ఇత్తడి వస్తువులు','ఉత్తరప్రదేశ్','steadyHigh','యూఏఈ, ఉత్తర అమెరికా, ఆతిథ్య రంగం'],
-    ['జైపూర్ నీలి కుండల మెరుగు సిరామిక్ వస్తువులు','రాజస్థాన్','high','ఇంటీరియర్ డిజైనర్లు, ఫ్రాన్స్, ఆస్ట్రేలియా']
-  ],
-  ml: [
-    ['ബങ്കുര ടെറാക്കോട്ട കുതിരകളും ശിൽപ്പങ്ങളും','പശ്ചിമ ബംഗാൾ','high','ജർമ്മനി, അമേരിക്ക, ഇന്ത്യയിലെ നഗര വിപണി'],
-    ['കാഞ്ചീപുരം കൈത്തറി ശുദ്ധമായ പട്ട്','തമിഴ്നാട്','veryHigh','യുകെ, സിംഗപ്പൂർ, വിവാഹ വസ്ത്ര വ്യാപാരം'],
-    ['ചന്നപട്ടണ പരിസ്ഥിതി സൗഹൃദ മരപ്പാവകൾ','കർണാടക','surging','മോണ്ടിസോറി സ്കൂളുകൾ, സ്കാൻഡിനേവിയ, ജപ്പാൻ'],
-    ['മൊറാദാബാദ് കൈകൊണ്ട് കൊത്തിയ പിച്ചള വസ്തുക്കൾ','ഉത്തർപ്രദേശ്','steadyHigh','യുഎഇ, വടക്കേ അമേരിക്ക, ഹോസ്പിറ്റാലിറ്റി മേഖല'],
-    ['ജയ്പൂർ നീല മൺപാത്ര ഗ്ലേസ്ഡ് സെറാമിക് വസ്തുക്കൾ','രാജസ്ഥാൻ','high','ഇന്റീരിയർ ഡിസൈനർമാർ, ഫ്രാൻസ്, ഓസ്ട്രേലിയ']
-  ]
-};
+function formatNumber(value, lang) {
+  return new Intl.NumberFormat(`${lang}-IN`, {
+    maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+}
 
-const GROWTH = ['+42%', '+38%', '+54%', '+29%', '+35%'];
-const PRICES = ['₹1,800 – ₹4,500', '₹12,000 – ₹35,000', '₹950 – ₹2,400', '₹2,500 – ₹7,800', '₹1,400 – ₹3,900'];
+function formatPrice(value, lang) {
+  return new Intl.NumberFormat(`${lang}-IN`, {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+}
 
 export default function MarketInsights() {
   const { t, lang } = useLanguage();
   const text = t.insights || {};
-  const rows = INSIGHTS[lang] || INSIGHTS.en;
-  const demandLabels = { high: text.high, veryHigh: text.veryHigh, surging: text.surging, steadyHigh: text.steadyHigh };
+  const [insights, setInsights] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
+  const [demandCategory, setDemandCategory] = useState('');
+  const [demandForecast, setDemandForecast] = useState(null);
+  const [demandLoading, setDemandLoading] = useState(false);
+  const [demandError, setDemandError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadInsights() {
+      setLoading(true);
+      setError('');
+
+      try {
+        const result = await api.getMarketInsights();
+        if (active) {
+          setInsights(result);
+          const supportedCategories = (result.categories || []).filter(
+            (category) => category.ml_supported
+          );
+          setDemandCategory((current) => (
+            supportedCategories.some((category) => category.category === current)
+              ? current
+              : supportedCategories[0]?.category || ''
+          ));
+        }
+      } catch (loadError) {
+        console.error('Could not load live market insights:', loadError);
+        if (active) {
+          setInsights(null);
+          setError(loadError.message || text.loadError);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadInsights();
+    return () => {
+      active = false;
+    };
+  }, [retry, text.loadError]);
+
+  const categories = useMemo(() => (
+    [...(insights?.categories || [])].sort(
+      (a, b) => Number(b.enquiries_30d || 0) - Number(a.enquiries_30d || 0)
+    )
+  ), [insights]);
+  const demandCategories = categories.filter((category) => category.ml_supported);
+  const overview = insights?.overview;
+  const maxEnquiries = Math.max(
+    1,
+    ...categories.map((category) => Number(category.enquiries_30d || 0))
+  );
+  const stats = overview
+    ? [
+      { value: formatNumber(overview.total_products, lang), label: text.liveProducts, Icon: Package, color: 'saffron' },
+      { value: formatNumber(overview.views_30d, lang), label: text.views30d, Icon: Eye, color: 'blue' },
+      { value: formatNumber(overview.enquiries_30d, lang), label: text.enquiries30d, Icon: TrendingUp, color: 'green' },
+      { value: formatPrice(overview.average_listing_price, lang), label: text.averagePrice, Icon: DollarSign, color: 'violet' }
+    ]
+    : [];
+
+  const categoryLabel = (category) => (
+    t.market?.[String(category).toLowerCase()] ||
+    String(category).replace(/[_-]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+  );
+
+  const demandLabel = (direction) => {
+    const key = String(direction || '').replace(/_([a-z])/g, (_match, letter) => letter.toUpperCase());
+    return text[key] || text.insufficientHistory;
+  };
+
+  const handleDemandForecast = async () => {
+    if (!demandCategory || demandLoading) return;
+    setDemandLoading(true);
+    setDemandError('');
+    setDemandForecast(null);
+
+    try {
+      setDemandForecast(await api.getLiveDemandForecast(demandCategory));
+    } catch (forecastError) {
+      setDemandError(forecastError.message || text.mlError);
+    } finally {
+      setDemandLoading(false);
+    }
+  };
+
   return (
-    <div>
-      <div className="page-header"><div><h1 className="page-title">{text.title}</h1><p className="page-subtitle">{text.desc}</p></div></div>
-      <div className="stats-grid">
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#fef3c7', color: '#d97706' }}><TrendingUp size={24} /></div><div><div className="stat-val">+41.8%</div><div className="stat-lbl">{text.giDemand}</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#ecfdf5', color: '#059669' }}><DollarSign size={24} /></div><div><div className="stat-val">2.8x</div><div className="stat-lbl">{text.earnings}</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#ede9fe', color: '#7c3aed' }}><Globe size={24} /></div><div><div className="stat-val">34+</div><div className="stat-lbl">{text.exportCountries}</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#e0f2fe', color: '#0284c7' }}><ShieldCheck size={24} /></div><div><div className="stat-val">100%</div><div className="stat-lbl">{text.settlements}</div></div></div>
-      </div>
-      <div className="card" style={{ marginBottom: '2rem', background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)', border: '1px solid #fed7aa' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div><h3 style={{ fontSize: '1.25rem', color: '#9a3412', marginBottom: '0.25rem' }}>💡 {text.benchmark}</h3><p style={{ fontSize: '0.92rem', color: '#7c2d12', maxWidth: '720px' }}>{text.benchmarkDesc}</p></div>
-          <div style={{ background: 'white', padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}><span style={{ fontSize: '0.75rem', color: '#9a3412', fontWeight: 700, textTransform: 'uppercase' }}>{text.margin}</span><div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#c2410c' }}>+62%</div></div>
+    <div className="insights-page">
+      <section className="insights-hero">
+        <div className="insights-hero-copy">
+          <span className="insights-kicker">
+            <Sparkles size={15} aria-hidden="true" />
+            {text.growth}
+          </span>
+          <h1>{text.title}</h1>
+          <p>{text.desc}</p>
         </div>
-      </div>
-      <div className="card">
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BarChart3 size={20} color="var(--primary)" /><span>{text.topCrafts}</span></h3>
-        <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.92rem' }}>
-          <thead><tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)' }}><th style={{ padding: '0.75rem' }}>{text.category}</th><th style={{ padding: '0.75rem' }}>{text.region}</th><th style={{ padding: '0.75rem' }}>{text.growth}</th><th style={{ padding: '0.75rem' }}>{text.intensity}</th><th style={{ padding: '0.75rem' }}>{text.fairPrice}</th><th style={{ padding: '0.75rem' }}>{text.buyers}</th></tr></thead>
-          <tbody>{rows.map((row, i) => <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', background: i % 2 === 0 ? 'rgba(250, 248, 245, 0.5)' : 'white' }}>
-            <td style={{ padding: '1rem 0.75rem', fontWeight: 600 }}>{row[0]}</td><td style={{ padding: '1rem 0.75rem', color: 'var(--text-muted)' }}>{row[1]}</td>
-            <td style={{ padding: '1rem 0.75rem', color: '#059669', fontWeight: 700 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}><ArrowUpRight size={15} />{GROWTH[i]}</span></td>
-            <td style={{ padding: '1rem 0.75rem' }}><span style={{ padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.78rem', fontWeight: 700, background: '#ecfdf5', color: '#065f46' }}>{demandLabels[row[2]] || row[2]}</span></td>
-            <td style={{ padding: '1rem 0.75rem', fontWeight: 600, color: 'var(--primary)' }}>{PRICES[i]}</td><td style={{ padding: '1rem 0.75rem', color: '#4b5563' }}>{row[3]}</td>
-          </tr>)}</tbody>
-        </table></div>
-      </div>
+        <div className="insights-hero-mark" aria-hidden="true">
+          <div className="insights-hero-orbit insights-hero-orbit-one" />
+          <div className="insights-hero-orbit insights-hero-orbit-two" />
+          <div className="insights-hero-emblem">
+            <BarChart3 size={34} strokeWidth={1.8} />
+            <span>{formatNumber(categories.length, lang)}</span>
+            <small>{text.topCrafts}</small>
+          </div>
+        </div>
+      </section>
+
+      {loading ? (
+        <div className="insights-state" role="status">
+          <span className="spinner" />
+          <p>{text.loading}</p>
+        </div>
+      ) : error ? (
+        <div className="insights-state is-error" role="alert">
+          <p><strong>{text.loadError}</strong></p>
+          <p>{error}</p>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setRetry((value) => value + 1)}
+          >
+            <RefreshCw size={15} />
+            {t.market?.retry || 'Retry'}
+          </button>
+        </div>
+      ) : (
+        <>
+          <section className="insights-stats" aria-label={text.title}>
+            {stats.map(({ value, label, Icon, color }) => (
+              <article className="insights-stat-card" key={label}>
+                <div className={`insights-stat-icon ${color}`}>
+                  <Icon size={21} strokeWidth={2} aria-hidden="true" />
+                </div>
+                <div className="insights-stat-content">
+                  <strong>{value}</strong>
+                  <span>{label}</span>
+                </div>
+                <ArrowUpRight className="insights-stat-arrow" size={17} aria-hidden="true" />
+              </article>
+            ))}
+          </section>
+
+          <section className="insights-panel insights-ml-panel">
+            <div className="insights-panel-heading">
+              <div>
+                <span className="insights-section-kicker">{text.mlTitle}</span>
+                <h2>{text.mlDescription}</h2>
+              </div>
+              <span className="insights-panel-icon"><Sparkles size={19} /></span>
+            </div>
+            <div className="insights-ml-controls">
+              <label className="insights-ml-select">
+                <span>{text.mlSelectCategory}</span>
+                <select
+                  className="form-input"
+                  value={demandCategory}
+                  onChange={(event) => {
+                    setDemandCategory(event.target.value);
+                    setDemandForecast(null);
+                    setDemandError('');
+                  }}
+                  disabled={demandCategories.length === 0 || demandLoading}
+                >
+                  {demandCategories.map((category) => (
+                    <option key={category.category} value={category.category}>
+                      {categoryLabel(category.category)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleDemandForecast}
+                disabled={!demandCategory || demandLoading}
+              >
+                {demandLoading && <RefreshCw size={16} className="animate-spin" />}
+                {demandLoading ? text.mlLoading : text.mlRunForecast}
+              </button>
+            </div>
+            {categories.some((category) => !category.ml_supported) && (
+              <small className="insights-ml-note">{text.mlUnsupportedNote}</small>
+            )}
+            {demandError && (
+              <p className="insights-ml-error" role="alert">
+                {text.mlError}: {demandError}
+              </p>
+            )}
+            {demandForecast && (
+              <div className="insights-ml-result" aria-live="polite">
+                <div className="insights-ml-result-main">
+                  <strong>
+                    {formatNumber(
+                      demandForecast.prediction.predicted_sales_quantity,
+                      lang
+                    )}
+                  </strong>
+                  <span>{text.mlEstimatedUnits}</span>
+                </div>
+                <p>
+                  {text.mlDemandClass}:{' '}
+                  <strong>
+                    {text[demandForecast.prediction.demand_class.toLowerCase()] ||
+                      demandForecast.prediction.demand_class}
+                  </strong>
+                </p>
+                <p>
+                  {text.mlLiveSignals}: {formatNumber(demandForecast.liveInputs.productViews30d, lang)} {text.views}
+                  {' · '}
+                  {formatNumber(demandForecast.liveInputs.buyerEnquiries30d, lang)} {text.enquiries}
+                </p>
+                <small>{text.mlTrainingNote}</small>
+              </div>
+            )}
+          </section>
+
+          {categories.length === 0 ? (
+            <div className="insights-state">
+              <Package size={28} aria-hidden="true" />
+              <p>{text.noData}</p>
+            </div>
+          ) : (
+            <>
+              <section className="insights-overview">
+                <article className="insights-panel insights-growth-panel">
+                  <div className="insights-panel-heading">
+                    <div>
+                      <span className="insights-section-kicker">{text.enquiries30d}</span>
+                      <h2>{text.buyerActivity}</h2>
+                    </div>
+                    <span className="insights-panel-icon"><BarChart3 size={19} /></span>
+                  </div>
+                  <div className="insights-growth-list">
+                    {categories.map((category) => {
+                      const count = Number(category.enquiries_30d || 0);
+                      const name = categoryLabel(category.category);
+                      return (
+                        <div className="insights-growth-row" key={category.category}>
+                          <div className="insights-growth-label">
+                            <span>{name}</span>
+                            <strong>{formatNumber(count, lang)}</strong>
+                          </div>
+                          <div
+                            className="insights-growth-track"
+                            role="img"
+                            aria-label={`${name}: ${formatNumber(count, lang)} ${text.enquiries}`}
+                          >
+                            <span style={{ width: `${(count / maxEnquiries) * 100}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </article>
+
+                <aside className="insights-benchmark">
+                  <div className="insights-benchmark-top">
+                    <span className="insights-benchmark-icon"><Eye size={19} /></span>
+                    <span>{text.views30d}</span>
+                  </div>
+                  <div className="insights-margin-value">
+                    {formatNumber(overview.views_30d, lang)}
+                  </div>
+                  <h2>{text.buyerActivity}</h2>
+                  <p>{text.dataSourceNote}</p>
+                  <div className="insights-benchmark-divider" />
+                  <div className="insights-benchmark-foot">
+                    <ShieldCheck size={17} aria-hidden="true" />
+                    <span>{text.enquiries30d}</span>
+                    <strong>{formatNumber(overview.enquiries_30d, lang)}</strong>
+                  </div>
+                </aside>
+              </section>
+
+              <section className="insights-crafts-panel">
+                <div className="insights-panel-heading">
+                  <div>
+                    <span className="insights-section-kicker">{text.intensity}</span>
+                    <h2>{text.topCrafts}</h2>
+                  </div>
+                  <span className="insights-craft-count">{categories.length}</span>
+                </div>
+
+                <div className="insights-craft-grid">
+                  {categories.map((category, index) => {
+                    const hasGrowth = category.enquiry_growth_percent !== null &&
+                      category.enquiry_growth_percent !== undefined;
+                    const growth = Number(category.enquiry_growth_percent);
+                    const DirectionIcon = growth < 0 ? TrendingDown : TrendingUp;
+
+                    return (
+                      <article className="insights-craft-card" key={category.category}>
+                        <div className="insights-craft-card-heading">
+                          <span className="insights-craft-index">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <div>
+                            <h3>{categoryLabel(category.category)}</h3>
+                            <span className="insights-craft-region">
+                              {formatNumber(category.total_products, lang)} {text.categoryProducts}
+                            </span>
+                          </div>
+                          <span className={`insights-demand demand-${category.demand_direction}`}>
+                            {demandLabel(category.demand_direction)}
+                          </span>
+                        </div>
+
+                        <div className="insights-craft-metrics">
+                          <div>
+                            <span>{text.enquiries}</span>
+                            <strong>{formatNumber(category.enquiries_30d, lang)}</strong>
+                          </div>
+                          <div>
+                            <span>{text.views}</span>
+                            <strong>{formatNumber(category.views_30d, lang)}</strong>
+                          </div>
+                          <div>
+                            <span>{text.averagePrice}</span>
+                            <strong>{formatPrice(category.average_price, lang)}</strong>
+                          </div>
+                        </div>
+
+                        <div className="insights-craft-buyers">
+                          {hasGrowth ? (
+                            <span className="insights-growth-summary">
+                              <DirectionIcon size={15} aria-hidden="true" />
+                              {text.growth}: {growth > 0 ? '+' : ''}{formatNumber(growth, lang)}%
+                            </span>
+                          ) : (
+                            <span className="insights-growth-summary">
+                              <BarChart3 size={15} aria-hidden="true" />
+                              {text.noGrowthBaseline}
+                            </span>
+                          )}
+                          <span className="insights-price-range">
+                            {text.priceRange}: {formatPrice(category.min_price, lang)} – {formatPrice(category.max_price, lang)}
+                          </span>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

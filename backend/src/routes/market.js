@@ -1,66 +1,103 @@
 import express from 'express';
+import {
+  isLiveDemandCategorySupported,
+  predictLiveDemand
+} from '../services/mlMarketService.js';
+import { isSupabaseConfigured, supabase } from '../config/supabase.js';
 
 const router = express.Router();
 
-const MARKET_TRENDS = [
-  {
-    craft: 'Bankura Terracotta Horses & Sculptures',
-    category: 'pottery',
-    region: 'West Bengal',
-    growth: '+42%',
-    demand: 'High',
-    avgPrice: '₹1,800 – ₹4,500',
-    topBuyers: 'Germany, USA, Domestic Urban',
-    exportOpportunity: 'Festive decor & cultural exhibitions'
-  },
-  {
-    craft: 'Kanjivaram Handwoven Pure Silk',
-    category: 'textiles',
-    region: 'Tamil Nadu',
-    growth: '+38%',
-    demand: 'Very High',
-    avgPrice: '₹12,000 – ₹35,000',
-    topBuyers: 'UK, Singapore, Wedding Retail',
-    exportOpportunity: 'Bridal wear & diaspora luxury markets'
-  },
-  {
-    craft: 'Channapatna Eco Wooden Toys',
-    category: 'woodwork',
-    region: 'Karnataka',
-    growth: '+54%',
-    demand: 'Surging',
-    avgPrice: '₹950 – ₹2,400',
-    topBuyers: 'Montessori Schools, Scandinavia, Japan',
-    exportOpportunity: 'Non-toxic sustainable educational toys'
-  },
-  {
-    craft: 'Moradabad Hand-Chiseled Brassware',
-    category: 'metal',
-    region: 'Uttar Pradesh',
-    growth: '+29%',
-    demand: 'Steady High',
-    avgPrice: '₹2,500 – ₹7,800',
-    topBuyers: 'UAE, North America, Hospitality',
-    exportOpportunity: 'Heritage resort & wellness sanctuary decor'
-  },
-  {
-    craft: 'Jaipur Blue Pottery Glazed Ceramics',
-    category: 'pottery',
-    region: 'Rajasthan',
-    growth: '+35%',
-    demand: 'High',
-    avgPrice: '₹1,400 – ₹3,900',
-    topBuyers: 'Interior Designers, France, Australia',
-    exportOpportunity: 'Contemporary tableware & architectural tile accents'
+async function fetchMarketInsights() {
+  if (!isSupabaseConfigured()) {
+    const error = new Error('Supabase is not configured.');
+    error.status = 503;
+    throw error;
   }
-];
 
-// GET /api/market/trends
-router.get('/trends', (req, res) => {
-  res.json({
-    updatedAt: new Date().toISOString(),
-    trends: MARKET_TRENDS
-  });
+  const [overviewResult, categoriesResult] = await Promise.all([
+    supabase.from('market_insights_overview').select('*').single(),
+    supabase
+      .from('market_insights_by_category')
+      .select('*')
+      .order('enquiries_30d', { ascending: false })
+  ]);
+
+  if (overviewResult.error) throw overviewResult.error;
+  if (categoriesResult.error) throw categoriesResult.error;
+
+  return {
+    overview: overviewResult.data,
+    categories: (categoriesResult.data || []).map((category) => ({
+      ...category,
+      ml_supported: isLiveDemandCategorySupported(category.category)
+    })),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+router.get('/insights', async (_req, res) => {
+  try {
+    return res.json(await fetchMarketInsights());
+  } catch (error) {
+    console.error('Market insights database query failed:', error.message);
+    return res.status(error.status || 503).json({
+      error: 'Could not load market insights. Apply the latest Supabase migration and try again.'
+    });
+  }
+});
+
+router.get('/trends', async (_req, res) => {
+  try {
+    const insights = await fetchMarketInsights();
+    return res.json({
+      updatedAt: insights.updatedAt,
+      trends: insights.categories
+    });
+  } catch (error) {
+    console.error('Market trends database query failed:', error.message);
+    return res.status(error.status || 503).json({
+      error: 'Could not load market trends. Apply the latest Supabase migration and try again.'
+    });
+  }
+});
+
+router.get('/ml/demand', async (req, res) => {
+  try {
+    return res.json(await predictLiveDemand(req.query.category));
+  } catch (error) {
+    console.error('Live ML demand prediction failed:', error.message);
+    return res.status(error.status || 503).json({
+      error: error.status
+        ? error.message
+        : 'Could not generate a demand estimate. Check the ML Python environment and trained model.'
+    });
+  }
+});
+
+router.post('/products/:id/view', async (req, res) => {
+  if (!isSupabaseConfigured()) {
+    return res.status(503).json({ error: 'Supabase is not configured.' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('product_views')
+      .insert({ product_id: req.params.id });
+
+    if (error) {
+      console.error('Product view recording failed:', error.message);
+      return res.status(error.code === '23503' ? 404 : 503).json({
+        error: error.code === '23503'
+          ? 'Product not found.'
+          : 'Could not record product view.'
+      });
+    }
+
+    return res.status(202).json({ success: true });
+  } catch (error) {
+    console.error('Product view recording failed:', error.message);
+    return res.status(503).json({ error: 'Could not record product view.' });
+  }
 });
 
 // POST /api/market/fair-price - Calculates transparent fair trade price
