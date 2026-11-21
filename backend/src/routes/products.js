@@ -1,4 +1,4 @@
-import { protectArtisanWrites } from '../middleware/auth.js';
+﻿import { protectArtisanWrites } from '../middleware/auth.js';
 
 import express from 'express';
 import {
@@ -63,7 +63,7 @@ let localProductStore = [...DEFAULT_PRODUCTS];
 // --------------------------------------------------
 
 async function getLocalizedProducts(products, language) {
-  if (language === 'en') {
+  if (language === 'en' || products.length === 0) {
     return products;
   }
 
@@ -71,92 +71,23 @@ async function getLocalizedProducts(products, language) {
     throw new Error(`Unsupported language: ${language}`);
   }
 
-  if (products.length === 0) {
-    return [];
-  }
-
-  const productIds = products.map(product => product.id);
-
-  let cachedTranslations = [];
-
-  // Check Supabase translation cache
-  if (isSupabaseConfigured()) {
-    const { data, error } = await supabase
-      .from('product_translations')
-      .select('product_id, translated_data')
-      .eq('language_code', language)
-      .in('product_id', productIds);
-
-    if (error) {
-      console.error('Translation cache read error:', error.message);
-    } else {
-      cachedTranslations = data || [];
-    }
-  }
-
-  const cacheMap = new Map(
-    cachedTranslations.map(item => [
-      item.product_id,
-      item.translated_data
-    ])
-  );
-
   const localizedProducts = [];
 
-  // Process products one by one to avoid excessive API requests
   for (const product of products) {
-    const cached = cacheMap.get(product.id);
-
-    // Return cached translation
-    if (cached) {
-      localizedProducts.push(cached);
-      continue;
-    }
-
     try {
-      // Generate new translation
       const translated = await translateProduct(product, language);
-
       localizedProducts.push(translated);
-
-      // Save translation in Supabase
-      if (isSupabaseConfigured()) {
-        const { error } = await supabase
-          .from('product_translations')
-          .upsert(
-            {
-              product_id: product.id,
-              language_code: language,
-              translated_data: translated,
-              updated_at: new Date().toISOString()
-            },
-            {
-              onConflict: 'product_id,language_code'
-            }
-          );
-
-        if (error) {
-          console.error(
-            'Translation cache save error:',
-            error.message
-          );
-        }
-      }
     } catch (error) {
       console.error(
         `Translation failed for product ${product.id}:`,
         error.message
       );
-
-      // Return English product if translation fails
       localizedProducts.push(product);
     }
   }
 
   return localizedProducts;
 }
-
-// --------------------------------------------------
 // HELPER: CLEAR TRANSLATION CACHE
 // --------------------------------------------------
 
@@ -310,7 +241,8 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const payload = { ...req.body, id: req.body.id || crypto.randomUUID(), artisan_id: req.user.id,
+    const { translations: _translations, ...productFields } = req.body;
+    const payload = { ...productFields, id: req.body.id || crypto.randomUUID(), artisan_id: req.user.id,
       is_verified: false, rating: 0, reviews_count: 0 };
     if (!payload.title || !Number.isFinite(Number(payload.price)) || Number(payload.price) < 0)
       return res.status(400).json({ error: 'A title and valid non-negative price are required.' });
@@ -321,7 +253,7 @@ router.post('/', async (req, res) => {
 });
 router.put('/:id', async (req, res) => {
   try {
-    const updates = { ...req.body };
+    const { translations: _translations, ...updates } = req.body;
     delete updates.id; delete updates.artisan_id;
     const { data, error } = await req.db.from('products').update(updates)
       .eq('id', req.params.id).eq('artisan_id', req.user.id).select().single();
@@ -337,3 +269,4 @@ router.delete('/:id', async (req, res) => {
   return res.json({ success: true, deletedId: data.id, deletedInSupabase: true });
 });
 export default router;
+

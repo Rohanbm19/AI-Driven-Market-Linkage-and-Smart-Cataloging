@@ -3065,6 +3065,39 @@ html[data-theme="dark"] .assistant-input::placeholder {
   background: var(--bg-subtle);
 }
 
+.market-insights-table {
+  color: var(--text-main);
+}
+
+.market-insights-table tbody tr:nth-child(odd) {
+  background: var(--bg-subtle);
+}
+
+.market-insights-table tbody tr:nth-child(even) {
+  background: var(--bg-card);
+}
+
+.market-insights-table tbody tr:hover {
+  background: var(--cream-dark);
+}
+
+.market-insights-table .market-insights-secondary {
+  color: var(--text-muted);
+}
+
+.market-insights-table .market-insights-growth {
+  color: var(--text-main);
+}
+
+.market-insights-table .market-insights-demand {
+  color: var(--text-main);
+  background: var(--accent-emerald-light);
+}
+
+.market-insights-table .market-insights-price {
+  color: var(--primary-hover);
+}
+
 /* Main page */
 html[data-theme="dark"] body {
   background-color: var(--bg-main);

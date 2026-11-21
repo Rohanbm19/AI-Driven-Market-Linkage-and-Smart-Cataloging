@@ -74,13 +74,13 @@ export default function MarketInsights() {
       </div>
       <div className="card">
         <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BarChart3 size={20} color="var(--primary)" /><span>{text.topCrafts}</span></h3>
-        <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.92rem' }}>
+        <div style={{ overflowX: 'auto' }}><table className="market-insights-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.92rem' }}>
           <thead><tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)' }}><th style={{ padding: '0.75rem' }}>{text.category}</th><th style={{ padding: '0.75rem' }}>{text.region}</th><th style={{ padding: '0.75rem' }}>{text.growth}</th><th style={{ padding: '0.75rem' }}>{text.intensity}</th><th style={{ padding: '0.75rem' }}>{text.fairPrice}</th><th style={{ padding: '0.75rem' }}>{text.buyers}</th></tr></thead>
-          <tbody>{rows.map((row, i) => <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', background: i % 2 === 0 ? 'rgba(250, 248, 245, 0.5)' : 'white' }}>
-            <td style={{ padding: '1rem 0.75rem', fontWeight: 600 }}>{row[0]}</td><td style={{ padding: '1rem 0.75rem', color: 'var(--text-muted)' }}>{row[1]}</td>
-            <td style={{ padding: '1rem 0.75rem', color: '#059669', fontWeight: 700 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}><ArrowUpRight size={15} />{GROWTH[i]}</span></td>
-            <td style={{ padding: '1rem 0.75rem' }}><span style={{ padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.78rem', fontWeight: 700, background: '#ecfdf5', color: '#065f46' }}>{demandLabels[row[2]] || row[2]}</span></td>
-            <td style={{ padding: '1rem 0.75rem', fontWeight: 600, color: 'var(--primary)' }}>{PRICES[i]}</td><td style={{ padding: '1rem 0.75rem', color: '#4b5563' }}>{row[3]}</td>
+          <tbody>{rows.map((row, i) => <tr key={i} className="market-insights-row" style={{ borderBottom: '1px solid var(--border-color)' }}>
+            <td style={{ padding: '1rem 0.75rem', fontWeight: 600 }}>{row[0]}</td><td className="market-insights-secondary" style={{ padding: '1rem 0.75rem' }}>{row[1]}</td>
+            <td className="market-insights-growth" style={{ padding: '1rem 0.75rem', fontWeight: 700 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}><ArrowUpRight size={15} color="var(--accent-emerald)" />{GROWTH[i]}</span></td>
+            <td style={{ padding: '1rem 0.75rem' }}><span className="market-insights-demand" style={{ padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.78rem', fontWeight: 700 }}>{demandLabels[row[2]] || row[2]}</span></td>
+            <td className="market-insights-price" style={{ padding: '1rem 0.75rem', fontWeight: 600 }}>{PRICES[i]}</td><td className="market-insights-secondary" style={{ padding: '1rem 0.75rem' }}>{row[3]}</td>
           </tr>)}</tbody>
         </table></div>
       </div>

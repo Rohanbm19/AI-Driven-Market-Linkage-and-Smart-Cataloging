@@ -1,4 +1,4 @@
--- Apply AFTER main's existing migrations. Non-destructive: preserves existing rows.
+﻿-- Apply AFTER main's existing migrations. Non-destructive: preserves existing rows.
 create table if not exists public.profiles (
  id uuid primary key references auth.users(id) on delete cascade,
  role text not null default 'buyer' check (role in ('buyer','artisan')),
@@ -54,7 +54,7 @@ grant select on public.artisans, public.products to anon, authenticated;
 grant insert, update, delete on public.artisans, public.products to authenticated;
 grant insert, select on public.enquiries to anon, authenticated;
 revoke update on public.enquiries from anon, authenticated;
-grant update(status,reply,updated_at) on public.enquiries to authenticated;
+grant update (status, reply, updated_at) on public.enquiries to authenticated;
 create policy own_profile on public.profiles for select to authenticated using(id = auth.uid());
 create policy public_artisans on public.artisans for select using(true);
 create policy own_studio_insert on public.artisans for insert to authenticated with check(id = auth.uid()::text and public.is_artisan());
@@ -82,3 +82,6 @@ end $$;
 create policy product_images_read on storage.objects for select using(bucket_id='product-images');
 create policy product_images_upload on storage.objects for insert to authenticated with check(
  bucket_id='product-images' and (storage.foldername(name))[1]=auth.uid()::text and public.is_artisan());
+
+
+

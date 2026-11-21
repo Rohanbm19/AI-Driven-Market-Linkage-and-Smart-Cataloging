@@ -15,11 +15,13 @@ import LanguageSwitcher from './LanguageSwitcher.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
 import Logo from './Logo.jsx';
 import { useLanguage } from '../i18n/index.js';
+import { loginTranslations } from '../i18n/loginTranslations.js';
 
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Header() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const copy = loginTranslations[lang] || loginTranslations.en;
   const { pathname } = useLocation();
   const { isAuthenticated, isArtisan, signOut } = useAuth();
   const navigate = useNavigate();
@@ -155,7 +157,7 @@ export default function Header() {
                 onClick={closeMobile}
               >
                 <Store size={18} />
-                <span>{isAuthenticated ? profileLabel : 'Artisan Sign In'}</span>
+                <span>{isAuthenticated ? profileLabel : copy.artisanLink}</span>
               </Link>
             </li>
 
@@ -181,3 +183,5 @@ export default function Header() {
     </header>
   );
 }
+
+
