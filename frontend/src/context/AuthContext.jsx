@@ -8,20 +8,24 @@ async function getAccount(session) {
   const user = session?.user;
   if (!user) return anonymousAccount;
 
-  const { data: role, error } = await supabase.rpc('get_my_kalasetu_role');
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role, full_name, studio_name, requested_role')
+    .eq('id', user.id)
+    .maybeSingle();
 
-  if (error) throw new Error(`Unable to load your KalaSetu role: ${error.message}`);
-  if (!role) throw new Error('No KalaSetu user record is linked to this account.');
+  if (error) throw new Error(`Unable to load your KalaSetu profile: ${error.message}`);
+  if (!profile) throw new Error('No KalaSetu profile is linked to this account.');
 
   return {
     id: user.id,
     email: user.email || null,
-    fullName: user.user_metadata?.full_name || null,
-    studioName: user.user_metadata?.studio_name || null,
-    requestedRole: user.user_metadata?.requested_role || 'buyer',
+    fullName: profile.full_name || user.user_metadata?.full_name || null,
+    studioName: profile.studio_name || user.user_metadata?.studio_name || null,
+    requestedRole: profile.requested_role || 'buyer',
     phone: user.phone || user.user_metadata?.phone || null,
     createdAt: user.created_at || null,
-    role,
+    role: profile.role,
     isAuthenticated: true
   };
 }

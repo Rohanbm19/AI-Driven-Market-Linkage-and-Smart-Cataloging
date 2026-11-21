@@ -101,7 +101,7 @@ export default function ArtisanProfile() {
         bio: bio.trim()
       };
 
-      const result = await api.updateArtisanProfile(payload);
+      const result = await api.updateArtisanProfile(userId, payload);
 
       if (result.success) {
         setArtisan(result.data);

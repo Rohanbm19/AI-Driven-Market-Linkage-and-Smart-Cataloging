@@ -88,10 +88,10 @@ router.post("/", async (req, res) => {
     }
 
     // User IDs match Supabase Auth UUIDs directly.
-    const { data: user, error: userError } = await req.db
-      .from("users")
-      .select("user_id")
-      .eq("user_id", req.user.id)
+    const { data: profile, error: userError } = await req.db
+      .from("profiles")
+      .select("id")
+      .eq("id", req.user.id)
       .maybeSingle();
 
     if (userError) {
@@ -100,9 +100,9 @@ router.post("/", async (req, res) => {
       });
     }
 
-    if (!user) {
+    if (!profile) {
       return res.status(404).json({
-        error: "User profile not found in public.users"
+        error: "User profile not found in public.profiles"
       });
     }
 

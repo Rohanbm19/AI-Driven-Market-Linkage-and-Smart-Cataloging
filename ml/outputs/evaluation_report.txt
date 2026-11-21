@@ -1,0 +1,46 @@
+KalaSetu ML evaluation report
+Sample / synthetic data for KalaSetu ML development only. Predictions from these files are not real market insights.
+
+Demand train
+  mae: 1.8923
+  rmse: 2.462
+  r2: 0.9459
+  n_samples: 560
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+Demand test
+  mae: 3.8156
+  rmse: 4.7793
+  r2: 0.7507
+  n_samples: 160
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+
+Price train
+  mae: 66.1774
+  rmse: 126.9939
+  r2: 0.9971
+  n_samples: 336
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+Price test
+  mae: 149.9707
+  rmse: 217.0155
+  r2: 0.991
+  n_samples: 84
+  note: Scores are measured on the held-out test split of the current dataset. They are not a claim of real-world market accuracy.
+
+Segmentation train
+  n_clusters_found: 4
+  n_samples: 160
+  cluster_sizes: {'0': 36, '1': 34, '2': 49, '3': 41}
+  silhouette: 0.128
+  davies_bouldin: 2.3962
+  note: Silhouette is closer to 1 when clusters separate well. Davies-Bouldin is lower when clusters are compact and apart. These scores describe this sample only.
+Segmentation test
+  n_clusters_found: 4
+  n_samples: 40
+  cluster_sizes: {'0': 9, '1': 14, '2': 7, '3': 10}
+  silhouette: 0.1035
+  davies_bouldin: 2.1835
+  note: Silhouette is closer to 1 when clusters separate well. Davies-Bouldin is lower when clusters are compact and apart. These scores describe this sample only.
+
+Trending categories: Wooden Crafts, Brass/Metalware, Other Handmade Products, Paintings, Jewellery, Pottery
+Decreasing categories: Baskets

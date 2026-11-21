@@ -46,11 +46,31 @@ export async function requireAuth(req, res, next) {
 }
 
 export async function requireArtisan(req, res, next) {
-  const { data: role, error } = await req.db.rpc('get_my_kalasetu_role');
-  if (error) return res.status(500).json({ error: `Unable to verify KalaSetu role: ${error.message}` });
-  if (!role) return res.status(404).json({ error: 'No KalaSetu user record is linked to this account.' });
-  if (role !== 'artisan') return res.status(403).json({ error: 'Artisan access required.' });
-  return next();
+  try {
+    const { data: profile, error } = await req.db
+      .from('profiles')
+      .select('role')
+      .eq('id', req.user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Unable to verify KalaSetu profile:', error.message);
+      return res.status(500).json({ error: 'Unable to verify KalaSetu role.' });
+    }
+
+    if (!profile) {
+      return res.status(404).json({ error: 'No KalaSetu profile is linked to this account.' });
+    }
+
+    if (profile.role !== 'artisan') {
+      return res.status(403).json({ error: 'Artisan access required.' });
+    }
+
+    return next();
+  } catch (error) {
+    console.error('Unable to verify KalaSetu role:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 }
 
 export function protectArtisanWrites(req, res, next) {
