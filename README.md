@@ -1,12 +1,14 @@
-# Merged version
+# KalaSetu – AI-Driven Market Linkage and Smart Cataloging
 
-Start with [MERGE_NOTES.md](MERGE_NOTES.md) for authentication, database upgrade, artisan approval and run instructions. The original main README follows.
+**Empowering Rural Artisans Through AI, Digital Market Access and Multilingual Technology**
 
-# AI-Driven Market Linkage and Smart Cataloging
+KalaSetu is an AI-powered marketplace platform designed to connect rural and traditional artisans with potential customers. It simplifies product cataloging, improves product presentation, supports multilingual interactions, and helps artisans showcase their products in a digital marketplace.
 
-An end-to-end platform empowering rural and traditional artisans with smart AI cataloging, market linkage, multilingual conversational assistance, image enhancement, and automated enquiry management.
+The platform combines AI-assisted catalog generation, image enhancement, market insights and enquiry management to help artisans improve their online presence and reach wider markets.
 
-## Project Structure
+> **Merged project documentation:** Start with [MERGE_NOTES.md](MERGE_NOTES.md) for authentication, database upgrades, artisan approval and additional setup instructions.
+
+---
 
 ```
 frontend/                 React + Vite application
@@ -23,25 +25,73 @@ supabase/
 ml/                          Model training module; live demand inference is served by the backend
 ```
 
-## Requirements
+## Project Structure
 
-- Node.js 18 or newer
-- A Supabase project for persistent database storage (optional for local fallback mode)
+```text
+AI-Driven-Market-Linkage-and-Smart-Cataloging/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── i18n/
+│   ├── public/
+│   └── package.json
+│
+├── backend/
+│   ├── src/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── middleware/
+│   ├── image_enhancer/
+│   └── package.json
+│
+├── supabase/
+│   ├── migrations/
+│   ├── functions/
+│   ├── config.toml
+│   └── seed.sql
+│
+├── MERGE_NOTES.md
+└── README.md
+```
 
 ## Getting Started
 
-### Supabase
+### Requirements
 
-Install the Supabase CLI dependency from the repository root, then link the project and apply the migrations:
+- Node.js 18 or newer.
+- npm.
+- Python 3.10 or newer for the image enhancement service.
+- A Supabase project.
+- Google Gemini API key for AI-powered features.
+- Supabase CLI for database migrations.
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Rohanbm19/AI-Driven-Market-Linkage-and-Smart-Cataloging.git
+
+cd AI-Driven-Market-Linkage-and-Smart-Cataloging
+```
+
+### 2. Configure Supabase
+
+Install dependencies from the repository root:
 
 ```bash
 npm install
-npx supabase login
-npx supabase link --project-ref <your-project-ref>
-npx supabase db push
 ```
 
-To load the sample artisans and products, run `supabase/seed.sql` in the Supabase Dashboard SQL Editor after the migrations. The migrations create `artisans`, `products`, and `enquiries`; products link to artisans, and enquiries can link to products.
+Log in and link your Supabase project:
+
+```bash
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+```
+
+Apply database migrations:
 
 **How Market Insights works:** The frontend requests summaries from the backend, which reads Supabase product listings, enquiries, and recorded product views. Database views calculate category prices and compare recent buyer activity with the previous 30 days. ML CSVs are used only to train models, not for live insights.
 
@@ -49,69 +99,135 @@ Apply `supabase/migrations/202611210002_market_insights_live_data.sql` after the
 
 `supabase/quick_setup.sql` is a destructive development shortcut that drops and recreates tables. Do not run it against a database containing data; it can delete products, artisans, and enquiries. Prefer applying migrations to an existing project. Run `supabase/seed.sql` only when you intentionally want to add its sample records.
 
-If these migrations have already been applied to a database, make schema changes in a new migration rather than editing an applied migration.
-The image enhancement workflow uses `products.original_image_url` to retain the original photo alongside the selected listing image. Apply the new migration with `npx supabase db push` before publishing enhanced images to Supabase.
+For additional authentication, database upgrade and artisan approval instructions, refer to [MERGE_NOTES.md](MERGE_NOTES.md).
 
-### Backend
+**Important:** Review the migration instructions before applying schema changes to a database containing existing data. Do not run destructive setup scripts on a database with data you need to preserve.
 
-In PowerShell, Command Prompt, or a Unix shell:
+### 3. Backend Setup
 
 ```bash
 cd backend
 npm ci
 ```
 
-Create `backend/.env` and set:
+Create a `.env` file inside the backend directory.
+
+Configure the required credentials:
 
 ```dotenv
 PORT=5000
-SUPABASE_URL=https://<your-project-ref>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
+
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+GEMINI_MODEL=YOUR_SUPPORTED_GEMINI_MODEL
 ```
 
-The backend can use `SUPABASE_ANON_KEY` if no service-role key is provided. Keep service-role keys in the backend only; never put them in frontend environment variables. Start the API with:
+Keep private credentials in the backend environment only. Never expose the Supabase service-role key in frontend code or commit `.env` files to GitHub.
+
+Start the backend:
 
 ```bash
 npm run dev
 ```
 
-The API listens at `http://localhost:5000`. `GET /api/health` reports whether Supabase credentials are configured; it does not verify a live database connection. Without credentials, product, artisan, and enquiry routes use in-memory sample data.
+Backend API:
 
-### OpenCV Image Enhancer
-
-Run the image service in a separate terminal. From the repository root in PowerShell:
-
-```powershell
-cd backend\image_enhancer
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-$env:IMAGE_ENHANCER_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```text
+http://localhost:5000
 ```
 
-The service accepts multipart image uploads at `POST http://localhost:8000/api/enhance`, limited to JPEG, PNG, and WebP files up to 10 MB. It returns the enhanced image bytes in the original format. Set the optional `background_preset` field to `clean_white`, `warm_sand`, or `soft_sage` to replace the original background, or send an optional `background_file` image to use a custom background. Omit the background fields or use `none` to keep the current background. Background removal works best when the product is centered and clearly separated from a simple background. `GET http://localhost:8000/health` checks service availability. Images are processed in an automatically cleaned temporary directory; the submitted file is never overwritten.
+Health endpoint:
 
-The Add Product form and standalone image enhancer let users choose a studio preset or upload a custom background before processing. Review the result before accepting it; the original photo remains unchanged.
+```text
+http://localhost:5000/api/health
+```
 
-Copy `frontend/.env.example` to `frontend/.env` and set `VITE_IMAGE_ENHANCER_URL=http://localhost:8000` if the service is hosted elsewhere. Restart Vite after changing frontend environment variables. The browser sends the file directly to this service; configure `IMAGE_ENHANCER_ALLOWED_ORIGINS` to include the frontend origin when deploying.
+### 4. Frontend Setup
 
-If the frontend reports **“Could not reach the image enhancement service”**, start the FastAPI command above in its own terminal and leave it running while using the frontend. Check `http://localhost:8000/health`; it should return a JSON status of `ok`. If health works but enhancement still fails, make sure `VITE_IMAGE_ENHANCER_URL` points to that service and that `IMAGE_ENHANCER_ALLOWED_ORIGINS` includes the exact frontend origin (for example, `http://localhost:5173`). Restart the relevant service after changing environment variables.
-
-### Frontend
-
-In a second terminal:
+Open a separate terminal:
 
 ```bash
 cd frontend
 npm ci
 ```
 
-Copy `frontend/.env.example` to `frontend/.env` and set the Supabase project URL and public anon key if the frontend Supabase features are needed. The API URL defaults to `http://localhost:5000/api`; the image enhancer URL defaults to `http://localhost:8000`.
+Create a `.env` file using the provided example:
+
+```dotenv
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+
+VITE_API_URL=http://localhost:5000/api
+VITE_IMAGE_ENHANCER_URL=http://localhost:8000
+```
+
+Only use the public Supabase anon/publishable key in the frontend. Never use the service-role key here.
+
+Start the frontend:
 
 ```bash
 npm run dev
 ```
+
+Open:
+
+```text
+http://localhost:5173
+```
+
+### 5. OpenCV Image Enhancer Setup
+
+The image enhancement service runs separately from the Express backend.
+
+From the repository root:
+
+```powershell
+cd backend\image_enhancer
+
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install -r requirements.txt
+
+$env:IMAGE_ENHANCER_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Health endpoint:
+
+```text
+http://localhost:8000/health
+```
+
+Image enhancement endpoint:
+
+```text
+POST http://localhost:8000/api/enhance
+```
+
+For detailed image enhancement options and troubleshooting, see the [Image Enhancement](#image-enhancement) section.
+
+## Environment Configuration
+
+| Variable | Location | Purpose |
+|---|---|---|
+| `PORT` | Backend | Express server port |
+| `SUPABASE_URL` | Backend | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Backend | User authentication validation |
+| `SUPABASE_SERVICE_ROLE_KEY` | Backend | Server-side privileged database operations |
+| `GEMINI_API_KEY` | Backend | Gemini AI integration |
+| `GEMINI_MODEL` | Backend | Configured Gemini model |
+| `VITE_SUPABASE_URL` | Frontend | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Frontend | Public Supabase key |
+| `VITE_API_URL` | Frontend | Backend API URL |
+| `VITE_IMAGE_ENHANCER_URL` | Frontend | Image enhancement service URL |
+| `IMAGE_ENHANCER_ALLOWED_ORIGINS` | Image service | Allowed frontend origins |
+
+Use the `.env.example` files as templates wherever available. Never commit actual credentials.
 
 ### ML Training and Live Demand Estimates
 
@@ -151,13 +267,45 @@ Training saves model artifacts in `ml/models/` and evaluation reports in `ml/out
 - `POST /api/market/products/:id/view`
 - `POST http://localhost:8000/api/enhance` (FastAPI image service)
 
-### Image enhancement smoke test
+Supported features include:
 
-With the FastAPI service running, verify its health and upload a local photo:
+- JPEG, PNG and WebP image uploads.
+- Maximum upload size of 10 MB.
+- Background presets:
+  - `clean_white`
+  - `warm_sand`
+  - `soft_sage`
+- Optional custom background images.
+- Original image preservation.
+- Before-and-after image comparison.
+
+Example smoke test:
 
 ```powershell
 Invoke-RestMethod http://localhost:8000/health
+
 curl.exe -F "file=@C:\path\to\product.jpg" http://localhost:8000/api/enhance --output enhanced.jpg
 ```
 
-Then open `http://localhost:5173/add-product`, upload an image, select **Enhance Image**, and use the before/after slider. Choose **Accept Enhanced Image** or **Keep Original Image** before publishing. The standalone `/image-enhancer` page also supports upload, comparison, retry, and download.
+The Add Product form and standalone `/image-enhancer` page provide image enhancement workflows. Review the result before accepting it.
+
+If the frontend cannot reach the image service, verify that FastAPI is running, check the health endpoint and confirm that `VITE_IMAGE_ENHANCER_URL` and `IMAGE_ENHANCER_ALLOWED_ORIGINS` are configured correctly.
+
+## Future Enhancements
+
+- More regional language support.
+- Improved AI-powered product recommendations.
+- Advanced artisan analytics.
+- Expanded market linkage opportunities.
+- Enhanced marketplace discovery.
+- Additional tools for artisan business growth.
+
+## Contributors
+
+Developed collaboratively as an AI-driven marketplace project focused on supporting rural and traditional artisans.
+
+Contributions, suggestions and improvements are welcome.
+
+---
+
+**KalaSetu – Connecting Artisans to Opportunities.**
