@@ -99,6 +99,8 @@ export default function VoiceInputField({
   };
 
   const displayError = internalError || voiceError;
+  const isLocalSuggestion = aiFilled === 'suggestion';
+  const autofillCopy = t.autofill || {};
 
   return (
     <div className={`voice-input-group ${isListening ? 'is-recording' : ''} ${aiFilled ? 'is-ai-filled' : ''} ${className}`}>
@@ -108,9 +110,18 @@ export default function VoiceInputField({
           <label htmlFor={id} className="form-label" style={{ margin: 0 }}>
             {label} {required && <span className="req-asterisk">*</span>}
             {aiFilled && (
-              <span className="ai-chip" title={t.autofill?.estimateNote}>
+              <span
+                className="ai-chip"
+                title={
+                  isLocalSuggestion
+                    ? autofillCopy.suggestionNote
+                    : autofillCopy.estimateNote
+                }
+              >
                 <Sparkles size={10} />
-                {t.autofill?.aiChip || 'AI'}
+                {isLocalSuggestion
+                  ? autofillCopy.suggestionChip || 'Suggestion'
+                  : autofillCopy.aiChip || 'AI'}
               </span>
             )}
           </label>

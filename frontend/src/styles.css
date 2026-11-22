@@ -42,6 +42,7 @@
   --text-main: #1C1917;
   --text-muted: #665E57;
   --text-light: #9B948C;
+  --assistant-user-bg: #C84E32;
 
   /* Elevations */
   --shadow-sm: 0 1px 3px rgba(69, 26, 24, 0.05);
@@ -1108,7 +1109,7 @@ h1, h2, h3, h4, .serif-font {
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #292524;
+  color: var(--text-main);
   margin-bottom: 0.45rem;
 }
 
@@ -1125,7 +1126,7 @@ h1, h2, h3, h4, .serif-font {
   font-family: var(--font-main);
   font-size: 0.95rem;
   color: var(--text-main);
-  background: #FFFFFF;
+  background: var(--bg-card);
   transition: var(--transition);
 }
 
@@ -1336,8 +1337,8 @@ h1, h2, h3, h4, .serif-font {
    FAIR TRADE CALCULATOR CARD
    ========================================================================== */
 .calculator-card {
-  background: #FDFBF8 !important;
-  border: 1px solid #EDE2D3 !important;
+  background: var(--bg-main) !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 .calculator-header {
@@ -1361,10 +1362,14 @@ h1, h2, h3, h4, .serif-font {
   gap: 0.35rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent-emerald);
+  color: var(--text-main);
   background: var(--accent-emerald-light);
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-full);
+}
+
+.fair-trade-badge svg {
+  color: var(--accent-emerald);
 }
 
 .calculator-grid {
@@ -1375,7 +1380,7 @@ h1, h2, h3, h4, .serif-font {
 }
 
 .calc-breakdown-bar {
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
   border: 1px solid var(--border-color);
@@ -1400,7 +1405,7 @@ h1, h2, h3, h4, .serif-font {
 
 .profit-tag {
   font-size: 0.82rem;
-  color: var(--accent-emerald);
+  color: var(--text-main);
   font-weight: 600;
 }
 
@@ -1413,8 +1418,23 @@ h1, h2, h3, h4, .serif-font {
 }
 
 .btn-apply-price:hover {
-  background: #FFEED8;
+  background: var(--cream-dark);
   border-color: var(--accent-gold);
+}
+
+.calculator-card .voice-lang-badge {
+  opacity: 1;
+}
+
+.calculator-card .voice-mic-btn:hover {
+  background: var(--cream);
+  color: var(--maroon-deep);
+  border-color: var(--accent-gold);
+}
+
+.calculator-card .voice-mic-btn:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* Photo Upload */
@@ -2958,12 +2978,124 @@ html[data-theme="dark"] {
 
   --text-main: #F5EEE9;
   --text-muted: #C0B3AA;
-  --text-light: #95877F;
+  --text-light: #B7AAA1;
+  --assistant-user-bg: #5E2522;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.assistant-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.assistant-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.assistant-prompt:hover {
+  background: var(--bg-subtle);
+  color: var(--text-main);
+}
+
+.assistant-prompt:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.assistant-chat-panel {
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+.assistant-message-bubble {
+  max-width: 82%;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  color: var(--text-main);
+  background: var(--bg-subtle);
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.assistant-message-user {
+  color: #FFFFFF;
+  background: var(--assistant-user-bg);
+}
+
+.assistant-composer {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.assistant-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-subtle);
+  color: var(--text-main);
+}
+
+.assistant-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+html[data-theme="dark"] .assistant-input::placeholder {
+  color: var(--text-muted);
+}
+
+.assistant-input:focus {
+  background: var(--bg-subtle);
+}
+
+.market-insights-table {
+  color: var(--text-main);
+}
+
+.market-insights-table tbody tr:nth-child(odd) {
+  background: var(--bg-subtle);
+}
+
+.market-insights-table tbody tr:nth-child(even) {
+  background: var(--bg-card);
+}
+
+.market-insights-table tbody tr:hover {
+  background: var(--cream-dark);
+}
+
+.market-insights-table .market-insights-secondary {
+  color: var(--text-muted);
+}
+
+.market-insights-table .market-insights-growth {
+  color: var(--text-main);
+}
+
+.market-insights-table .market-insights-demand {
+  color: var(--text-main);
+  background: var(--accent-emerald-light);
+}
+
+.market-insights-table .market-insights-price {
+  color: var(--primary-hover);
 }
 
 /* Main page */

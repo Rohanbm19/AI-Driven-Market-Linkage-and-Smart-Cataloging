@@ -654,7 +654,7 @@ export const api = {
       `${API_BASE_URL}/artisans/${encodeURIComponent(id)}`,
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify(updatedData)
       }
     );

@@ -3,10 +3,14 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function RequireBuyer() {
-  const { isAuthenticated, isLoading, role } = useAuth();
+  const { isAuthenticated, isLoading, role, authError } = useAuth();
 
   if (isLoading) {
     return <div className="auth-loading" role="status">Loading your account...</div>;
+  }
+
+  if (isAuthenticated && authError) {
+    return <div className="auth-message" role="alert">{authError}</div>;
   }
 
   if (isAuthenticated && role === 'artisan') {
@@ -15,6 +19,10 @@ export default function RequireBuyer() {
 
   if (!isAuthenticated) {
     return <Navigate to="/buyer/login?redirect=%2Fbuyer%2Fprofile" replace />;
+  }
+
+  if (role !== 'buyer') {
+    return <div className="auth-message" role="alert">Unable to verify your KalaSetu account role.</div>;
   }
 
   return <Outlet />;

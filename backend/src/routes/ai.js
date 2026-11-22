@@ -8,11 +8,12 @@ import { calculateFairPrice } from '../services/marketService.js';
 const router = express.Router();
 
 // 1. POST /api/ai/catalog - Smart AI Catalog generation
-router.post('/catalog', requireAuth, requireArtisan, (req, res) => {
+router.post('/catalog', requireAuth, requireArtisan, async (req, res) => {
   try {
-    const generated = generateSmartCatalog(req.body);
+    const generated = await generateSmartCatalog(req.body);
     return res.json(generated);
   } catch (err) {
+    console.error('AI catalog generation failed:', err.message);
     return res.status(500).json({ error: err.message });
   }
 });
