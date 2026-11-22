@@ -239,12 +239,13 @@ async function currentUser() {
   return user;
 }
 
+
 async function requireArtisan() {
   const user = await currentUser();
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('role, studio_name, full_name')
+    .select('role')
     .eq('id', user.id)
     .single();
 
@@ -254,22 +255,9 @@ async function requireArtisan() {
     throw new Error('Artisan access is required.');
   }
 
-  const { error: studioError } = await supabase
-    .from('artisans')
-    .upsert({
-      id: user.id,
-      name: profile.studio_name || profile.full_name || 'My Studio',
-      craft: '',
-      region: ''
-    }, {
-      onConflict: 'id',
-      ignoreDuplicates: true
-    });
-
-  if (studioError) throw studioError;
-
   return user;
 }
+
 
 async function getAuthHeaders(includeContentType = true) {
   await requireArtisan();
