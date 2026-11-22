@@ -929,12 +929,76 @@ export default function AddProduct() {
   return (
     <>
       <style>{`
-        /* Live Buyer Preview: centered compact card with a larger image area */
+        /*
+         * Add Product theme + preview/publish surface.
+         * Uses the app's light/dark theme markers and keeps the preview
+         * and publish actions visually connected as one section.
+         */
+        .cataloging-page-container {
+          --catalog-surface: var(--card-bg, var(--surface, #ffffff));
+          --catalog-page: var(--page-bg, var(--background, #f7f5f0));
+          --catalog-text: var(--text-primary, var(--text, #29251f));
+          --catalog-muted: var(--text-muted, #746d63);
+          --catalog-border: var(--border-color, #e7e0d6);
+          --catalog-preview-bg: var(--catalog-surface);
+          color: var(--catalog-text);
+          color-scheme: light;
+        }
+        .dark .cataloging-page-container,
+        [data-theme="dark"] .cataloging-page-container,
+        [data-bs-theme="dark"] .cataloging-page-container,
+        [data-mode="dark"] .cataloging-page-container,
+        html.dark .cataloging-page-container {
+          --catalog-surface: var(--card-bg, var(--surface, #242321));
+          --catalog-page: var(--page-bg, var(--background, #181817));
+          --catalog-text: var(--text-primary, var(--text, #f4f0e9));
+          --catalog-muted: var(--text-muted, #b8b0a5);
+          --catalog-border: var(--border-color, #403d38);
+          --catalog-preview-bg: var(--catalog-surface);
+          color-scheme: dark;
+        }
+        .cataloging-page-container .catalog-card,
+        .cataloging-page-container .preview-card {
+          color: var(--catalog-text);
+          background: var(--catalog-surface);
+          border-color: var(--catalog-border);
+        }
+        .cataloging-page-container .preview-card-body {
+          color: var(--catalog-text);
+        }
+        .cataloging-page-container .preview-card-story,
+        .cataloging-page-container .preview-artisan-line,
+        .cataloging-page-container .preview-materials-line {
+          color: var(--catalog-muted);
+        }
+        .cataloging-page-container .form-divider {
+          border-color: var(--catalog-border);
+        }
+
+        /* One continuous surface behind Live Buyer Preview + Publish buttons */
         .catalog-preview-before-publish {
           width: 100% !important;
-          max-width: 560px !important;
-          margin: 18px auto 26px !important;
+          max-width: none !important;
+          margin: 18px 0 0 !important;
+          padding: 20px 18px 18px;
           float: none !important;
+          box-sizing: border-box;
+          background: var(--catalog-surface);
+          border: 1px solid var(--catalog-border);
+          border-bottom: 0;
+          border-radius: 16px 16px 0 0;
+        }
+        .cataloging-page-container .catalog-actions-bar {
+          margin-top: 0 !important;
+          padding: 16px 18px 20px;
+          background: var(--catalog-surface);
+          border: 1px solid var(--catalog-border);
+          border-top: 0;
+          border-radius: 0 0 16px 16px;
+          box-sizing: border-box;
+        }
+        .cataloging-page-container .catalog-actions-bar .btn-secondary {
+          color: var(--catalog-text);
         }
         .catalog-preview-before-publish .preview-sticky-wrap {
           position: static !important;
@@ -959,6 +1023,13 @@ export default function AddProduct() {
           overflow: hidden;
           background: #f6f1e9;
           position: relative;
+        }
+        .dark .catalog-preview-before-publish .preview-img-container,
+        [data-theme="dark"] .catalog-preview-before-publish .preview-img-container,
+        [data-bs-theme="dark"] .catalog-preview-before-publish .preview-img-container,
+        [data-mode="dark"] .catalog-preview-before-publish .preview-img-container,
+        html.dark .catalog-preview-before-publish .preview-img-container {
+          background: #302d28;
         }
         .catalog-preview-before-publish .preview-img {
           display: block;
@@ -995,8 +1066,8 @@ export default function AddProduct() {
         @media (max-width: 600px) {
           .catalog-preview-before-publish {
             max-width: 100% !important;
-            padding-left: 0;
-            padding-right: 0;
+            padding-left: 12px;
+            padding-right: 12px;
           }
           .catalog-preview-before-publish .preview-img-container,
           .catalog-preview-before-publish .preview-placeholder-box {
