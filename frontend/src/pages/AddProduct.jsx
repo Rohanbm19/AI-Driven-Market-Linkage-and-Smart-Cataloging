@@ -13,10 +13,8 @@ import {
   ArrowLeft,
   ArrowRight,
   RefreshCw,
-  Database,
   Image as ImageIcon,
   ShieldCheck,
-  User
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -33,7 +31,6 @@ import {
   detectCategoryKey,
   MIN_STORY_LENGTH
 } from '../services/craftAutofill.js';
-import { isSupabaseConfigured } from '../lib/supabaseClient.js';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import VoiceInputField from '../components/VoiceInputField.jsx';
 
@@ -103,8 +100,6 @@ export default function AddProduct() {
   const [saveStatus, setSaveStatus] = useState(null);
   const [formErr, setFormErr] = useState(null);
   const [loadingExisting, setLoadingExisting] = useState(isEditMode);
-
-  const supabaseConnected = isSupabaseConfigured();
 
   const errText = (error) => (
     error ? (error.key ? a[error.key] : error.raw) : ''
@@ -932,7 +927,156 @@ export default function AddProduct() {
 
   // PAGE
   return (
-    <div className="cataloging-page-container">
+    <>
+      <style>{`
+        /*
+         * Add Product theme + preview/publish surface.
+         * Uses the app's light/dark theme markers and keeps the preview
+         * and publish actions visually connected as one section.
+         */
+        .cataloging-page-container {
+          --catalog-surface: var(--card-bg, var(--surface, #ffffff));
+          --catalog-page: var(--page-bg, var(--background, #f7f5f0));
+          --catalog-text: var(--text-primary, var(--text, #29251f));
+          --catalog-muted: var(--text-muted, #746d63);
+          --catalog-border: var(--border-color, #e7e0d6);
+          --catalog-preview-bg: var(--catalog-surface);
+          color: var(--catalog-text);
+          color-scheme: light;
+        }
+        .dark .cataloging-page-container,
+        [data-theme="dark"] .cataloging-page-container,
+        [data-bs-theme="dark"] .cataloging-page-container,
+        [data-mode="dark"] .cataloging-page-container,
+        html.dark .cataloging-page-container {
+          --catalog-surface: var(--card-bg, var(--surface, #242321));
+          --catalog-page: var(--page-bg, var(--background, #181817));
+          --catalog-text: var(--text-primary, var(--text, #f4f0e9));
+          --catalog-muted: var(--text-muted, #b8b0a5);
+          --catalog-border: var(--border-color, #403d38);
+          --catalog-preview-bg: var(--catalog-surface);
+          color-scheme: dark;
+        }
+        .cataloging-page-container .catalog-card,
+        .cataloging-page-container .preview-card {
+          color: var(--catalog-text);
+          background: var(--catalog-surface);
+          border-color: var(--catalog-border);
+        }
+        .cataloging-page-container .preview-card-body {
+          color: var(--catalog-text);
+        }
+        .cataloging-page-container .preview-card-story,
+        .cataloging-page-container .preview-artisan-line,
+        .cataloging-page-container .preview-materials-line {
+          color: var(--catalog-muted);
+        }
+        .cataloging-page-container .form-divider {
+          border-color: var(--catalog-border);
+        }
+
+        /* One continuous surface behind Live Buyer Preview + Publish buttons */
+        .catalog-preview-before-publish {
+          width: 100% !important;
+          max-width: none !important;
+          margin: 18px 0 0 !important;
+          padding: 20px 18px 18px;
+          float: none !important;
+          box-sizing: border-box;
+          background: var(--catalog-surface);
+          border: 1px solid var(--catalog-border);
+          border-bottom: 0;
+          border-radius: 16px 16px 0 0;
+        }
+        .cataloging-page-container .catalog-actions-bar {
+          margin-top: 0 !important;
+          padding: 16px 18px 20px;
+          background: var(--catalog-surface);
+          border: 1px solid var(--catalog-border);
+          border-top: 0;
+          border-radius: 0 0 16px 16px;
+          box-sizing: border-box;
+        }
+        .cataloging-page-container .catalog-actions-bar .btn-secondary {
+          color: var(--catalog-text);
+        }
+        .catalog-preview-before-publish .preview-sticky-wrap {
+          position: static !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        .catalog-preview-before-publish .preview-top-badge {
+          text-align: center;
+          margin-bottom: 12px;
+        }
+        .catalog-preview-before-publish .preview-card {
+          width: 100% !important;
+          max-width: 560px !important;
+          margin: 0 auto !important;
+          overflow: hidden;
+          border-radius: 14px;
+        }
+        .catalog-preview-before-publish .preview-img-container {
+          width: 100% !important;
+          height: 340px !important;
+          min-height: 340px !important;
+          overflow: hidden;
+          background: #f6f1e9;
+          position: relative;
+        }
+        .dark .catalog-preview-before-publish .preview-img-container,
+        [data-theme="dark"] .catalog-preview-before-publish .preview-img-container,
+        [data-bs-theme="dark"] .catalog-preview-before-publish .preview-img-container,
+        [data-mode="dark"] .catalog-preview-before-publish .preview-img-container,
+        html.dark .catalog-preview-before-publish .preview-img-container {
+          background: #302d28;
+        }
+        .catalog-preview-before-publish .preview-img {
+          display: block;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: contain !important;
+          object-position: center;
+        }
+        .catalog-preview-before-publish .preview-placeholder-box {
+          width: 100%;
+          height: 100%;
+          min-height: 340px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .catalog-preview-before-publish .preview-card-body {
+          padding: 15px 18px !important;
+        }
+        .catalog-preview-before-publish .preview-card-title {
+          font-size: 19px;
+          margin: 0 0 8px;
+        }
+        .catalog-preview-before-publish .preview-card-story {
+          font-size: 13px;
+          line-height: 1.45;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        @media (max-width: 600px) {
+          .catalog-preview-before-publish {
+            max-width: 100% !important;
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+          .catalog-preview-before-publish .preview-img-container,
+          .catalog-preview-before-publish .preview-placeholder-box {
+            height: 280px !important;
+            min-height: 280px !important;
+          }
+        }
+      `}</style>
+      <div className="cataloging-page-container">
 
       {/* PAGE HEADER */}
       <div className="catalog-header-bar">
@@ -965,14 +1109,6 @@ export default function AddProduct() {
           </p>
         </div>
 
-        <div
-          className={`db-status-pill ${
-            supabaseConnected ? 'is-connected' : 'is-local'
-          }`}
-        >
-          <Database size={14} />
-          <span>{supabaseConnected ? a.dbOnline : a.dbLocal}</span>
-        </div>
       </div>
 
       {/* SUCCESS MESSAGE */}
@@ -1304,7 +1440,7 @@ export default function AddProduct() {
                   <div className="calc-stat-sub">
                     {a.totalCost}{' '}
                     <strong>
-                      â‚¹{formatNumber(computedTotalCost)}
+                      ₹{formatNumber(computedTotalCost)}
                     </strong>{' '}
 
                     {fill(a.breakdown, {
@@ -1317,7 +1453,7 @@ export default function AddProduct() {
                   <div className="calc-stat-main">
                     {a.fairPrice}{' '}
                     <strong>
-                      â‚¹{formatNumber(computedFairSellingPrice)}
+                      ₹{formatNumber(computedFairSellingPrice)}
                     </strong>{' '}
 
                     <span className="profit-tag">
@@ -1686,6 +1822,92 @@ export default function AddProduct() {
               </div>
             </div>
 
+            {/* LIVE BUYER PREVIEW - BEFORE PUBLISH */}
+            <div className="catalog-preview-col catalog-preview-before-publish">
+          <div className="preview-sticky-wrap">
+            <div className="preview-top-badge">
+              <span className="preview-heading-text">
+                {a.previewHeading}
+              </span>
+            </div>
+
+            <div className="preview-card">
+              <div className="preview-img-container">
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={title || a.previewHeading}
+                    className="preview-img"
+                  />
+                ) : (
+                  <div className="preview-placeholder-box">
+                    <ImageIcon
+                      size={44}
+                      className="placeholder-icon"
+                    />
+
+                    <span>{a.previewPhoto}</span>
+                  </div>
+                )}
+
+                <div className="preview-category-tag">
+                  {(craftCategory || a.heritageCraft).toUpperCase()}
+                </div>
+              </div>
+
+              <div className="preview-card-body">
+                <h3 className="preview-card-title">
+                  {title || a.untitled}
+                </h3>
+
+                <div className="preview-artisan-line">
+                  <MapPin size={14} className="map-icon" />
+
+                  <span className="preview-region">
+                    {region || a.defaultRegion}
+                  </span>
+
+                  <span className="dot-sep">•</span>
+
+                  <span className="preview-artisan-name">
+                    {artisanName || a.defaultMaker}
+                  </span>
+                </div>
+
+                <div className="preview-materials-line">
+                  <strong>{a.materialsPrefix} </strong>
+                  <span>{materials || a.defaultMaterials}</span>
+                </div>
+
+                <p className="preview-card-story">
+                  {description || a.previewStory}
+                </p>
+
+                <div className="preview-card-footer">
+                  <div className="preview-price-block">
+                    <span className="price-label">
+                      {a.priceLabel}
+                    </span>
+
+                    <span className="price-amount">
+                      ₹{price ? formatNumber(price) : '0'}
+                    </span>
+                  </div>
+
+                  <div className="preview-stock-badge">
+                    <span className="stock-check">✓</span>
+
+                    <span>
+                      {stock || 1} {a.available}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
             {/* FORM ACTIONS */}
             <div className="catalog-actions-bar">
               <div className="publish-btns-group">
@@ -1745,104 +1967,9 @@ export default function AddProduct() {
           </form>
         </div>
 
-        {/* RIGHT COLUMN: BUYER PREVIEW */}
-        <div className="catalog-preview-col">
-          <div className="preview-sticky-wrap">
-            <div className="preview-top-badge">
-              <span className="preview-heading-text">
-                {a.previewHeading}
-              </span>
-            </div>
-
-            <div className="preview-card">
-              <div className="preview-img-container">
-                {photoUrl ? (
-                  <img
-                    src={photoUrl}
-                    alt={title || a.previewHeading}
-                    className="preview-img"
-                  />
-                ) : (
-                  <div className="preview-placeholder-box">
-                    <ImageIcon
-                      size={44}
-                      className="placeholder-icon"
-                    />
-
-                    <span>{a.previewPhoto}</span>
-                  </div>
-                )}
-
-                <div className="preview-category-tag">
-                  {(craftCategory || a.heritageCraft).toUpperCase()}
-                </div>
-              </div>
-
-              <div className="preview-card-body">
-                <h3 className="preview-card-title">
-                  {title || a.untitled}
-                </h3>
-
-                <div className="preview-artisan-line">
-                  <MapPin size={14} className="map-icon" />
-
-                  <span className="preview-region">
-                    {region || a.defaultRegion}
-                  </span>
-
-                  <span className="dot-sep">â€¢</span>
-
-                  <span className="preview-artisan-name">
-                    {artisanName || a.defaultMaker}
-                  </span>
-                </div>
-
-                <div className="preview-materials-line">
-                  <strong>{a.materialsPrefix} </strong>
-                  <span>{materials || a.defaultMaterials}</span>
-                </div>
-
-                <p className="preview-card-story">
-                  {description || a.previewStory}
-                </p>
-
-                <div className="preview-card-footer">
-                  <div className="preview-price-block">
-                    <span className="price-label">
-                      {a.priceLabel}
-                    </span>
-
-                    <span className="price-amount">
-                      â‚¹{price ? formatNumber(price) : '0'}
-                    </span>
-                  </div>
-
-                  <div className="preview-stock-badge">
-                    <span className="stock-check">âœ“</span>
-
-                    <span>
-                      {stock || 1} {a.available}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* SIGN IN LINK */}
-      <div className="catalog-signin-row">
-        <Link
-          to="/login"
-          className="btn btn-signin"
-          aria-label={a.signIn || t.common?.signIn}
-        >
-          <User size={16} />
-          <span>{t.nav?.login || 'Sign In'}</span>
-        </Link>
       </div>
-    </div>
+    </>
   );
 }
-
