@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api.js';
 import { useLanguage } from '../i18n/index.js';
 import {
@@ -9,410 +9,420 @@ import {
   Send,
   Phone,
   Mail,
-  Building,
-  Tag
+  Package,
+  RefreshCw
 } from 'lucide-react';
-
-const INITIAL_ENQUIRIES = [
-  {
-    id: 'enq-1',
-    buyer_name: 'Ananya Sharma (FabHeritage Boutiques)',
-    buyer_type: 'Wholesale Retailer',
-    email: 'ananya@fabheritage.in',
-    phone: '+91 98450 12345',
-    product_title: 'Bankura Terracotta Sacred Horse',
-    quantity: '25 units',
-    message: 'We are planning our festive Diwali curation for our stores in Bengaluru and Delhi. Can you ship 25 units of the 18-inch model by October 10th? What is your bulk discount pricing?',
-    date: 'Today, 2:15 PM',
-    status: 'pending'
-  },
-  {
-    id: 'enq-2',
-    buyer_name: 'David Miller (Artisan World Exports)',
-    buyer_type: 'Export Buyer (UK)',
-    email: 'david@artisanworld.co.uk',
-    phone: '+44 7911 123456',
-    product_title: 'Channapatna Wooden Nesting Dolls',
-    quantity: '100 sets',
-    message: 'We require European toy safety EN71 certification test reports for the organic vegetable dyes. Can we order 5 sample sets to evaluate quality and packaging?',
-    date: 'Yesterday',
-    status: 'pending'
-  },
-  {
-    id: 'enq-3',
-    buyer_name: 'Rohan Mehra (Studio Vistara Interiors)',
-    buyer_type: 'Interior Architect',
-    email: 'rohan@studiovistara.com',
-    phone: '+91 97110 54321',
-    product_title: 'Moradabad Engraved Brass Urli Bowl',
-    quantity: '6 units',
-    message: 'Need 6 pieces of the 24-inch antique patina finish for a heritage resort lobby in Udaipur. Payment terms can be 100% advance.',
-    date: '3 days ago',
-    status: 'responded'
-  }
-];
 
 export default function Enquiries() {
   const { t } = useLanguage();
-  const text = t.enquiries;
+  const text = t.enquiries || {};
 
   const [enquiries, setEnquiries] = useState([]);
   const [filter, setFilter] = useState('all');
   const [replyText, setReplyText] = useState({});
   const [activeReplyId, setActiveReplyId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [sendingId, setSendingId] = useState(null);
 
+  // Load enquiries
   useEffect(() => {
-    let isMounted = true;
+    let active = true;
 
     async function loadData() {
-      try {
-        const live = await api.getEnquiries();
+      setLoading(true);
+      setError('');
 
-        if (isMounted) setEnquiries(live);
+      try {
+        const result = await api.getEnquiries();
+
+        if (active) {
+          setEnquiries(Array.isArray(result) ? result : []);
+        }
       } catch (err) {
-        console.warn('Enquiries fetch error:', err);
+        console.error('Enquiries fetch error:', err);
+
+        if (active) {
+          setError(err?.message || 'Unable to load enquiries.');
+        }
+      } finally {
+        if (active) setLoading(false);
       }
     }
 
     loadData();
 
     return () => {
-      isMounted = false;
+      active = false;
     };
   }, []);
 
-  const filtered = enquiries.filter((e) => {
-    if (filter === 'pending') return e.status === 'pending';
-    if (filter === 'responded') return e.status === 'responded';
-    return true;
-  });
+  // Filter enquiries
+  const filtered = useMemo(() => {
+    if (filter === 'all') return enquiries;
 
-  const handleSendReply = async (id) => {
-    try { await api.replyToEnquiry(id, replyText[id] || ''); }
-    catch (error) { window.alert(error.message); return; }
-    setEnquiries((prev) =>
-      prev.map((e) =>
-        e.id === id ? { ...e, status: 'responded' } : e
-      )
+    return enquiries.filter(
+      enquiry => enquiry.status === filter
     );
+  }, [enquiries, filter]);
 
-    setActiveReplyId(null);
-    alert(text.replySent);
+  const pendingCount = enquiries.filter(
+    enquiry => enquiry.status === 'pending'
+  ).length;
+
+  const respondedCount = enquiries.filter(
+    enquiry => enquiry.status === 'responded'
+  ).length;
+
+  // Send reply
+  const handleSendReply = async id => {
+    const message = (replyText[id] || '').trim();
+
+    if (!message || sendingId) return;
+
+    setSendingId(id);
+
+    try {
+      await api.replyToEnquiry(id, message);
+
+      setEnquiries(previous =>
+        previous.map(enquiry =>
+          enquiry.id === id
+            ? { ...enquiry, status: 'responded' }
+            : enquiry
+        )
+      );
+
+      setReplyText(previous => ({
+        ...previous,
+        [id]: ''
+      }));
+
+      setActiveReplyId(null);
+
+      window.alert(text.replySent || 'Reply sent successfully.');
+    } catch (err) {
+      window.alert(err?.message || 'Unable to send reply.');
+    } finally {
+      setSendingId(null);
+    }
   };
 
+  // Quick reply templates
   const handleQuickTemplate = (id, message) => {
-    setReplyText((prev) => ({
-      ...prev,
+    setReplyText(previous => ({
+      ...previous,
       [id]: message
     }));
   };
 
-  const getBuyerType = (buyerType) => {
+  const getBuyerType = buyerType => {
     const buyerTypes = {
       'Wholesale Retailer': text.wholesaleRetailer,
       'Export Buyer (UK)': text.exportBuyer,
       'Interior Architect': text.interiorArchitect
     };
 
-    return buyerTypes[buyerType] || buyerType;
+    return buyerTypes[buyerType] || buyerType || 'Buyer';
   };
 
   return (
-    <div>
-      <div className="page-header">
+    <div className="enquiries-page">
+
+      {/* HEADER */}
+      <div className="page-header enquiries-header">
         <div>
           <h1 className="page-title">
-            {text.title}
+            {text.title || 'Buyer Enquiries'}
           </h1>
 
           <p className="page-subtitle">
-            {text.desc}
+            {text.desc ||
+              'Manage buyer requests and communicate with potential customers.'}
           </p>
         </div>
+      </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {['all', 'pending', 'responded'].map((tab) => (
+      {/* SUMMARY */}
+      <section className="enquiries-summary">
+        <div className="enquiry-summary-card">
+          <div className="enquiry-summary-icon">
+            <MessageSquare size={20} />
+          </div>
+
+          <div>
+            <strong>{enquiries.length}</strong>
+            <span>{text.all || 'Total Enquiries'}</span>
+          </div>
+        </div>
+
+        <div className="enquiry-summary-card">
+          <div className="enquiry-summary-icon pending">
+            <Clock size={20} />
+          </div>
+
+          <div>
+            <strong>{pendingCount}</strong>
+            <span>{text.pending || 'Pending'}</span>
+          </div>
+        </div>
+
+        <div className="enquiry-summary-card">
+          <div className="enquiry-summary-icon responded">
+            <CheckCircle size={20} />
+          </div>
+
+          <div>
+            <strong>{respondedCount}</strong>
+            <span>{text.responded || 'Responded'}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* FILTERS */}
+      <div className="enquiries-toolbar">
+        <div>
+          <h2>{text.title || 'Enquiries'}</h2>
+          <p>Review and respond to buyer requests.</p>
+        </div>
+
+        <div className="enquiries-filters">
+          {['all', 'pending', 'responded'].map(tab => (
             <button
               key={tab}
               type="button"
-              className={`btn btn-sm ${
-                filter === tab ? 'btn-primary' : 'btn-secondary'
+              className={`enquiry-filter-btn ${
+                filter === tab ? 'active' : ''
               }`}
               onClick={() => setFilter(tab)}
-              style={{ textTransform: 'capitalize' }}
             >
-              {text[tab]}
+              {text[tab] || tab}
             </button>
           ))}
         </div>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1.25rem'
-        }}
-      >
-        {filtered.map((enq) => (
-          <div key={enq.id} className="card">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                flexWrap: 'wrap',
-                gap: '0.75rem',
-                marginBottom: '1rem'
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontSize: '1.2rem',
-                      margin: 0
-                    }}
-                  >
-                    {enq.buyer_name}
-                  </h3>
+      {/* LOADING */}
+      {loading && (
+        <div className="enquiries-state">
+          <RefreshCw size={22} className="animate-spin" />
+          <p>Loading enquiries...</p>
+        </div>
+      )}
 
-                  <span
-                    style={{
-                      background: 'var(--bg-subtle)',
-                      padding: '0.2rem 0.6rem',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: '0.75rem',
-                      fontWeight: 600
-                    }}
-                  >
-                    {getBuyerType(enq.buyer_type)}
-                  </span>
+      {/* ERROR */}
+      {!loading && error && (
+        <div className="enquiries-state error" role="alert">
+          <MessageSquare size={25} />
+          <p>{error}</p>
+        </div>
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading && !error && filtered.length === 0 && (
+        <div className="enquiries-state">
+          <MessageSquare size={32} />
+          <h3>No enquiries found</h3>
+          <p>
+            {filter === 'all'
+              ? 'Buyer enquiries will appear here when customers contact you.'
+              : `There are no ${filter} enquiries at the moment.`}
+          </p>
+        </div>
+      )}
+
+      {/* ENQUIRY LIST */}
+      {!loading && !error && filtered.length > 0 && (
+        <div className="enquiries-list">
+          {filtered.map(enq => (
+            <article className="enquiry-card" key={enq.id}>
+
+              {/* BUYER DETAILS */}
+              <div className="enquiry-card-header">
+                <div className="enquiry-buyer">
+                  <div className="enquiry-avatar">
+                    {(enq.buyer_name || 'B')
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+
+                  <div>
+                    <h3>{enq.buyer_name || 'Buyer'}</h3>
+
+                    <span className="enquiry-buyer-type">
+                      {getBuyerType(enq.buyer_type)}
+                    </span>
+                  </div>
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    color: 'var(--text-muted)',
-                    fontSize: '0.85rem',
-                    marginTop: '0.35rem'
-                  }}
-                >
+                <div className="enquiry-status-area">
                   <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem'
-                    }}
+                    className={`enquiry-status ${
+                      enq.status === 'pending'
+                        ? 'pending'
+                        : 'responded'
+                    }`}
                   >
-                    <Mail size={14} />
+                    {enq.status === 'pending' ? (
+                      <Clock size={13} />
+                    ) : (
+                      <CheckCircle size={13} />
+                    )}
+
+                    {text[enq.status] || enq.status}
+                  </span>
+
+                  <span className="enquiry-date">
+                    {enq.date}
+                  </span>
+                </div>
+              </div>
+
+              {/* CONTACT DETAILS */}
+              <div className="enquiry-contact">
+                {enq.email && (
+                  <a href={`mailto:${enq.email}`}>
+                    <Mail size={15} />
                     {enq.email}
-                  </span>
+                  </a>
+                )}
 
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem'
-                    }}
-                  >
-                    <Phone size={14} />
+                {enq.phone && (
+                  <a href={`tel:${enq.phone}`}>
+                    <Phone size={15} />
                     {enq.phone}
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ textAlign: 'right' }}>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    padding: '0.25rem 0.65rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    background:
-                      enq.status === 'pending'
-                        ? '#fef3c7'
-                        : '#ecfdf5',
-                    color:
-                      enq.status === 'pending'
-                        ? '#92400e'
-                        : '#065f46'
-                  }}
-                >
-                  {enq.status === 'pending' ? (
-                    <Clock size={12} />
-                  ) : (
-                    <CheckCircle size={12} />
-                  )}
-
-                  <span style={{ textTransform: 'capitalize' }}>
-                    {text[enq.status]}
-                  </span>
-                </span>
-
-                <span
-                  style={{
-                    display: 'block',
-                    fontSize: '0.78rem',
-                    color: 'var(--text-light)',
-                    marginTop: '0.25rem'
-                  }}
-                >
-                  {enq.date}
-                </span>
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: 'var(--bg-subtle)',
-                padding: '1rem',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '1rem'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.4rem',
-                  fontSize: '0.86rem'
-                }}
-              >
-                <strong>
-                  {text.product}: {enq.product_title}
-                </strong>
-
-                <span
-                  style={{
-                    color: 'var(--primary)',
-                    fontWeight: 700
-                  }}
-                >
-                  {text.requested}: {enq.quantity}
-                </span>
-              </div>
-
-              <p
-                style={{
-                  color: '#374151',
-                  fontSize: '0.92rem',
-                  lineHeight: 1.5,
-                  margin: 0
-                }}
-              >
-                "{enq.message}"
-              </p>
-            </div>
-
-            {/* Quick response panel */}
-            {activeReplyId === enq.id ? (
-              <div
-                style={{
-                  marginTop: '1rem',
-                  borderTop: '1px solid var(--border-color)',
-                  paddingTop: '1rem'
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '0.5rem',
-                    marginBottom: '0.5rem',
-                    flexWrap: 'wrap'
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() =>
-                      handleQuickTemplate(
-                        enq.id,
-                        text.templateDispatchMessage
-                      )
-                    }
-                  >
-                    {text.templateDispatch}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() =>
-                      handleQuickTemplate(
-                        enq.id,
-                        text.templateSamplesMessage
-                      )
-                    }
-                  >
-                    {text.templateSamples}
-                  </button>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '0.75rem'
-                  }}
-                >
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={replyText[enq.id] || ''}
-                    onChange={(e) =>
-                      setReplyText((prev) => ({
-                        ...prev,
-                        [enq.id]: e.target.value
-                      }))
-                    }
-                    placeholder={text.replyPlaceholder}
-                    style={{ flex: 1 }}
-                  />
-
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => handleSendReply(enq.id)}
-                  >
-                    <Send size={16} />
-                    <span>{text.send}</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '0.75rem'
-                }}
-              >
-                {enq.status === 'pending' && (
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
-                    onClick={() => setActiveReplyId(enq.id)}
-                  >
-                    <Send size={14} />
-                    <span>{text.respondToBuyer}</span>
-                  </button>
+                  </a>
                 )}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+
+              {/* PRODUCT DETAILS */}
+              <div className="enquiry-product">
+                <div className="enquiry-product-heading">
+                  <Package size={17} />
+
+                  <div>
+                    <span>{text.product || 'Product'}</span>
+                    <strong>{enq.product_title || 'Product enquiry'}</strong>
+                  </div>
+                </div>
+
+                <div className="enquiry-quantity">
+                  <span>{text.requested || 'Requested quantity'}</span>
+                  <strong>{enq.quantity || 'Not specified'}</strong>
+                </div>
+              </div>
+
+              {/* BUYER MESSAGE */}
+              <div className="enquiry-message">
+                <span>Buyer Message</span>
+                <p>{enq.message || 'No message provided.'}</p>
+              </div>
+
+              {/* REPLY SECTION */}
+              {activeReplyId === enq.id ? (
+                <div className="enquiry-reply">
+                  <div className="enquiry-reply-heading">
+                    <h4>Reply to buyer</h4>
+
+                    <button
+                      type="button"
+                      className="enquiry-cancel"
+                      onClick={() => setActiveReplyId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  <div className="enquiry-templates">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleQuickTemplate(
+                          enq.id,
+                          text.templateDispatchMessage || ''
+                        )
+                      }
+                    >
+                      {text.templateDispatch || 'Dispatch update'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleQuickTemplate(
+                          enq.id,
+                          text.templateSamplesMessage || ''
+                        )
+                      }
+                    >
+                      {text.templateSamples || 'Sample request'}
+                    </button>
+                  </div>
+
+                  <textarea
+                    className="form-input enquiry-reply-input"
+                    value={replyText[enq.id] || ''}
+                    onChange={event =>
+                      setReplyText(previous => ({
+                        ...previous,
+                        [enq.id]: event.target.value
+                      }))
+                    }
+                    placeholder={
+                      text.replyPlaceholder || 'Write your reply...'
+                    }
+                    rows={4}
+                  />
+
+                  <div className="enquiry-reply-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      disabled={
+                        !(replyText[enq.id] || '').trim() ||
+                        sendingId === enq.id
+                      }
+                      onClick={() => handleSendReply(enq.id)}
+                    >
+                      {sendingId === enq.id ? (
+                        <RefreshCw
+                          size={15}
+                          className="animate-spin"
+                        />
+                      ) : (
+                        <Send size={15} />
+                      )}
+
+                      {sendingId === enq.id
+                        ? 'Sending...'
+                        : text.send || 'Send Reply'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="enquiry-card-footer">
+                  {enq.status === 'pending' ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setActiveReplyId(enq.id)}
+                    >
+                      <Send size={14} />
+                      {text.respondToBuyer || 'Respond to Buyer'}
+                    </button>
+                  ) : (
+                    <span className="enquiry-replied-label">
+                      <CheckCircle size={15} />
+                      Reply sent
+                    </span>
+                  )}
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

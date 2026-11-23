@@ -61,6 +61,9 @@ export default function AddProduct() {
   const [artisanName, setArtisanName] = useState('Shankar Das');
   const [region, setRegion] = useState('');
   const [materials, setMaterials] = useState('');
+  // Original artisan story (typed or spoken) is the AI input.
+  const [craftStory, setCraftStory] = useState('');
+  // Polished, editable product description shown to buyers.
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('5');
@@ -222,15 +225,15 @@ export default function AddProduct() {
     setFormErr(null);
 
     try {
-      if (description.trim().length < MIN_STORY_LENGTH) {
+      if (craftStory.trim().length < MIN_STORY_LENGTH) {
         throw new Error(
           af.writeFirst || 'Please enter a longer craft story first.'
         );
       }
 
       const response = await api.generateSmartCatalog({
-        description: description.trim(),
-        story: description.trim(),
+        description: craftStory.trim(),
+        story: craftStory.trim(),
         craftType: craftCategory.trim(),
         category: craftCategory.trim(),
         title: title.trim(),
@@ -252,6 +255,12 @@ export default function AddProduct() {
         response.translations
       );
 
+      // Keep the artisan's original story separate from the buyer-facing copy.
+      // Prefer the catalog description, then the English translation.
+      const generatedDescription = String(
+        catalog.description || generatedTranslations.en?.description || ''
+      ).trim();
+
       let finalTitle = title.trim();
       let finalCategory = craftCategory.trim();
       let finalRegion = region.trim();
@@ -260,6 +269,11 @@ export default function AddProduct() {
       let filledFieldCount = 0;
 
       if (applyFields) {
+        if (generatedDescription && !touchedRef.current.has('description')) {
+          setDescription(generatedDescription);
+          filledFieldCount += 1;
+          setAiFilled((previous) => ({ ...previous, description: 'ai' }));
+        }
         if (!touchedRef.current.has('title') && catalog.title) {
           finalTitle = String(catalog.title);
           setTitle(finalTitle);
@@ -362,7 +376,7 @@ export default function AddProduct() {
 
   // LOCAL AUTOFILL WHILE TYPING
   const runAutofill = ({ force = false } = {}) => {
-    const result = analyzeStory(description, {
+    const result = analyzeStory(craftStory, {
       lang,
       t,
       wage: hourlyWage,
@@ -393,7 +407,7 @@ export default function AddProduct() {
   useEffect(() => {
     if (isEditMode || !autoMode) return undefined;
 
-    if (description.trim().length < MIN_STORY_LENGTH) {
+    if (craftStory.trim().length < MIN_STORY_LENGTH) {
       setAutoWorking(false);
       setAutoCount(null);
       setAutoFeedbackSource(null);
@@ -419,7 +433,7 @@ export default function AddProduct() {
       setAutoWorking(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [description, lang, autoMode, isEditMode]);
+  }, [craftStory, lang, autoMode, isEditMode]);
 
   // CLEAN UP TEMPORARY IMAGE URLS
   useEffect(() => () => {
@@ -463,6 +477,7 @@ export default function AddProduct() {
           setPrice(String(item.price ?? ''));
           setStock(String(item.stock ?? '5'));
           setDescription(item.description || '');
+          setCraftStory(item.description || '');
 
           setTags(
             Array.isArray(item.tags)
@@ -722,8 +737,13 @@ export default function AddProduct() {
       return;
     }
 
+    if (!craftStory.trim()) {
+      setFormErr({ raw: 'Please enter the artisan craft story using text or voice.' });
+      return;
+    }
+
     if (!description.trim()) {
-      setFormErr({ key: 'errStory' });
+      setFormErr({ raw: 'Please generate or enter a product description before publishing.' });
       return;
     }
 
@@ -854,6 +874,7 @@ export default function AddProduct() {
     setMaterials('');
     setPrice('');
     setStock('5');
+    setCraftStory('');
     setDescription('');
     setTags('');
 
@@ -929,6 +950,58 @@ export default function AddProduct() {
   return (
     <>
       <style>{`
+        .cataloging-page-container .craft-description-group {
+          width: 100%;
+          margin-bottom: 1rem;
+        }
+        .cataloging-page-container .craft-description-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 8px;
+        }
+        .cataloging-page-container .craft-description-edit-label {
+          color: var(--catalog-muted);
+          font-size: 0.78rem;
+          font-weight: 600;
+        }
+        .cataloging-page-container .craft-description-input {
+          display: block;
+          width: 100%;
+          min-height: 190px;
+          padding: 14px 16px;
+          line-height: 1.65;
+          resize: vertical;
+          box-sizing: border-box;
+          color: var(--catalog-text);
+          background: var(--catalog-surface);
+          border: 1px solid var(--catalog-border);
+          border-radius: 12px;
+          font: inherit;
+        }
+        .cataloging-page-container .craft-description-input:focus {
+          outline: 2px solid var(--primary);
+          outline-offset: 2px;
+        }
+        .cataloging-page-container .craft-description-footer {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-top: 7px;
+        }
+        .cataloging-page-container .craft-description-count {
+          flex: 0 0 auto;
+          color: var(--catalog-muted);
+          font-size: 0.78rem;
+        }
+        @media (max-width: 600px) {
+          .cataloging-page-container .craft-description-input {
+            min-height: 160px;
+          }
+        }
+
         /*
          * Add Product theme + preview/publish surface.
          * Uses the app's light/dark theme markers and keeps the preview
@@ -1192,30 +1265,35 @@ export default function AddProduct() {
 
               <hr className="form-divider" />
 
-              {/* STORY */}
-              <div
-                className="form-group"
-                style={{ marginBottom: '0.75rem' }}
-              >
+              {/* ORIGINAL CRAFT STORY: TEXT + VOICE INPUT */}
+              <div className="form-group craft-description-group">
+                <div className="craft-description-heading">
+                  <label className="form-label" htmlFor="craft-story">
+                    {a.storyLabel || 'Tell us your craft story'} <span aria-hidden="true">*</span>
+                  </label>
+                  <span className="craft-description-edit-label">Text or voice</span>
+                </div>
+
                 <VoiceInputField
                   id="craft-story"
                   type="textarea"
                   rows={5}
-                  label={a.storyLabel}
-                  value={description}
+                  maxLength={3000}
+                  value={craftStory}
                   onChange={(value) => {
                     invalidatePendingAiGeneration();
-                    setDescription(value);
+                    setCraftStory(value);
                     setAutoCount(null);
                     setAutoFeedbackSource(null);
                     translationsRef.current = null;
                     translationSourceRef.current = '';
                   }}
-                  placeholder={a.storyPlaceholder}
+                  placeholder={a.storyPlaceholder || 'Tell us how you make this product, which materials you use, and what makes it special...'}
                   required
                   currentLang={lang}
-                  hint={a.storyHint}
+                  hint={a.storyHint || 'You can type your story or use the microphone. The AI will use this story to prepare your product listing.'}
                 />
+                <small className="craft-description-count">{craftStory.length}/3000</small>
               </div>
 
               {/* AI CATALOG GENERATION */}
@@ -1280,6 +1358,40 @@ export default function AddProduct() {
                   </div>
                 </div>
               )}
+
+              {/* BUYER-FACING PRODUCT DESCRIPTION: AI AUTOFILL + MANUAL EDIT */}
+              <div className="form-group craft-description-group">
+                <div className="craft-description-heading">
+                  <label className="form-label" htmlFor="product-description">
+                    Product Description <span aria-hidden="true">*</span>
+                  </label>
+                  <span className="craft-description-edit-label">AI generated · Editable</span>
+                </div>
+
+                <textarea
+                  id="product-description"
+                  name="productDescription"
+                  className="form-input craft-description-input"
+                  rows={6}
+                  value={description}
+                  onChange={(event) => {
+                    editField('description', setDescription)(event.target.value);
+                  }}
+                  placeholder="Your polished product description will appear here after AI generation. You can also write or edit it yourself."
+                  required
+                  maxLength={3000}
+                  aria-describedby="product-description-help product-description-count"
+                />
+
+                <div className="craft-description-footer">
+                  <small id="product-description-help" className="form-hint">
+                    This is the description buyers will see on your product listing. Review and edit it before publishing.
+                  </small>
+                  <small id="product-description-count" className="craft-description-count">
+                    {description.length}/3000
+                  </small>
+                </div>
+              </div>
 
               <hr className="form-divider" />
 
