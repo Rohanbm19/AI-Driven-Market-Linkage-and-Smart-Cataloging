@@ -20,7 +20,6 @@ import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import { useLanguage } from '../i18n/index.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
-
 export default function ProductDetail() {
   const { id } = useParams();
   const { id: userId, isArtisan, fullName, email } = useAuth();
@@ -30,14 +29,19 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+
   const [showSlider, setShowSlider] = useState(false);
   const [enquirySent, setEnquirySent] = useState(false);
   const [enquirySubmitting, setEnquirySubmitting] = useState(false);
-  const [enquiryMsg, setEnquiryMsg] = useState('');
+
   const [buyerName, setBuyerName] = useState(fullName || '');
   const [buyerEmail, setBuyerEmail] = useState(email || '');
-  const [deleting, setDeleting] = useState(false);
+  const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerLocation, setBuyerLocation] = useState('');
+  const [quantity, setQuantity] = useState('1');
+  const [enquiryMsg, setEnquiryMsg] = useState('');
 
+  const [deleting, setDeleting] = useState(false);
   const trackedViews = useRef(new Set());
 
   useEffect(() => {
@@ -52,10 +56,14 @@ export default function ProductDetail() {
 
         if (isMounted) {
           setProduct(item || null);
-          if (!item) setLoadError('This product is unavailable or has been removed.');
+
+          if (!item) {
+            setLoadError('This product is unavailable or has been removed.');
+          }
         }
       } catch (err) {
-        console.error('Error fetching product by id:', err);
+        console.error('Error fetching product:', err);
+
         if (isMounted) {
           setProduct(null);
           setLoadError(err.message || 'Unable to load product details.');
@@ -92,17 +100,42 @@ export default function ProductDetail() {
   const handleSendEnquiry = async (e) => {
     e.preventDefault();
 
-    if (!enquiryMsg.trim() || !buyerName.trim() || !buyerEmail.trim()) return;
+    if (
+      !buyerName.trim() ||
+      !buyerEmail.trim() ||
+      !buyerPhone.trim() ||
+      !buyerLocation.trim() ||
+      !enquiryMsg.trim() ||
+      !quantity
+    ) {
+      window.alert('Please complete all enquiry details.');
+      return;
+    }
+
+    if (!product?.artisan_id) {
+      window.alert('The artisan profile for this product could not be found.');
+      return;
+    }
+
+    if (isArtisan && product.artisan_id === userId) {
+      window.alert('You cannot send an enquiry for your own product.');
+      return;
+    }
 
     setEnquirySubmitting(true);
 
     try {
+      
       await api.submitEnquiry({
         buyer_id: userId || null,
+        artisan_id: product.artisan_id,
         product_id: product.id,
         product_title: product.title,
         buyer_name: buyerName.trim(),
         buyer_email: buyerEmail.trim(),
+        phone: buyerPhone.trim(),
+        buyer_location: buyerLocation.trim(),
+        quantity: String(quantity),
         message: enquiryMsg.trim()
       });
 
@@ -114,6 +147,7 @@ export default function ProductDetail() {
         origin: { y: 0.7 }
       });
     } catch (err) {
+      console.error('Enquiry submission failed:', err);
       window.alert(err.message || 'Could not send enquiry. Please try again.');
     } finally {
       setEnquirySubmitting(false);
@@ -121,7 +155,9 @@ export default function ProductDetail() {
   };
 
   const handleDeleteProduct = async () => {
-    if (!window.confirm(`Are you sure you want to delete "${product.title}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${product.title}"?`)) {
+      return;
+    }
 
     setDeleting(true);
 
@@ -178,8 +214,6 @@ export default function ProductDetail() {
 
   return (
     <main className="product-detail-page">
-
-      {/* Navigation and artisan actions */}
       <div className="product-detail-header">
         <Link to="/" className="product-back-link">
           <ArrowLeft size={17} />
@@ -210,8 +244,6 @@ export default function ProductDetail() {
       </div>
 
       <div className="product-detail-layout">
-
-        {/* Product image */}
         <section className="product-gallery">
           <div className="product-image-container">
             {showSlider && hasEnhancedImage ? (
@@ -253,9 +285,7 @@ export default function ProductDetail() {
           )}
         </section>
 
-        {/* Product information */}
         <section className="product-information">
-
           <div className="product-tags">
             {parsedTags.map((tag, index) => (
               <Badge key={`${tag}-${index}`} type="craft">
@@ -284,7 +314,6 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Price */}
           <div className="product-price-section">
             <div>
               <span className="product-price-label">Direct Artisan Price</span>
@@ -300,13 +329,11 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Description */}
           <div className="product-description">
             <h2>About this Craft</h2>
             <p>{product.description || 'No description available.'}</p>
           </div>
 
-          {/* Materials */}
           {parsedMaterials.length > 0 && (
             <div className="product-materials">
               <h3>
@@ -322,72 +349,121 @@ export default function ProductDetail() {
             </div>
           )}
 
-          {/* Enquiry */}
-          <div className="product-enquiry-card">
-            <div className="product-enquiry-heading">
-              <div className="product-enquiry-icon">
-                <Send size={18} />
-              </div>
+          {/* CONTACT ARTISAN / SEND ENQUIRY */}
+          {!isOwner && (
+            <div className="product-enquiry-card">
+              <div className="product-enquiry-heading">
+                <div className="product-enquiry-icon">
+                  <Send size={18} />
+                </div>
 
-              <div>
-                <h2>Contact Artisan</h2>
-                <p>Send an enquiry for product details or bulk orders.</p>
-              </div>
-            </div>
-
-            {enquirySent ? (
-              <div className="product-enquiry-success">
-                <CheckCircle2 size={23} />
                 <div>
-                  <strong>Enquiry sent successfully!</strong>
+                  <h2>Contact Artisan</h2>
                   <p>
-                    Your enquiry has been shared with{' '}
-                    {product.artisan_name || 'the artisan'}.
+                    Share your contact details and requirements directly
+                    with the artisan.
                   </p>
                 </div>
               </div>
-            ) : (
-              <form onSubmit={handleSendEnquiry} className="product-enquiry-form">
-                <div className="product-form-row">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Your Name"
-                    className="form-input"
-                    value={buyerName}
-                    onChange={e => setBuyerName(e.target.value)}
-                  />
 
-                  <input
-                    type="email"
-                    required
-                    placeholder="Your Email"
-                    className="form-input"
-                    value={buyerEmail}
-                    onChange={e => setBuyerEmail(e.target.value)}
-                  />
+              {enquirySent ? (
+                <div className="product-enquiry-success">
+                  <CheckCircle2 size={23} />
+                  <div>
+                    <strong>Enquiry sent successfully!</strong>
+                    <p>
+                      Your enquiry has been shared with{' '}
+                      {product.artisan_name || 'the artisan'}.
+                    </p>
+                  </div>
                 </div>
-
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Ask about dimensions, customization, bulk discounts or delivery..."
-                  className="form-textarea"
-                  value={enquiryMsg}
-                  onChange={e => setEnquiryMsg(e.target.value)}
-                />
-
-                <button
-                  type="submit"
-                  disabled={enquirySubmitting}
-                  className="btn btn-primary product-enquiry-submit"
+              ) : (
+                <form
+                  onSubmit={handleSendEnquiry}
+                  className="product-enquiry-form"
                 >
-                  <Send size={16} />
-                  {enquirySubmitting ? 'Sending...' : 'Send Enquiry'}
-                </button>
-              </form>
-            )}
-          </div>
+                  <div className="product-form-row">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Your Full Name"
+                      className="form-input"
+                      value={buyerName}
+                      onChange={e => setBuyerName(e.target.value)}
+                    />
+
+                    <input
+                      type="email"
+                      required
+                      placeholder="Your Email Address"
+                      className="form-input"
+                      value={buyerEmail}
+                      onChange={e => setBuyerEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="product-form-row">
+                    <input
+                      type="tel"
+                      required
+                      placeholder="Phone Number"
+                      className="form-input"
+                      value={buyerPhone}
+                      onChange={e => setBuyerPhone(e.target.value)}
+                    />
+
+                    <input
+                      type="text"
+                      required
+                      placeholder="City, State"
+                      className="form-input"
+                      value={buyerLocation}
+                      onChange={e => setBuyerLocation(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Quantity Required</label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      className="form-input"
+                      value={quantity}
+                      onChange={e => setQuantity(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Your Message</label>
+                    <textarea
+                      rows={4}
+                      required
+                      placeholder="Ask about dimensions, customization, bulk discounts or delivery..."
+                      className="form-textarea"
+                      value={enquiryMsg}
+                      onChange={e => setEnquiryMsg(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={enquirySubmitting || stock <= 0}
+                    className="btn btn-primary product-enquiry-submit"
+                  >
+                    <Send size={16} />
+                    {enquirySubmitting ? 'Sending...' : 'Send Enquiry'}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {isOwner && (
+            <div className="product-enquiry-card">
+              <p>You are viewing your own product listing.</p>
+            </div>
+          )}
         </section>
       </div>
     </main>

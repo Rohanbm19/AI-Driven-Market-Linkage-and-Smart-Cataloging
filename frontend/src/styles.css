@@ -5986,3 +5986,627 @@ html[data-theme="dark"] .footer-badge {
     padding: 1rem;
   }
 }
+
+
+/* =========================================
+   ARTISAN PROFILE
+========================================= */
+
+.artisan-profile-success,
+.artisan-profile-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 18px;
+}
+
+.artisan-profile-success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.artisan-profile-success button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.artisan-profile-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.artisan-profile-top,
+.artisan-products-header,
+.artisan-enquiries-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.artisan-profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.artisan-profile-main {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.artisan-profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--border-color);
+}
+
+.artisan-profile-info {
+  flex: 1;
+  min-width: 220px;
+}
+
+.artisan-profile-info h1 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 2rem;
+}
+
+.artisan-profile-craft {
+  color: var(--primary);
+  font-weight: 600;
+  margin: 0 0 15px;
+}
+
+.artisan-profile-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.artisan-profile-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.artisan-profile-story {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.artisan-profile-story-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.artisan-profile-story-heading h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.artisan-profile-story-heading span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.artisan-profile-story p {
+  line-height: 1.8;
+  color: var(--text-secondary, var(--text-primary));
+  white-space: pre-line;
+}
+
+.artisan-profile-form {
+  margin-top: 20px;
+}
+
+.artisan-profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.artisan-profile-voice {
+  margin: 20px 0;
+  padding: 18px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.artisan-profile-form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.artisan-products-section {
+  margin-top: 30px;
+}
+
+.artisan-products-header h2 {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: 1.45rem;
+}
+
+.artisan-products-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.artisan-products-empty {
+  text-align: center;
+  padding: 45px 20px;
+}
+
+.artisan-products-empty svg {
+  color: var(--text-muted);
+}
+
+.artisan-product-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.artisan-product-actions a,
+.artisan-product-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+.artisan-product-delete {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* =========================================
+   ARTISAN ENQUIRIES
+========================================= */
+
+.artisan-enquiries-section {
+  margin-top: 45px;
+  padding-bottom: 35px;
+}
+
+.artisan-enquiries-header {
+  margin-bottom: 20px;
+}
+
+.artisan-enquiries-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.artisan-enquiries-header h2 svg {
+  color: var(--primary);
+}
+
+.artisan-enquiries-header p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.artisan-enquiry-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.artisan-enquiry-stat {
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.artisan-enquiry-stat span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.artisan-enquiry-stat strong {
+  color: var(--text-primary);
+  font-size: 1.6rem;
+}
+
+.artisan-enquiry-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.artisan-enquiry-filters button {
+  padding: 9px 16px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary, var(--text-primary));
+  cursor: pointer;
+  font-size: 0.86rem;
+  transition: 0.2s ease;
+}
+
+.artisan-enquiry-filters button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.artisan-enquiries-list {
+  display: grid;
+  gap: 16px;
+}
+
+.artisan-enquiry-card {
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.artisan-enquiry-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.artisan-enquiry-buyer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.artisan-enquiry-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.artisan-enquiry-buyer h3 {
+  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.artisan-enquiry-buyer span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.artisan-enquiry-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 30px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.artisan-enquiry-status.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.artisan-enquiry-status.responded {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.artisan-enquiry-product {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 0;
+  color: var(--text-secondary, var(--text-primary));
+  font-size: 0.9rem;
+}
+
+.artisan-enquiry-product svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.artisan-enquiry-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.artisan-enquiry-contact-grid > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: var(--text-secondary, var(--text-primary));
+  font-size: 0.86rem;
+}
+
+.artisan-enquiry-contact-grid svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.artisan-enquiry-contact-grid span {
+  overflow-wrap: anywhere;
+}
+
+.artisan-enquiry-message,
+.artisan-enquiry-existing-reply {
+  margin-top: 16px;
+  padding: 15px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.artisan-enquiry-message strong,
+.artisan-enquiry-existing-reply strong {
+  color: var(--text-primary);
+}
+
+.artisan-enquiry-message p,
+.artisan-enquiry-existing-reply p {
+  margin: 8px 0 0;
+  color: var(--text-secondary, var(--text-primary));
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.artisan-enquiry-existing-reply {
+  border: 1px solid #a7f3d0;
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.artisan-enquiry-existing-reply > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #059669;
+}
+
+.artisan-enquiry-reply-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.artisan-enquiry-reply-form button {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.artisan-enquiries-empty {
+  text-align: center;
+  padding: 45px 20px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.artisan-enquiries-empty svg {
+  color: var(--text-muted);
+}
+
+.artisan-enquiries-empty h3 {
+  color: var(--text-primary);
+  margin: 12px 0 6px;
+}
+
+.artisan-enquiries-empty p {
+  color: var(--text-muted);
+  max-width: 450px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* MOBILE */
+
+@media (max-width: 650px) {
+  .artisan-profile-form-grid,
+  .artisan-enquiry-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .artisan-enquiry-stats {
+    gap: 8px;
+  }
+
+  .artisan-enquiry-stat {
+    padding: 12px;
+  }
+
+  .artisan-enquiry-stat span {
+    font-size: 0.75rem;
+  }
+
+  .artisan-enquiry-stat strong {
+    font-size: 1.3rem;
+  }
+
+  .artisan-enquiry-card {
+    padding: 14px;
+  }
+
+  .artisan-profile-info h1 {
+    font-size: 1.55rem;
+  }
+
+  .artisan-profile-main {
+    gap: 16px;
+  }
+
+  .artisan-profile-avatar {
+    width: 90px;
+    height: 90px;
+  }
+}
+/* ENQUIRY APPROVAL ACTIONS */
+.artisan-enquiry-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.artisan-enquiry-decision-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.artisan-enquiry-reject {
+  border: 1px solid #dc2626 !important;
+  color: #dc2626 !important;
+}
+
+.artisan-enquiry-status.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.artisan-enquiry-status.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.artisan-enquiry-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.artisan-enquiry-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.artisan-enquiry-stat {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.artisan-enquiry-stat span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.artisan-enquiry-stat strong {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.artisan-enquiry-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.artisan-enquiry-filters button {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 30px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.artisan-enquiry-filters button.active {
+  background: var(--accent-primary, #d97706);
+  border-color: var(--accent-primary, #d97706);
+  color: #fff;
+}
+
+.artisan-enquiry-existing-reply {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.artisan-enquiry-existing-reply > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+}
+
+.artisan-enquiry-existing-reply p {
+  margin: 0.5rem 0 0;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 650px) {
+  .artisan-enquiry-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .artisan-enquiry-decision-actions {
+    flex-direction: column;
+  }
+
+  .artisan-enquiry-decision-actions button {
+    width: 100%;
+  }
+}

@@ -1,5 +1,4 @@
-﻿
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
+﻿import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
 
 const configuredApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api')
   .trim()
@@ -125,7 +124,9 @@ export const MOCK_ARTISAN = {
   badges: ['Master Craftsman']
 };
 
+// ==========================================
 // LOCAL STORAGE HELPERS
+// ==========================================
 
 function getLocalProducts() {
   try {
@@ -143,7 +144,7 @@ function saveProductLocally(product) {
 
     const updated = [
       product,
-      ...current.filter((item) => item.id !== product.id)
+      ...current.filter(item => item.id !== product.id)
     ];
 
     localStorage.setItem(
@@ -158,7 +159,7 @@ function saveProductLocally(product) {
 function removeProductLocally(productId) {
   try {
     const updated = getLocalProducts().filter(
-      (product) => product.id !== productId
+      product => product.id !== productId
     );
 
     localStorage.setItem(
@@ -194,7 +195,9 @@ function saveLocalArtisan(artisan) {
   }
 }
 
+// ==========================================
 // RESPONSE AND DATA HELPERS
+// ==========================================
 
 async function readResponse(response) {
   const result = await response.json().catch(() => ({}));
@@ -214,31 +217,38 @@ async function readResponse(response) {
 
 function normalizeArray(value) {
   if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).filter(Boolean);
+    return value.map(item => String(item).trim()).filter(Boolean);
   }
 
   if (typeof value === 'string') {
-    return value.split(',').map((item) => item.trim()).filter(Boolean);
+    return value.split(',').map(item => item.trim()).filter(Boolean);
   }
 
   return [];
 }
 
+// ==========================================
 // SUPABASE AUTH HELPERS
+// ==========================================
 
 async function currentUser() {
   if (!isSupabaseConfigured()) {
     throw new Error('Supabase is not configured.');
   }
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
 
   if (error) throw error;
-  if (!user) throw new Error('Please sign in first.');
+
+  if (!user) {
+    throw new Error('Please sign in first.');
+  }
 
   return user;
 }
-
 
 async function requireArtisan() {
   const user = await currentUser();
@@ -247,9 +257,13 @@ async function requireArtisan() {
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+
+  if (!profile) {
+    throw new Error('Your user profile could not be found.');
+  }
 
   if (profile.role !== 'artisan') {
     throw new Error('Artisan access is required.');
@@ -258,22 +272,31 @@ async function requireArtisan() {
   return user;
 }
 
-
 async function getAuthHeaders(includeContentType = true) {
   await requireArtisan();
 
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error
+  } = await supabase.auth.getSession();
 
   if (error) throw error;
-  if (!session?.access_token) throw new Error('Please sign in again.');
+
+  if (!session?.access_token) {
+    throw new Error('Please sign in again.');
+  }
 
   return {
-    ...(includeContentType ? { 'Content-Type': 'application/json' } : {}),
+    ...(includeContentType
+      ? { 'Content-Type': 'application/json' }
+      : {}),
     Authorization: `Bearer ${session.access_token}`
   };
 }
 
+// ==========================================
 // API METHODS
+// ==========================================
 
 export const api = {
 
@@ -286,7 +309,6 @@ export const api = {
     return await readResponse(response);
   },
 
-  // Existing live marketplace demand forecast (GET)
   async getLiveDemandForecast(category) {
     const response = await fetch(
       `${API_BASE_URL}/market/ml/demand?category=${encodeURIComponent(category)}`
@@ -309,7 +331,6 @@ export const api = {
     return await readResponse(response);
   },
 
-  // Exploratory demand prediction (POST)
   async predictMlDemand(data) {
     const response = await fetch(`${API_BASE_URL}/market/ml/demand`, {
       method: 'POST',
@@ -320,7 +341,6 @@ export const api = {
     return await readResponse(response);
   },
 
-  // Exploratory price prediction (POST)
   async predictMlPrice(data) {
     const response = await fetch(`${API_BASE_URL}/market/ml/price`, {
       method: 'POST',
@@ -331,7 +351,6 @@ export const api = {
     return await readResponse(response);
   },
 
-  // Exploratory customer segmentation (POST)
   async predictMlSegment(data) {
     const response = await fetch(`${API_BASE_URL}/market/ml/segment`, {
       method: 'POST',
@@ -465,8 +484,7 @@ export const api = {
       image_url: productData.image_url || null,
       original_image_url:
         productData.original_image_url || productData.image_url || null,
-      enhanced_image_url:
-        productData.enhanced_image_url ?? null,
+      enhanced_image_url: productData.enhanced_image_url ?? null,
       tags: normalizeArray(productData.tags),
       stock: Number(productData.stock ?? 1),
       translations: productData.translations || undefined
@@ -671,125 +689,132 @@ export const api = {
   // ENQUIRIES
   // ==========================================
 
+  // Get enquiries belonging to the logged-in artisan
   async getEnquiries() {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('enquiries')
-          .select('*')
-          .order('created_at', { ascending: false });
+    const user = await requireArtisan();
 
-        if (!error && Array.isArray(data) && data.length > 0) {
-          return data;
-        }
-      } catch (error) {
-        console.warn('Supabase enquiry fetch failed:', error.message);
-      }
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/enquiries`);
-
-      if (response.ok) {
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      }
-    } catch {
-      // Use local fallback.
-    }
-
-    try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_ENQUIRIES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  async getBuyerEnquiries(buyerId) {
     const { data, error } = await supabase
       .from('enquiries')
       .select('*')
-      .eq('buyer_id', buyerId)
+      .eq('artisan_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    return data;
+    return data || [];
   },
 
-  async submitEnquiry(enquiryData) {
-    const id = enquiryData.id || `enq-${Date.now()}`;
+  // Submit buyer enquiry to the product owner
+  
+async submitEnquiry(enquiryData) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
 
-    const payload = {
-      ...enquiryData,
-      id,
-      status: 'pending',
-      created_at: new Date().toISOString()
-    };
+  const buyer = await currentUser();
 
-    let savedInSupabase = false;
+  const payload = {
+    id: `enq-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 7)}`,
 
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase
-          .from('enquiries')
-          .insert([payload]);
+    buyer_id: buyer.id,
+    artisan_id: enquiryData.artisan_id,
+    product_id: String(enquiryData.product_id),
+    product_title: String(enquiryData.product_title).trim(),
 
-        if (!error) {
-          savedInSupabase = true;
-        } else {
-          console.warn('Supabase enquiry insert failed:', error.message);
-        }
-      } catch (error) {
-        console.warn('Enquiry insert failed:', error.message);
-      }
+    buyer_name: String(enquiryData.buyer_name).trim(),
+    buyer_email: String(enquiryData.buyer_email).trim(),
+    phone: String(enquiryData.phone).trim(),
+    buyer_location: String(enquiryData.buyer_location).trim(),
+
+    quantity: String(enquiryData.quantity),
+    message: String(enquiryData.message).trim(),
+
+    status: 'pending',
+    reply: null
+  };
+
+  console.log('Submitting enquiry:', {
+    buyer_id: payload.buyer_id,
+    artisan_id: payload.artisan_id,
+    product_id: payload.product_id
+  });
+
+  // INSERT ONLY — do not use .select()
+  const { error } = await supabase
+    .from('enquiries')
+    .insert(payload);
+
+  if (error) {
+    console.error('Supabase enquiry error:', error);
+    throw error;
+  }
+
+  return {
+    success: true,
+    data: payload
+  };
+},
+
+  // Approve or reject a buyer enquiry
+  async updateEnquiryStatus(id, status) {
+    const allowedStatuses = ['approved', 'rejected'];
+
+    if (!allowedStatuses.includes(status)) {
+      throw new Error('Invalid enquiry status.');
     }
 
-    try {
-      await fetch(`${API_BASE_URL}/enquiries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch {
-      // Backend optional for this existing feature.
-    }
+    const user = await requireArtisan();
 
-    try {
-      const current = await this.getEnquiries();
-
-      localStorage.setItem(
-        LOCAL_STORAGE_ENQUIRIES_KEY,
-        JSON.stringify([
-          payload,
-          ...current.filter((item) => item.id !== id)
-        ])
-      );
-    } catch (error) {
-      console.warn('Local enquiry cache error:', error.message);
-    }
-
-    return {
-      success: true,
-      data: payload,
-      savedInSupabase
-    };
-  },
-
-  async replyToEnquiry(id, reply) {
-    await requireArtisan();
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('enquiries')
       .update({
-        reply,
-        status: 'responded',
+        status,
         updated_at: new Date().toISOString()
       })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('artisan_id', user.id)
+      .select();
 
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      throw new Error(
+        'No enquiry was updated. Check that this enquiry belongs to your artisan account and that Supabase RLS allows the update.'
+      );
+    }
+
+    return data[0];
+  },
+
+  // Reply to a buyer without changing approval/rejection status
+  async replyToEnquiry(id, reply) {
+    if (!reply || !reply.trim()) {
+      throw new Error('Please enter a reply.');
+    }
+
+    const user = await requireArtisan();
+
+    const { data, error } = await supabase
+      .from('enquiries')
+      .update({
+        reply: reply.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('artisan_id', user.id)
+      .select();
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      throw new Error(
+        'Reply was not saved. Check enquiry ownership and Supabase RLS policies.'
+      );
+    }
+
+    return data[0];
   },
 
   // ==========================================
