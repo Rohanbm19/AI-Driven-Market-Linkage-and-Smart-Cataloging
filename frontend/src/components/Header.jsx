@@ -126,16 +126,7 @@ export default function Header() {
               </NavLink>
             </li>}
 
-            <li>
-              <NavLink
-                to="/assistant"
-                className={({ isActive }) => `mobile-nav-link ${isActive ? 'active' : ''}`}
-                onClick={closeMobile}
-              >
-                <Bot size={18} />
-                <span>{t?.nav?.assistant || 'AI Assistant'}</span>
-              </NavLink>
-            </li>
+            
 
             <li>
               <NavLink
