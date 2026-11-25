@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, Download, RefreshCw, Sparkles, Upload } from 'lucide-react';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import {
   enhanceProductImage,
   IMAGE_BACKGROUND_PRESETS,
@@ -10,8 +10,11 @@ import {
 
 export default function ImageEnhancer() {
   const { t } = useLanguage();
+  const text = t.enhancer || {};
+
   const fileInputRef = useRef(null);
   const backgroundInputRef = useRef(null);
+
   const [originalFile, setOriginalFile] = useState(null);
   const [originalImage, setOriginalImage] = useState('');
   const [enhancedFile, setEnhancedFile] = useState(null);
@@ -20,6 +23,29 @@ export default function ImageEnhancer() {
   const [backgroundFile, setBackgroundFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+
+  const errorMessages = {
+    'Choose an image to continue.': text.chooseImageError,
+    'Choose an image to enhance.': text.chooseImageError,
+    'Image files must be 10 MB or smaller.': text.imageTooLarge,
+    'Use a JPEG, PNG, or WebP image.': text.imageTypeError,
+    'Choose a background image or select a studio preset.': text.chooseBackgroundError,
+    'Could not reach the image enhancement service. Check that the FastAPI service is running.': text.serviceUnavailable,
+    'Image enhancement failed. Please try again.': text.enhancementFailed,
+    'The image service returned an invalid response.': text.invalidResponse
+  };
+
+  const localizeError = (message) => {
+    return errorMessages[message] || text.serviceError;
+  };
+
+  const presetLabels = {
+    none: text.keepOriginal,
+    clean_white: text.cleanWhite,
+    warm_sand: text.warmSand,
+    soft_sage: text.softSage,
+    custom: text.customBackground
+  };
 
   useEffect(() => () => {
     if (originalImage.startsWith('blob:')) URL.revokeObjectURL(originalImage);
@@ -33,7 +59,7 @@ export default function ImageEnhancer() {
     try {
       validateImageFile(file);
     } catch (validationError) {
-      setError(validationError.message);
+      setError(localizeError(validationError.message));
       event.target.value = '';
       return;
     }
@@ -47,18 +73,23 @@ export default function ImageEnhancer() {
 
   const handleEnhance = async () => {
     if (!originalFile) {
-      setError('Choose an image to enhance.');
+      setError(text.chooseImageError);
       return;
     }
 
     setIsProcessing(true);
     setError('');
+
     try {
-      const result = await enhanceProductImage(originalFile, backgroundPreset, backgroundFile);
+      const result = await enhanceProductImage(
+        originalFile,
+        backgroundPreset,
+        backgroundFile
+      );
       setEnhancedFile(result);
       setEnhancedImage(URL.createObjectURL(result));
     } catch (processingError) {
-      setError(processingError.message || 'Image enhancement failed. Please try again.');
+      setError(localizeError(processingError.message));
     } finally {
       setIsProcessing(false);
     }
@@ -68,8 +99,8 @@ export default function ImageEnhancer() {
     <div className="image-enhancer-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">{t.enhancer.title}</h1>
-          <p className="page-subtitle">{t.enhancer.desc}</p>
+          <h1 className="page-title">{text.title}</h1>
+          <p className="page-subtitle">{text.desc}</p>
         </div>
       </div>
 
@@ -77,39 +108,40 @@ export default function ImageEnhancer() {
         <section className="card image-enhancer-preview-card">
           <h2 className="image-enhancer-section-title">
             <Sparkles size={18} color="var(--primary)" />
-            <span>Before &amp; After</span>
+            <span>{text.compare}</span>
           </h2>
+
           {originalImage && enhancedImage ? (
             <BeforeAfterSlider
               beforeImage={originalImage}
               afterImage={enhancedImage}
-              beforeLabel="Original Photo"
-              afterLabel={backgroundPreset === 'none' ? 'OpenCV Enhanced' : 'New Background'}
+              beforeLabel={text.originalPhoto}
+              afterLabel={
+                backgroundPreset === 'none'
+                  ? text.enhancedPhoto
+                  : text.newBackground
+              }
             />
           ) : originalImage ? (
             <div className="image-enhancer-single-preview">
-              <img src={originalImage} alt="Original artisan product" />
-              <span>Original photo — enhance it to compare</span>
+              <img src={originalImage} alt={text.originalAlt} />
+              <span>{text.previewHint}</span>
             </div>
           ) : (
             <div className="image-enhancer-empty">
               <Upload size={30} />
-              <p>Select an artisan product photo to preview it here.</p>
+              <p>{text.selectPreview}</p>
             </div>
           )}
+
           {enhancedImage && (
-            <p className="image-enhancer-hint">
-              Drag the center handle to compare the original and enhanced image.
-            </p>
+            <p className="image-enhancer-hint">{text.compareHint}</p>
           )}
         </section>
 
         <section className="card image-enhancer-controls">
-          <h2 className="image-enhancer-section-title">Enhance a Product Photo</h2>
-          <p className="image-enhancer-copy">
-            OpenCV improves lighting, color, and detail. Optionally replace the background
-            with a studio preset; the product itself is not regenerated.
-          </p>
+          <h2 className="image-enhancer-section-title">{text.heading}</h2>
+          <p className="image-enhancer-copy">{text.help}</p>
 
           <input
             ref={fileInputRef}
@@ -118,18 +150,20 @@ export default function ImageEnhancer() {
             onChange={handleFileUpload}
             hidden
           />
+
           <button
             type="button"
             className="image-enhancer-upload"
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={18} />
-            <span>{originalFile ? originalFile.name : 'Select a JPEG, PNG, or WebP photo'}</span>
+            <span>{originalFile ? originalFile.name : text.selectPhoto}</span>
           </button>
-          <p className="image-enhancer-hint">Maximum file size: 10 MB.</p>
+
+          <p className="image-enhancer-hint">{text.maxSize}</p>
 
           <label className="image-background-field" htmlFor="image-background-preset">
-            <span>Background option</span>
+            <span>{text.backgroundOption}</span>
             <select
               id="image-background-preset"
               className="image-background-select"
@@ -141,7 +175,9 @@ export default function ImageEnhancer() {
               disabled={isProcessing}
             >
               {IMAGE_BACKGROUND_PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>{preset.label}</option>
+                <option key={preset.value} value={preset.value}>
+                  {presetLabels[preset.value] || preset.label}
+                </option>
               ))}
             </select>
           </label>
@@ -154,17 +190,19 @@ export default function ImageEnhancer() {
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(event) => {
                   const file = event.target.files?.[0] || null;
+
                   try {
                     if (file) validateImageFile(file);
                     setBackgroundFile(file);
                     setError('');
                   } catch (validationError) {
-                    setError(validationError.message);
+                    setError(localizeError(validationError.message));
                     event.target.value = '';
                   }
                 }}
                 hidden
               />
+
               <button
                 type="button"
                 className="image-enhancer-upload"
@@ -172,22 +210,29 @@ export default function ImageEnhancer() {
                 disabled={isProcessing}
               >
                 <Upload size={18} />
-                <span>{backgroundFile?.name || 'Select a JPEG, PNG, or WebP background'}</span>
+                <span>
+                  {backgroundFile?.name || text.selectBackground}
+                </span>
               </button>
             </>
           )}
 
           <label className="image-background-field" htmlFor="image-background-preset">
-            <span>Studio background</span>
+            <span>{text.studioBackground}</span>
             <select
               id="image-background-preset"
               className="image-background-select"
               value={backgroundPreset}
-              onChange={(event) => setBackgroundPreset(event.target.value)}
+              onChange={(event) => {
+                setBackgroundPreset(event.target.value);
+                setError('');
+              }}
               disabled={isProcessing}
             >
               {IMAGE_BACKGROUND_PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>{preset.label}</option>
+                <option key={preset.value} value={preset.value}>
+                  {presetLabels[preset.value] || preset.label}
+                </option>
               ))}
             </select>
           </label>
@@ -196,7 +241,11 @@ export default function ImageEnhancer() {
             type="button"
             className="btn btn-primary image-enhancer-submit"
             onClick={handleEnhance}
-            disabled={!originalFile || isProcessing || (backgroundPreset === 'custom' && !backgroundFile)}
+            disabled={
+              !originalFile ||
+              isProcessing ||
+              (backgroundPreset === 'custom' && !backgroundFile)
+            }
           >
             {isProcessing ? (
               <RefreshCw size={17} className="animate-spin" />
@@ -205,8 +254,10 @@ export default function ImageEnhancer() {
             )}
             <span>
               {isProcessing
-                ? t.enhancer.processing
-                : backgroundPreset === 'none' ? 'Enhance Image' : 'Enhance & Replace Background'}
+                ? text.processing
+                : backgroundPreset === 'none'
+                  ? text.enhanceImage
+                  : text.enhanceReplace}
             </span>
           </button>
 
@@ -224,7 +275,7 @@ export default function ImageEnhancer() {
               download={enhancedFile.name}
             >
               <Download size={17} />
-              <span>Download Enhanced Image</span>
+              <span>{text.download}</span>
             </a>
           )}
         </section>

@@ -10,7 +10,8 @@ export default {
     insights: "Market Insights",
     enquiries: "Enquiries",
     profile: "My Studio",
-    login: "Sign In"
+    login: "Sign In",
+  logout: 'Sign Out'
   },
   hero: {
     badge: "AI-Powered Artisan Empowerment",
@@ -28,6 +29,9 @@ export default {
     woodwork: "Carved Woodwork",
     painting: "Pattachitra Art",
     other: "Other Heritage Craft",
+    "other heritage craft": "Other Heritage Craft",
+    "clock": "Clock",
+    "carpet": "Carpet",
     filterState: "All Regions",
     verifiedOnly: "Verified Artisans Only",
     voiceHint: "Click mic to speak in your native language",
@@ -113,16 +117,16 @@ product: {
     storyLabel: "Craft Story & Heritage Description (Speak in Your Native Language)",
     storyPlaceholder: "Speak in Hindi, Tamil, Kannada, Telugu, Malayalam, or English to describe your creation process, cultural inspiration, or firing techniques...",
     calculatorTitle: "Fair Trade Wage & Cost Calculator",
-    calculatorBadge: "✓ Prevents Artisan Undervaluation",
-    materialCostLabel: "Material Cost (₹)",
+    calculatorBadge: "âœ“ Prevents Artisan Undervaluation",
+    materialCostLabel: "Material Cost (â‚¹)",
     laborHoursLabel: "Labor Hours (hrs)",
-    wageLabel: "Artisan Wage (₹/hr)",
-    packagingLabel: "Packaging (₹)",
+    wageLabel: "Artisan Wage (â‚¹/hr)",
+    packagingLabel: "Packaging (â‚¹)",
     totalProductionCost: "Total Production Cost:",
     suggestedFairPrice: "Suggested Fair Price:",
     artisanProfitMargin: "(+30% Artisan Profit)",
     applyFairPrice: "Apply Fair Price",
-    sellingPriceLabel: "Selling Price (₹)",
+    sellingPriceLabel: "Selling Price (â‚¹)",
     stockLabel: "Available Stock (Units)",
     tagsLabel: "Tags / Keywords (comma separated)",
     tagsPlaceholder: "GI Tagged, Terracotta, Handmade, Natural Clay, Festive Decor",
@@ -173,8 +177,10 @@ product: {
     listFirstCraft: "List Your First Craft",
     editCraft: "Edit",
     deleteCraft: "Delete",
-    loadingProfile: "Loading artisan profile..."
-  },
+    loadingProfile: "Loading artisan profile...",
+    studio: {"approve":"Approve Enquiry","edit":"Edit","experienceMissing":"Experience not added","storyPlaceholder":"Speak or type your ancestral story, training, techniques and personal journey...","artisan":"Artisan","locationMissing":"Location not added","noCategory":"No enquiries in this category","reject":"Reject Enquiry","storyLabel":"Artisan Heritage Story \u0026 Biography","studioDesc":"Your handmade creations listed on the KalaSetu marketplace.","approved":"Approved","noCraftsDesc":"List your first craft to start receiving buyer enquiries.","pending":"Pending","listFirst":"List Your First Craft","all":"All","saving":"Saving Profile...","sending":"Sending Reply...","studioTitle":"Masterpieces from {name}\u0027s Studio","language":"Language","rejected":"Rejected","addCraft":"Add New Craft","totalEnquiries":"Total Enquiries","heritagePractice":"Heritage Practice","notProvided":"Not provided","replyPlaceholder":"Write your response about availability, pricing, delivery or customization...","buyerMessage":"Buyer\u0027s Message","replyToBuyer":"Reply to Buyer","loadingProfile":"Loading artisan profile...","sendReply":"Send Reply","dateUnavailable":"Date unavailable","product":"Product","enquiryDesc":"Review, approve or reject enquiries received for your crafts.","noEnquiriesDesc":"When buyers contact you about your products, their enquiries will appear here.","noStory":"No artisan story added yet.","buyer":"Buyer","delete":"Delete","yourReply":"Your Reply","quantity":"Quantity","saveChanges":"Save Profile Changes","noEnquiries":"No buyer enquiries yet","locationNotProvided":"Location not provided","noCrafts":"No crafts listed yet","cancel":"Cancel","imageUrl":"Profile Image URL","updating":"Updating...","buyerEnquiries":"Buyer Enquiries","tryFilter":"Try selecting another enquiry filter.",
+    "loadError":"Unable to load your studio.","signIn":"Please sign in to view your artisan profile.","saveError":"Failed to save profile changes. Please try again.","saveGenericError":"An error occurred while saving.","savedCloud":"Profile updated and saved to Supabase!","savedLocal":"Profile updated and saved locally.","confirmDeleteCraft":"Are you sure you want to delete this craft item?","deleteError":"Could not delete product: ","confirmApprove":"Are you sure you want to approve this enquiry?","confirmReject":"Are you sure you want to reject this enquiry?","approveError":"Unable to approve this enquiry.","rejectError":"Unable to reject this enquiry.","replyRequired":"Please enter a reply.","replyError":"Unable to send reply.","approveStatus":"Approved","rejectStatus":"Rejected"},
+    },
   aiCatalog: {
     title: "AI Smart Catalog Generator",
     desc: "Describe your handmade creation in any language or record your voice. Our AI builds professional e-commerce titles, SEO keywords, stories, and price estimates in seconds.",
@@ -184,11 +190,43 @@ product: {
     generating: "Analyzing craft with AI..."
   },
   enhancer: {
+
     title: "Studio AI Image Enhancer",
     desc: "Carefully improve product-photo lighting, noise, color balance, and detail while preserving the original craft and its colors.",
     compareTitle: "Before & After AI Studio Enhancement",
     uploadBtn: "Upload Photo to Enhance",
-    processing: "Enhancing details and lighting..."
+    processing: "Enhancing details and lighting...",
+    backgroundOption: "Background option",
+    imageTooLarge: "Image files must be 10 MB or smaller.",
+    selectPhoto: "Select a JPEG, PNG, or WebP photo",
+    serviceUnavailable: "Could not reach the image enhancement service. Check that the service is running.",
+    originalAlt: "Original artisan product",
+    warmSand: "Warm sand",
+    download: "Download Enhanced Image",
+    chooseImageError: "Choose an image to enhance.",
+    selectPreview: "Select an artisan product photo to preview it here.",
+    compare: "Before \u0026 After",
+    enhanceImage: "Enhance Image",
+    newBackground: "New Background",
+    enhanceReplace: "Enhance \u0026 Replace Background",
+    originalPhoto: "Original Photo",
+    maxSize: "Maximum file size: 10 MB.",
+    previewHint: "Original photo — enhance it to compare",
+    studioBackground: "Studio background",
+    customBackground: "Upload a background image",
+    enhancementFailed: "Image enhancement failed. Please try again.",
+    heading: "Enhance a Product Photo",
+    chooseBackgroundError: "Choose a background image or select a studio preset.",
+    selectBackground: "Select a JPEG, PNG, or WebP background",
+    keepOriginal: "Keep original background",
+    imageTypeError: "Use a JPEG, PNG, or WebP image.",
+    softSage: "Soft sage",
+    enhancedPhoto: "OpenCV Enhanced",
+    invalidResponse: "The image service returned an invalid response.",
+    serviceError: "Something went wrong while enhancing the image. Please try again.",
+    cleanWhite: "Clean white",
+    help: "OpenCV improves lighting, color, and detail. Optionally replace the background with a studio preset; the product itself is not regenerated.",
+    compareHint: "Drag the center handle to compare the original and enhanced image."
   },
   loadingProduct: "Loading product...",
   productNotFound: "Product not found.",
@@ -199,3 +237,6 @@ product: {
 };
 
 // en.js
+
+
+

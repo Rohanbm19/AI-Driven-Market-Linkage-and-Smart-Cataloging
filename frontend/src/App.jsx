@@ -1,17 +1,15 @@
-import React from 'react';
+﻿import React from 'react';
 import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Logo from './components/Logo.jsx';
 import Marketplace from './pages/Marketplace.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
 import AddProduct from './pages/AddProduct.jsx';
-import ImageEnhancer from './pages/ImageEnhancer.jsx';
 import Assistant from './pages/Assistant.jsx';
 import MarketInsights from './pages/MarketInsights.jsx';
-import Enquiries from './pages/Enquiries.jsx';
 import ArtisanProfile from './pages/ArtisanProfile.jsx';
 import Login from './pages/Login.jsx';
-import { useLanguage } from './i18n/index.js';
+import { useLanguage } from './i18n/index.jsx';
 
 import RequireArtisan from './components/RequireArtisan.jsx';
 import RequireBuyer from './components/RequireBuyer.jsx';
@@ -44,8 +42,6 @@ export default function App() {
             <Route path="/seller/dashboard" element={<Navigate to="/artisan-profile" replace />} />
             <Route path="/add-product" element={<AddProduct />} />
             <Route path="/edit-product/:id" element={<AddProduct />} />
-            <Route path="/image-enhancer" element={<ImageEnhancer />} />
-            <Route path="/enquiries" element={<Enquiries />} />
             <Route path="/artisan-profile" element={<ArtisanProfile />} />
           </Route>
         </Routes>
@@ -61,13 +57,7 @@ export default function App() {
             <p className="footer-desc">{f.desc}</p>
           </div>
           <div className="footer-meta-col">
-            <div className="footer-badges">
-              <span className="footer-badge">{f.fairTrade}</span>
-              <span className="footer-dot">•</span>
-              <span className="footer-badge">{f.voiceAi}</span>
-              <span className="footer-dot">•</span>
-              <span className="footer-badge">{f.giTag}</span>
-            </div>
+
             <p className="footer-copyright">
               © {new Date().getFullYear()} {f.copyright}
             </p>
@@ -77,3 +67,5 @@ export default function App() {
     </div>
   );
 }
+
+

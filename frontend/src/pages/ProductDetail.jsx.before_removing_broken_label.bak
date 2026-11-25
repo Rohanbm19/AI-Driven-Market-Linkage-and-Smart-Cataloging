@@ -1,0 +1,472 @@
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import {
+  MapPin,
+  ArrowLeft,
+  Send,
+  CheckCircle2,
+  Wand2,
+  Edit3,
+  Trash2,
+  Layers,
+  ShieldCheck
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+
+import { api } from '../services/api.js';
+import Badge from '../components/Badge.jsx';
+import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
+import { useLanguage } from '../i18n/index.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+
+export default function ProductDetail() {
+  const { id } = useParams();
+  const { id: userId, isArtisan, fullName, email } = useAuth();
+  const navigate = useNavigate();
+  const { t, lang } = useLanguage();
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  const [showSlider, setShowSlider] = useState(false);
+  const [enquirySent, setEnquirySent] = useState(false);
+  const [enquirySubmitting, setEnquirySubmitting] = useState(false);
+
+  const [buyerName, setBuyerName] = useState(fullName || '');
+  const [buyerEmail, setBuyerEmail] = useState(email || '');
+  const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerLocation, setBuyerLocation] = useState('');
+  const [quantity, setQuantity] = useState('1');
+  const [enquiryMsg, setEnquiryMsg] = useState('');
+
+  const [deleting, setDeleting] = useState(false);
+  const trackedViews = useRef(new Set());
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadItem() {
+      try {
+        setLoading(true);
+        setLoadError('');
+
+        const item = await api.getProductById(id, lang);
+
+        if (isMounted) {
+          setProduct(item || null);
+
+          if (!item) {
+            setLoadError('This product is unavailable or has been removed.');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+
+        if (isMounted) {
+          setProduct(null);
+          setLoadError(err.message || 'Unable to load product details.');
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadItem();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, lang]);
+
+  useEffect(() => {
+    if (
+      !product ||
+      trackedViews.current.has(id) ||
+      (isArtisan && product.artisan_id === userId)
+    ) {
+      return;
+    }
+
+    trackedViews.current.add(id);
+
+    api.trackProductView(id).catch(error => {
+      trackedViews.current.delete(id);
+      console.warn('Could not record product view:', error.message);
+    });
+  }, [id, product, isArtisan, userId]);
+
+  const handleSendEnquiry = async (e) => {
+    e.preventDefault();
+
+    if (
+      !buyerName.trim() ||
+      !buyerEmail.trim() ||
+      !buyerPhone.trim() ||
+      !buyerLocation.trim() ||
+      !enquiryMsg.trim() ||
+      !quantity
+    ) {
+      window.alert('Please complete all enquiry details.');
+      return;
+    }
+
+    if (!product?.artisan_id) {
+      window.alert('The artisan profile for this product could not be found.');
+      return;
+    }
+
+    if (isArtisan && product.artisan_id === userId) {
+      window.alert('You cannot send an enquiry for your own product.');
+      return;
+    }
+
+    setEnquirySubmitting(true);
+
+    try {
+      
+      await api.submitEnquiry({
+        buyer_id: userId || null,
+        artisan_id: product.artisan_id,
+        product_id: product.id,
+        product_title: product.title,
+        buyer_name: buyerName.trim(),
+        buyer_email: buyerEmail.trim(),
+        phone: buyerPhone.trim(),
+        buyer_location: buyerLocation.trim(),
+        quantity: String(quantity),
+        message: enquiryMsg.trim()
+      });
+
+      setEnquirySent(true);
+
+      confetti({
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+    } catch (err) {
+      console.error('Enquiry submission failed:', err);
+      window.alert(err.message || 'Could not send enquiry. Please try again.');
+    } finally {
+      setEnquirySubmitting(false);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!window.confirm(`Are you sure you want to delete "${product.title}"?`)) {
+      return;
+    }
+
+    setDeleting(true);
+
+    try {
+      await api.deleteProduct(product.id);
+      navigate('/');
+    } catch (err) {
+      window.alert('Could not delete product: ' + err.message);
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="product-detail-loading">
+        <div className="spinner" />
+        <p>{t.productDetail.loading}</p>
+      </div>
+    );
+  }
+
+  if (loadError || !product) {
+    return (
+      <div className="empty-market-state">
+        <p className="empty-title">{t.productDetail.notFound}</p>
+        <p className="empty-subtitle">
+          {loadError || 'This product is unavailable or has been removed.'}
+        </p>
+        <Link to="/" className="btn btn-primary">
+          <ArrowLeft size={16} />
+          {t.productDetail.back}
+        </Link>
+      </div>
+    );
+  }
+
+  const parsedMaterials = Array.isArray(product.materials)
+    ? product.materials
+    : typeof product.materials === 'string'
+      ? product.materials.split(',').map(m => m.trim()).filter(Boolean)
+      : [];
+
+  const parsedTags = Array.isArray(product.tags)
+    ? product.tags
+    : typeof product.tags === 'string'
+      ? product.tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)
+      : ['Handmade'];
+
+  const formattedPrice = Number(product.price || 0).toLocaleString('en-IN');
+  const isOwner = isArtisan && product.artisan_id === userId;
+  const stock = Number(product.stock ?? 1);
+  const hasEnhancedImage = Boolean(product.enhanced_image_url);
+  const mainImage = product.enhanced_image_url || product.image_url;
+
+  return (
+    <main className="product-detail-page">
+      <div className="product-detail-header">
+        <Link to="/" className="product-back-link">
+          <ArrowLeft size={17} />
+          {t.productDetail.back}
+        </Link>
+
+        {isOwner && (
+          <div className="product-owner-actions">
+            <Link
+              to={`/edit-product/${product.id}`}
+              className="product-edit-button"
+            >
+              <Edit3 size={15} />
+              {t.productDetail.edit}
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleDeleteProduct}
+              disabled={deleting}
+              className="product-delete-button"
+            >
+              <Trash2 size={15} />
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="product-detail-layout">
+        <section className="product-gallery">
+          <div className="product-image-container">
+            {showSlider && hasEnhancedImage ? (
+              <BeforeAfterSlider
+                beforeImage={product.original_image_url || product.image_url}
+                afterImage={product.enhanced_image_url}
+                beforeLabel={t.productDetail.original}
+                afterLabel={t.productDetail.enhanced}
+              />
+            ) : (
+              <img
+                src={mainImage}
+                alt={product.title}
+                className="product-main-image"
+              />
+            )}
+
+            {product.fair_trade && (
+              <span className="product-fairtrade-badge">
+                <ShieldCheck size={14} />
+                Fair Trade
+              </span>
+            )}
+          </div>
+
+          {hasEnhancedImage && (
+            <div className="product-image-actions">
+              <button
+                type="button"
+                className="product-compare-button"
+                onClick={() => setShowSlider(!showSlider)}
+              >
+                <Wand2 size={16} />
+                {showSlider ? t.productDetail.showImage : t.productDetail.compareImage}
+              </button>
+
+              <span>{t.productDetail.authentic}</span>
+            </div>
+          )}
+        </section>
+
+        <section className="product-information">
+          <div className="product-tags">
+            {parsedTags.map((tag, index) => (
+              <Badge key={`${tag}-${index}`} type="craft">
+                {tag}
+              </Badge>
+            ))}
+
+            {product.fair_trade && (
+              <Badge type="verified">{t.productDetail.fairTradeLabel}</Badge>
+            )}
+          </div>
+
+          <h1 className="product-title">{product.title}</h1>
+
+          <div className="product-artisan">
+            <div className="product-artisan-details">
+              <span className="product-artisan-label">{t.productDetail.craftedBy}</span>
+              <Link to="/artisan-profile">
+                {product.artisan_name || 'Master Artisan'}
+              </Link>
+            </div>
+
+            <div className="product-region">
+              <MapPin size={16} />
+              {product.region || 'India'}
+            </div>
+          </div>
+
+          <div className="product-price-section">
+            <div>
+              <span className="product-price-label">{t.productDetail.price}</span>
+              <div className="product-price">₹{formattedPrice}</div>
+              <span className="product-price-note">
+                {t.productDetail.priceNote}
+              </span>
+            </div>
+
+            <div className={`product-stock ${stock > 0 ? 'available' : 'unavailable'}`}>
+              <span className="product-stock-dot" />
+              {stock > 0 ? `${stock} in stock` : 'Out of stock'}
+            </div>
+          </div>
+
+          <div className="product-description">
+            <h2>{t.productDetail.about}</h2>
+            <p>{product.description || 'No description available.'}</p>
+          </div>
+
+          {parsedMaterials.length > 0 && (
+            <div className="product-materials">
+              <h3>
+                <Layers size={17} />
+                {t.productDetail.materials}
+              </h3>
+
+              <div className="product-material-list">
+                {parsedMaterials.map((material, index) => (
+                  <span key={`${material}-${index}`}>{material}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CONTACT ARTISAN / SEND ENQUIRY */}
+          {!isOwner && (
+            <div className="product-enquiry-card">
+              <div className="product-enquiry-heading">
+                <div className="product-enquiry-icon">
+                  <Send size={18} />
+                </div>
+
+                <div>
+                  <h2>{t.productDetail.contact}</h2>
+                  <p>
+                    Share your contact details and requirements directly
+                    with the artisan.
+                  </p>
+                </div>
+              </div>
+
+              {enquirySent ? (
+                <div className="product-enquiry-success">
+                  <CheckCircle2 size={23} />
+                  <div>
+                    <strong>Enquiry sent successfully!</strong>
+                    <p>
+                      Your enquiry has been shared with{' '}
+                      {product.artisan_name || 'the artisan'}.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <form
+                  onSubmit={handleSendEnquiry}
+                  className="product-enquiry-form"
+                >
+                  <div className="product-form-row">
+                    <input
+                      type="text"
+                      required
+                      placeholder="{t.productDetail.fullName}"
+                      className="form-input"
+                      value={buyerName}
+                      onChange={e => setBuyerName(e.target.value)}
+                    />
+
+                    <input
+                      type="email"
+                      required
+                      placeholder="{t.productDetail.email}"
+                      className="form-input"
+                      value={buyerEmail}
+                      onChange={e => setBuyerEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="product-form-row">
+                    <input
+                      type="tel"
+                      required
+                      placeholder="{t.productDetail.phone}"
+                      className="form-input"
+                      value={buyerPhone}
+                      onChange={e => setBuyerPhone(e.target.value)}
+                    />
+
+                    <input
+                      type="text"
+                      required
+                      placeholder="{t.productDetail.location}"
+                      className="form-input"
+                      value={buyerLocation}
+                      onChange={e => setBuyerLocation(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">{t.productDetail.quantity}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      className="form-input"
+                      value={quantity}
+                      onChange={e => setQuantity(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">{t.productDetail.message}</label>
+                    <textarea
+                      rows={4}
+                      required
+                      placeholder="Ask about dimensions, customization, bulk discounts or delivery..."
+                      className="form-textarea"
+                      value={enquiryMsg}
+                      onChange={e => setEnquiryMsg(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={enquirySubmitting || stock <= 0}
+                    className="btn btn-primary product-enquiry-submit"
+                  >
+                    <Send size={16} />
+                    {enquirySubmitting ? 'Sending...' : '{t.productDetail.send}'}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {isOwner && (
+            <div className="product-enquiry-card">
+              <p>You are viewing your own product listing.</p>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}
+

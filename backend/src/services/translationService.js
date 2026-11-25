@@ -1,7 +1,1350 @@
 
+// // import crypto from 'crypto';
+// // import { askGemini } from './gemini.js';
+// // import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+
+// // export const SUPPORTED_LANGUAGES = {
+// //   en: 'English',
+// //   kn: 'Kannada',
+// //   hi: 'Hindi',
+// //   ta: 'Tamil',
+// //   te: 'Telugu',
+// //   ml: 'Malayalam'
+// // };
+
+// // const LANGUAGE_CODES = Object.keys(SUPPORTED_LANGUAGES);
+
+// // function cleanArray(value) {
+// //   if (!Array.isArray(value)) return [];
+
+// //   return [...new Set(
+// //     value
+// //       .map((item) => String(item).trim())
+// //       .filter(Boolean)
+// //   )];
+// // }
+
+// // export function normalizeProduct(product = {}) {
+// //   return {
+// //     title: String(product.title || ''),
+// //     description: String(product.description || ''),
+// //     region: String(product.region || ''),
+// //     materials: cleanArray(product.materials),
+// //     tags: cleanArray(product.tags),
+// //     story: String(product.story || product.description || ''),
+// //     seo_keywords: String(product.seo_keywords || product.seoKeywords || '')
+// //   };
+// // }
+
+// // export function createProductSourceHash(product) {
+// //   const source = normalizeProduct(product);
+
+// //   return crypto
+// //     .createHash('sha256')
+// //     .update(JSON.stringify({
+// //       title: source.title,
+// //       description: source.description,
+// //       region: source.region,
+// //       materials: source.materials,
+// //       tags: source.tags
+// //     }))
+// //     .digest('hex');
+// // }
+
+// // function extractJSON(result) {
+// //   if (result && typeof result === 'object' && !Array.isArray(result)) {
+// //     return result;
+// //   }
+
+// //   if (typeof result !== 'string') {
+// //     throw new Error('Gemini returned an empty or invalid response.');
+// //   }
+
+// //   const cleaned = result
+// //     .trim()
+// //     .replace(/^```(?:json)?\s*/i, '')
+// //     .replace(/\s*```$/i, '')
+// //     .trim();
+
+// //   try {
+// //     return JSON.parse(cleaned);
+// //   } catch {
+// //     const start = cleaned.indexOf('{');
+// //     const end = cleaned.lastIndexOf('}');
+
+// //     if (start === -1 || end <= start) {
+// //       throw new Error('Gemini did not return valid JSON.');
+// //     }
+
+// //     try {
+// //       return JSON.parse(cleaned.slice(start, end + 1));
+// //     } catch {
+// //       throw new Error('Gemini returned malformed JSON.');
+// //     }
+// //   }
+// // }
+
+// // function normalizeTranslation(data = {}) {
+// //   if (!data || typeof data !== 'object' || Array.isArray(data)) {
+// //     throw new Error('Invalid translation object returned by Gemini.');
+// //   }
+
+// //   const fields = [
+// //     'title',
+// //     'description',
+// //     'region',
+// //     'story',
+// //     'seo_keywords'
+// //   ];
+
+// //   for (const field of fields) {
+// //     if (typeof data[field] !== 'string') {
+// //       throw new Error(`Gemini returned an invalid ${field} field.`);
+// //     }
+// //   }
+
+// //   if (!Array.isArray(data.materials) || !Array.isArray(data.tags)) {
+// //     throw new Error('Gemini returned invalid materials or tags.');
+// //   }
+
+// //   return {
+// //     title: data.title.trim(),
+// //     description: data.description.trim(),
+// //     region: data.region.trim(),
+// //     materials: cleanArray(data.materials),
+// //     tags: cleanArray(data.tags),
+// //     story: data.story.trim(),
+// //     seo_keywords: data.seo_keywords.trim()
+// //   };
+// // }
+
+// // /**
+// //  * Generate all six language translations in one Gemini call.
+// //  */
+// // export async function generateAllTranslations(product) {
+// //   const source = normalizeProduct(product);
+
+// //   if (!source.title && !source.description) {
+// //     throw new Error('Product title or description is required.');
+// //   }
+
+// //   const prompt = `
+// // You are KalaSetu's professional multilingual translation engine.
+
+// // Translate this product information into all six requested languages.
+
+// // SOURCE:
+// // ${JSON.stringify(source, null, 2)}
+
+// // LANGUAGES:
+// // en: English
+// // kn: Kannada
+// // hi: Hindi
+// // ta: Tamil
+// // te: Telugu
+// // ml: Malayalam
+
+// // STRICT RULES:
+// // 1. Preserve the exact meaning and factual information.
+// // 2. Do not invent product details, materials, awards or certifications.
+// // 3. Translate naturally for Indian marketplace customers.
+// // 4. Keep proper names and geographical identities accurate.
+// // 5. Translate materials and tags naturally.
+// // 6. Preserve all supplied materials.
+// // 7. Tags may have a different number in each language.
+// // 8. Do not force the original tag count.
+// // 9. Empty source fields must remain empty.
+// // 10. English must preserve the original source content.
+// // 11. Return JSON only, without Markdown or explanations.
+// // 12. Every language must contain every requested field.
+// // 13. Do not create unsupported product claims.
+
+// // Return this exact structure:
+
+// // {
+// //   "en": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "kn": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "hi": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "ta": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "te": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "ml": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   }
+// // }
+// // `;
+
+// //   const rawResult = await askGemini(prompt, true, 'product');
+// //   const result = extractJSON(rawResult);
+
+// //   const translations = {};
+
+// //   for (const language of LANGUAGE_CODES) {
+// //     if (!result[language]) {
+// //       throw new Error(`Gemini did not return the ${language} translation.`);
+// //     }
+
+// //     translations[language] = normalizeTranslation(result[language]);
+// //   }
+
+// //   return translations;
+// // }
+
+// // /**
+// //  * Save translations in Supabase.
+// //  */
+// // export async function saveProductTranslations(
+// //   productId,
+// //   translations,
+// //   sourceProduct
+// // ) {
+// //   if (!isSupabaseConfigured() || !supabase) {
+// //     throw new Error('Supabase is not configured.');
+// //   }
+
+// //   if (!productId) {
+// //     throw new Error('Product ID is required.');
+// //   }
+
+// //   const sourceHash = createProductSourceHash(sourceProduct);
+
+// //   const rows = LANGUAGE_CODES.map((language) => {
+// //     const translated = normalizeTranslation(translations[language]);
+
+// //     return {
+// //       product_id: productId,
+// //       language_code: language,
+// //       title: translated.title,
+// //       description: translated.description,
+// //       region: translated.region,
+// //       materials: translated.materials,
+// //       tags: translated.tags,
+// //       story: translated.story,
+// //       seo_keywords: translated.seo_keywords,
+// //       source_hash: sourceHash,
+// //       updated_at: new Date().toISOString()
+// //     };
+// //   });
+
+// //   const { error } = await supabase
+// //     .from('product_translations')
+// //     .upsert(rows, {
+// //       onConflict: 'product_id,language_code'
+// //     });
+
+// //   if (error) {
+// //     throw new Error(
+// //       `Could not save product translations: ${error.message}`
+// //     );
+// //   }
+
+// //   return rows;
+// // }
+
+// // /**
+// //  * Retrieve cached translations.
+// //  */
+// // export async function getCachedProductTranslation(
+// //   productId,
+// //   language,
+// //   sourceProduct
+// // ) {
+// //   if (!isSupabaseConfigured() || !supabase) {
+// //     return null;
+// //   }
+
+// //   if (!SUPPORTED_LANGUAGES[language]) {
+// //     throw new Error('Unsupported language.');
+// //   }
+
+// //   const { data, error } = await supabase
+// //     .from('product_translations')
+// //     .select('*')
+// //     .eq('product_id', productId)
+// //     .eq('language_code', language)
+// //     .maybeSingle();
+
+// //   if (error) {
+// //     throw new Error(
+// //       `Could not read translation cache: ${error.message}`
+// //     );
+// //   }
+
+// //   if (!data) return null;
+
+// //   const currentHash = createProductSourceHash(sourceProduct);
+
+// //   if (data.source_hash !== currentHash) {
+// //     return null;
+// //   }
+
+// //   return {
+// //     title: data.title,
+// //     description: data.description,
+// //     region: data.region,
+// //     materials: data.materials || [],
+// //     tags: data.tags || [],
+// //     story: data.story || '',
+// //     seo_keywords: data.seo_keywords || ''
+// //   };
+// // }
+
+// // /**
+// //  * Translate one product and cache all six languages.
+// //  */
+// // export async function translateProduct(product, language = 'en') {
+// //   if (!SUPPORTED_LANGUAGES[language]) {
+// //     throw new Error('Unsupported language.');
+// //   }
+
+// //   if (language === 'en') {
+// //     return product;
+// //   }
+
+// //   if (!isSupabaseConfigured() || !supabase) {
+// //     throw new Error('Supabase is not configured for translation.');
+// //   }
+
+// //   const cached = await getCachedProductTranslation(
+// //     product.id,
+// //     language,
+// //     product
+// //   );
+
+// //   if (cached) {
+// //     return {
+// //       ...product,
+// //       ...cached
+// //     };
+// //   }
+
+// //   const translations = await generateAllTranslations(product);
+
+// //   await saveProductTranslations(
+// //     product.id,
+// //     translations,
+// //     product
+// //   );
+
+// //   return {
+// //     ...product,
+// //     ...translations[language]
+// //   };
+// // }
+
+
+
+// // import crypto from 'crypto';
+// // import { askGemini } from './gemini.js';
+// // import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+
+// // export const SUPPORTED_LANGUAGES = {
+// //   en: 'English',
+// //   kn: 'Kannada',
+// //   hi: 'Hindi',
+// //   ta: 'Tamil',
+// //   te: 'Telugu',
+// //   ml: 'Malayalam'
+// // };
+
+// // const LANGUAGE_CODES = Object.keys(SUPPORTED_LANGUAGES);
+
+// // const SCRIPT_RANGES = {
+// //   kn: /[\u0C80-\u0CFF]/g,
+// //   hi: /[\u0900-\u097F]/g,
+// //   ta: /[\u0B80-\u0BFF]/g,
+// //   te: /[\u0C00-\u0C7F]/g,
+// //   ml: /[\u0D00-\u0D7F]/g,
+// //   en: /[A-Za-z]/g
+// // };
+
+// // function cleanArray(value) {
+// //   if (!Array.isArray(value)) return [];
+
+// //   return [...new Set(
+// //     value
+// //       .map(item => String(item ?? '').trim())
+// //       .filter(Boolean)
+// //   )];
+// // }
+
+// // export function normalizeProduct(product = {}) {
+// //   return {
+// //     title: String(product.title || ''),
+// //     description: String(product.description || ''),
+// //     region: String(product.region || ''),
+// //     materials: cleanArray(product.materials),
+// //     tags: cleanArray(product.tags),
+// //     story: String(product.story || product.description || ''),
+// //     seo_keywords: String(product.seo_keywords || product.seoKeywords || '')
+// //   };
+// // }
+
+// // export function createProductSourceHash(product) {
+// //   const source = normalizeProduct(product);
+
+// //   return crypto
+// //     .createHash('sha256')
+// //     .update(JSON.stringify({
+// //       title: source.title,
+// //       description: source.description,
+// //       materials: source.materials,
+// //       tags: source.tags,
+// //       story: source.story
+// //     }))
+// //     .digest('hex');
+// // }
+
+// // function extractJSON(result) {
+// //   if (result && typeof result === 'object' && !Array.isArray(result)) {
+// //     return result;
+// //   }
+
+// //   if (typeof result !== 'string') {
+// //     throw new Error('Gemini returned an empty response.');
+// //   }
+
+// //   const cleaned = result
+// //     .trim()
+// //     .replace(/^```(?:json)?\s*/i, '')
+// //     .replace(/\s*```$/i, '')
+// //     .trim();
+
+// //   try {
+// //     return JSON.parse(cleaned);
+// //   } catch {
+// //     const start = cleaned.indexOf('{');
+// //     const end = cleaned.lastIndexOf('}');
+
+// //     if (start < 0 || end <= start) {
+// //       throw new Error('Gemini did not return valid JSON.');
+// //     }
+
+// //     return JSON.parse(cleaned.slice(start, end + 1));
+// //   }
+// // }
+
+// // function normalizeTranslation(data = {}) {
+// //   if (!data || typeof data !== 'object' || Array.isArray(data)) {
+// //     throw new Error('Invalid translation object.');
+// //   }
+
+// //   const fields = ['title', 'description', 'story', 'seo_keywords'];
+
+// //   for (const field of fields) {
+// //     if (typeof data[field] !== 'string' || !data[field].trim()) {
+// //       throw new Error(`Translation field "${field}" is missing.`);
+// //     }
+// //   }
+
+// //   if (!Array.isArray(data.materials) || !Array.isArray(data.tags)) {
+// //     throw new Error('Translation materials or tags are invalid.');
+// //   }
+
+// //   return {
+// //     title: data.title.trim(),
+// //     description: data.description.trim(),
+// //     // Region is deliberately not translated or trusted.
+// //     region: '',
+// //     materials: cleanArray(data.materials),
+// //     tags: cleanArray(data.tags),
+// //     story: data.story.trim(),
+// //     seo_keywords: data.seo_keywords.trim()
+// //   };
+// // }
+
+// // function scriptRatio(value, language) {
+// //   const text = String(value || '');
+// //   const letters = text.match(/\p{L}/gu) || [];
+// //   if (!letters.length) return 0;
+
+// //   const script = text.match(SCRIPT_RANGES[language]) || [];
+// //   return script.length / letters.length;
+// // }
+
+// // function validateLanguage(translation, language) {
+// //   if (language === 'en') return true;
+
+// //   // A genuine Indian-language title and description must use
+// //   // the corresponding native writing system, not Romanized text.
+// //   const titleRatio = scriptRatio(translation.title, language);
+// //   const descriptionRatio = scriptRatio(translation.description, language);
+
+// //   if (titleRatio < 0.20 || descriptionRatio < 0.20) {
+// //     throw new Error(
+// //       `${SUPPORTED_LANGUAGES[language]} translation appears to use the wrong script or Romanized text.`
+// //     );
+// //   }
+
+// //   return true;
+// // }
+
+// // function validateAllTranslations(result, source) {
+// //   const translations = {};
+
+// //   // English remains the original product content.
+// //   translations.en = {
+// //     ...source,
+// //     region: ''
+// //   };
+
+// //   for (const language of LANGUAGE_CODES) {
+// //     if (language === 'en') continue;
+
+// //     if (!result[language]) {
+// //       throw new Error(`Gemini did not return ${SUPPORTED_LANGUAGES[language]}.`);
+// //     }
+
+// //     const translated = normalizeTranslation(result[language]);
+// //     validateLanguage(translated, language);
+
+// //     translations[language] = translated;
+// //   }
+
+// //   return translations;
+// // }
+
+// // /**
+// //  * Generate translations for all supported languages.
+// //  */
+// // export async function generateAllTranslations(product) {
+// //   const source = normalizeProduct(product);
+
+// //   if (!source.title || !source.description) {
+// //     throw new Error('Product title and description are required.');
+// //   }
+
+// //   const prompt = `
+// // You are a professional Indian-language translator for KalaSetu,
+// // a marketplace for traditional Indian handicrafts.
+
+// // Translate the product into these languages:
+// // Kannada (kn), Hindi (hi), Tamil (ta), Telugu (te), Malayalam (ml).
+
+// // The English source is also included in the required JSON response.
+
+// // SOURCE PRODUCT:
+// // ${JSON.stringify(source, null, 2)}
+
+// // STRICT TRANSLATION RULES:
+
+// // 1. Translate naturally and accurately. Do not summarize.
+// // 2. Kannada MUST be written in Kannada script.
+// // 3. Hindi MUST be written in Devanagari script.
+// // 4. Tamil MUST be written in Tamil script.
+// // 5. Telugu MUST be written in Telugu script.
+// // 6. Malayalam MUST be written in Malayalam script.
+// // 7. NEVER use Romanized Kannada, Romanized Hindi, or other transliteration.
+// // 8. Do not mix two languages in one translation.
+// // 9. Keep product names, craft terminology and descriptions natural for native speakers.
+// // 10. Do not invent facts, materials, awards, certifications or locations.
+// // 11. Keep proper names and geographical names accurate.
+// // 12. Translate materials and tags naturally.
+// // 13. Keep all supplied facts and measurements unchanged.
+// // 14. Do not leave English sentences in an Indian-language description.
+// // 15. Return every requested field for every language.
+// // 16. Return valid JSON only.
+
+// // Return exactly this structure:
+// // {
+// //   "en": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "kn": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "hi": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "ta": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "te": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   },
+// //   "ml": {
+// //     "title": "",
+// //     "description": "",
+// //     "region": "",
+// //     "materials": [],
+// //     "tags": [],
+// //     "story": "",
+// //     "seo_keywords": ""
+// //   }
+// // }
+// // `;
+
+// //   const raw = await askGemini(prompt, true, 'product');
+// //   const result = extractJSON(raw);
+
+// //   return validateAllTranslations(result, source);
+// // }
+
+// // /**
+// //  * Save all language translations.
+// //  * Requires a unique constraint on (product_id, language_code).
+// //  */
+// // export async function saveProductTranslations(
+// //   productId,
+// //   translations,
+// //   sourceProduct
+// // ) {
+// //   if (!isSupabaseConfigured() || !supabase) {
+// //     throw new Error('Supabase is not configured.');
+// //   }
+
+// //   if (!productId) {
+// //     throw new Error('Product ID is required.');
+// //   }
+
+// //   const sourceHash = createProductSourceHash(sourceProduct);
+
+// //   const rows = LANGUAGE_CODES.map(language => {
+// //     const translated = language === 'en'
+// //       ? normalizeProduct(sourceProduct)
+// //       : normalizeTranslation(translations[language]);
+
+// //     if (language !== 'en') {
+// //       validateLanguage(translated, language);
+// //     }
+
+// //     return {
+// //       product_id: productId,
+// //       language_code: language,
+// //       title: translated.title,
+// //       description: translated.description,
+// //       // Keep the original location in the database.
+// //       region: String(sourceProduct.region || ''),
+// //       materials: translated.materials,
+// //       tags: translated.tags,
+// //       story: translated.story,
+// //       seo_keywords: translated.seo_keywords,
+// //       source_hash: sourceHash,
+// //       updated_at: new Date().toISOString()
+// //     };
+// //   });
+
+// //   const { error } = await supabase
+// //     .from('product_translations')
+// //     .upsert(rows, {
+// //       onConflict: 'product_id,language_code'
+// //     });
+
+// //   if (error) {
+// //     throw new Error(`Could not save translations: ${error.message}`);
+// //   }
+
+// //   return rows;
+// // }
+
+// // /**
+// //  * Read and validate one cached translation.
+// //  */
+// // export async function getCachedProductTranslation(
+// //   productId,
+// //   language,
+// //   sourceProduct
+// // ) {
+// //   if (!isSupabaseConfigured() || !supabase) return null;
+// //   if (!SUPPORTED_LANGUAGES[language]) {
+// //     throw new Error('Unsupported language.');
+// //   }
+
+// //   const { data, error } = await supabase
+// //     .from('product_translations')
+// //     .select('*')
+// //     .eq('product_id', productId)
+// //     .eq('language_code', language)
+// //     .maybeSingle();
+
+// //   if (error) {
+// //     throw new Error(`Could not read translation cache: ${error.message}`);
+// //   }
+
+// //   if (!data) return null;
+
+// //   const currentHash = createProductSourceHash(sourceProduct);
+
+// //   if (data.source_hash !== currentHash) return null;
+
+// //   const cached = normalizeTranslation({
+// //     title: data.title,
+// //     description: data.description,
+// //     materials: data.materials,
+// //     tags: data.tags,
+// //     story: data.story || data.description,
+// //     seo_keywords: data.seo_keywords || ''
+// //   });
+
+// //   try {
+// //     validateLanguage(cached, language);
+// //   } catch {
+// //     // Invalid or Romanized cache: regenerate it.
+// //     return null;
+// //   }
+
+// //   return {
+// //     ...cached,
+// //     region: String(sourceProduct.region || '')
+// //   };
+// // }
+
+// // /**
+// //  * Return one product in the requested language.
+// //  */
+// // export async function translateProduct(product, language = 'en') {
+// //   if (!SUPPORTED_LANGUAGES[language]) {
+// //     throw new Error(`Unsupported language: ${language}`);
+// //   }
+
+// //   if (!product) return product;
+
+// //   const original = {
+// //     ...product,
+// //     artisan_name: product.artisan_name,
+// //     region: product.region,
+// //     price: product.price
+// //   };
+
+// //   if (language === 'en') {
+// //     return {
+// //       ...original,
+// //       localized_language: 'en'
+// //     };
+// //   }
+
+// //   if (!isSupabaseConfigured() || !supabase) {
+// //     throw new Error('Supabase is not configured for translations.');
+// //   }
+
+// //   if (!product.id) {
+// //     throw new Error('Product ID is required for translation caching.');
+// //   }
+
+// //   // First try the saved translation for this language.
+// //   const cached = await getCachedProductTranslation(
+// //     product.id,
+// //     language,
+// //     product
+// //   );
+
+// //   if (cached) {
+// //     return {
+// //       ...original,
+// //       ...cached,
+// //       region: product.region,
+// //       artisan_name: product.artisan_name,
+// //       price: product.price,
+// //       localized_language: language
+// //     };
+// //   }
+
+// //   // Missing, stale or invalid cache: generate all languages.
+// //   const translations = await generateAllTranslations(product);
+
+// //   await saveProductTranslations(
+// //     product.id,
+// //     translations,
+// //     product
+// //   );
+
+// //   return {
+// //     ...original,
+// //     ...translations[language],
+// //     region: product.region,
+// //     artisan_name: product.artisan_name,
+// //     price: product.price,
+// //     localized_language: language
+// //   };
+// // }
+
+
+// import crypto from 'crypto';
+// import { askGemini } from './gemini.js';
+// import {
+//   supabase,
+//   isSupabaseConfigured
+// } from '../config/supabase.js';
+
+// export const SUPPORTED_LANGUAGES = {
+//   en: 'English',
+//   kn: 'Kannada',
+//   hi: 'Hindi',
+//   ta: 'Tamil',
+//   te: 'Telugu',
+//   ml: 'Malayalam'
+// };
+
+// const LANGUAGE_CODES = Object.keys(SUPPORTED_LANGUAGES);
+
+// const SCRIPT_RANGES = {
+//   kn: /[\u0C80-\u0CFF]/g,
+//   hi: /[\u0900-\u097F]/g,
+//   ta: /[\u0B80-\u0BFF]/g,
+//   te: /[\u0C00-\u0C7F]/g,
+//   ml: /[\u0D00-\u0D7F]/g
+// };
+
+// function cleanArray(value) {
+//   if (!Array.isArray(value)) return [];
+
+//   return [...new Set(
+//     value
+//       .map(item => String(item ?? '').trim())
+//       .filter(Boolean)
+//   )];
+// }
+
+// export function normalizeProduct(product = {}) {
+//   return {
+//     title: String(product.title || ''),
+//     description: String(product.description || ''),
+//     region: String(product.region || ''),
+//     materials: cleanArray(product.materials),
+//     tags: cleanArray(product.tags),
+//     category: String(product.category || ''),
+//     story: String(product.story || product.description || ''),
+//     seo_keywords: String(
+//       product.seo_keywords || product.seoKeywords || ''
+//     )
+//   };
+// }
+
+// export function createProductSourceHash(product) {
+//   const source = normalizeProduct(product);
+
+//   return crypto
+//     .createHash('sha256')
+//     .update(JSON.stringify({
+//       title: source.title,
+//       description: source.description,
+//       materials: source.materials,
+//       tags: source.tags,
+//       category: source.category,
+//       story: source.story
+//     }))
+//     .digest('hex');
+// }
+
+// function extractJSON(result) {
+//   if (
+//     result &&
+//     typeof result === 'object' &&
+//     !Array.isArray(result)
+//   ) {
+//     return result;
+//   }
+
+//   if (typeof result !== 'string') {
+//     throw new Error('Gemini returned an empty response.');
+//   }
+
+//   const cleaned = result
+//     .trim()
+//     .replace(/^```(?:json)?\s*/i, '')
+//     .replace(/\s*```$/i, '')
+//     .trim();
+
+//   try {
+//     return JSON.parse(cleaned);
+//   } catch {
+//     const start = cleaned.indexOf('{');
+//     const end = cleaned.lastIndexOf('}');
+
+//     if (start < 0 || end <= start) {
+//       throw new Error('Gemini did not return valid JSON.');
+//     }
+
+//     return JSON.parse(cleaned.slice(start, end + 1));
+//   }
+// }
+
+// function normalizeTranslation(data = {}) {
+//   if (
+//     !data ||
+//     typeof data !== 'object' ||
+//     Array.isArray(data)
+//   ) {
+//     throw new Error('Invalid translation object.');
+//   }
+
+//   for (const field of ['title', 'description', 'story']) {
+//     if (
+//       typeof data[field] !== 'string' ||
+//       !data[field].trim()
+//     ) {
+//       throw new Error(
+//         `Translation field "${field}" is missing.`
+//       );
+//     }
+//   }
+
+//   if (
+//     !Array.isArray(data.materials) ||
+//     !Array.isArray(data.tags)
+//   ) {
+//     throw new Error(
+//       'Translation materials or tags are invalid.'
+//     );
+//   }
+
+//   return {
+//     title: data.title.trim(),
+//     description: data.description.trim(),
+//     region: '',
+//     materials: cleanArray(data.materials),
+//     tags: cleanArray(data.tags),
+//     story: data.story.trim(),
+//     seo_keywords: String(
+//       data.seo_keywords || ''
+//     ).trim()
+//   };
+// }
+
+// function scriptRatio(value, language) {
+//   const text = String(value || '');
+//   const letters = text.match(/\p{L}/gu) || [];
+
+//   if (!letters.length) return 0;
+
+//   const script = text.match(SCRIPT_RANGES[language]) || [];
+
+//   return script.length / letters.length;
+// }
+
+// function validateLanguage(translation, language) {
+//   if (language === 'en') return true;
+
+//   const titleRatio = scriptRatio(
+//     translation.title,
+//     language
+//   );
+
+//   const descriptionRatio = scriptRatio(
+//     translation.description,
+//     language
+//   );
+
+//   if (
+//     titleRatio < 0.20 ||
+//     descriptionRatio < 0.20
+//   ) {
+//     throw new Error(
+//       `${SUPPORTED_LANGUAGES[language]} translation ` +
+//       'contains the wrong script or Romanized text.'
+//     );
+//   }
+
+//   return true;
+// }
+
+// function validateAllTranslations(result, source) {
+//   if (!result || typeof result !== 'object') {
+//     throw new Error('Invalid Gemini translation response.');
+//   }
+
+//   const translations = {};
+
+//   translations.en = {
+//     title: source.title,
+//     description: source.description,
+//     region: source.region,
+//     materials: source.materials,
+//     tags: source.tags,
+//     story: source.story,
+//     seo_keywords: source.seo_keywords
+//   };
+
+//   for (const language of LANGUAGE_CODES) {
+//     if (language === 'en') continue;
+
+//     if (!result[language]) {
+//       throw new Error(
+//         `Gemini did not return ${SUPPORTED_LANGUAGES[language]}.`
+//       );
+//     }
+
+//     const translated = normalizeTranslation(
+//       result[language]
+//     );
+
+//     validateLanguage(translated, language);
+
+//     translations[language] = translated;
+//   }
+
+//   return translations;
+// }
+
+// export async function generateAllTranslations(product) {
+//   const source = normalizeProduct(product);
+
+//   if (!source.title || !source.description) {
+//     throw new Error(
+//       'Product title and description are required.'
+//     );
+//   }
+
+//   const prompt = `
+// You are a professional Indian-language translator
+// working for KalaSetu, a traditional handicraft marketplace.
+
+// Translate this product into Kannada, Hindi, Tamil,
+// Telugu and Malayalam.
+
+// SOURCE PRODUCT:
+// ${JSON.stringify(source, null, 2)}
+
+// STRICT RULES:
+
+// 1. Translate naturally and accurately.
+// 2. Kannada must use Kannada script.
+// 3. Hindi must use Devanagari script.
+// 4. Tamil must use Tamil script.
+// 5. Telugu must use Telugu script.
+// 6. Malayalam must use Malayalam script.
+// 7. Never use Romanized Indian languages.
+// 8. Do not mix languages unnecessarily.
+// 9. Preserve all original product facts.
+// 10. Do not invent materials or certifications.
+// 11. Keep artisan names unchanged.
+// 12. Keep geographical locations unchanged.
+// 13. Translate product descriptions naturally.
+// 14. Translate materials and tags.
+// 15. Do not translate prices or measurements.
+// 16. Return valid JSON only.
+// 17. Include all requested fields.
+// 18. SEO keywords may be an empty string if unavailable.
+// 19. Preserve the product category meaning in translation.
+// 20. Do not change the original category identifier.
+
+// Return exactly this JSON structure:
+
+// {
+//   "kn": {
+//     "title": "",
+//     "description": "",
+//     "materials": [],
+//     "tags": [],
+//     "story": "",
+//     "seo_keywords": ""
+//   },
+//   "hi": {
+//     "title": "",
+//     "description": "",
+//     "materials": [],
+//     "tags": [],
+//     "story": "",
+//     "seo_keywords": ""
+//   },
+//   "ta": {
+//     "title": "",
+//     "description": "",
+//     "materials": [],
+//     "tags": [],
+//     "story": "",
+//     "seo_keywords": ""
+//   },
+//   "te": {
+//     "title": "",
+//     "description": "",
+//     "materials": [],
+//     "tags": [],
+//     "story": "",
+//     "seo_keywords": ""
+//   },
+//   "ml": {
+//     "title": "",
+//     "description": "",
+//     "materials": [],
+//     "tags": [],
+//     "story": "",
+//     "seo_keywords": ""
+//   }
+// }
+// `;
+
+//   const raw = await askGemini(
+//     prompt,
+//     true,
+//     'product'
+//   );
+
+//   const result = extractJSON(raw);
+
+//   return validateAllTranslations(result, source);
+// }
+
+// export async function saveProductTranslations(
+//   productId,
+//   translations,
+//   sourceProduct
+// ) {
+//   if (!isSupabaseConfigured() || !supabase) {
+//     throw new Error('Supabase is not configured.');
+//   }
+
+//   if (!productId) {
+//     throw new Error('Product ID is required.');
+//   }
+
+//   const sourceHash = createProductSourceHash(sourceProduct);
+
+//   const rows = LANGUAGE_CODES.map(language => {
+//     const translated = language === 'en'
+//       ? normalizeProduct(sourceProduct)
+//       : normalizeTranslation(translations[language]);
+
+//     if (language !== 'en') {
+//       validateLanguage(translated, language);
+//     }
+
+//     return {
+//       product_id: productId,
+//       language_code: language,
+//       title: translated.title,
+//       description: translated.description,
+//       region: String(sourceProduct.region || ''),
+//       materials: translated.materials,
+//       tags: translated.tags,
+//       story: translated.story,
+//       seo_keywords: translated.seo_keywords,
+//       source_hash: sourceHash,
+//       updated_at: new Date().toISOString()
+//     };
+//   });
+
+//   const { error } = await supabase
+//     .from('product_translations')
+//     .upsert(rows, {
+//       onConflict: 'product_id,language_code'
+//     });
+
+//   if (error) {
+//     throw new Error(
+//       `Could not save translations: ${error.message}`
+//     );
+//   }
+
+//   return rows;
+// }
+
+// export async function getCachedProductTranslation(
+//   productId,
+//   language,
+//   sourceProduct
+// ) {
+//   if (!isSupabaseConfigured() || !supabase) {
+//     return null;
+//   }
+
+//   if (!SUPPORTED_LANGUAGES[language]) {
+//     throw new Error('Unsupported language.');
+//   }
+
+//   const { data, error } = await supabase
+//     .from('product_translations')
+//     .select('*')
+//     .eq('product_id', productId)
+//     .eq('language_code', language)
+//     .maybeSingle();
+
+//   if (error) {
+//     throw new Error(
+//       `Could not read translation cache: ${error.message}`
+//     );
+//   }
+
+//   if (!data) return null;
+
+//   const currentHash = createProductSourceHash(sourceProduct);
+
+//   if (data.source_hash !== currentHash) {
+//     return null;
+//   }
+
+//   try {
+//     const cached = normalizeTranslation({
+//       title: data.title,
+//       description: data.description,
+//       materials: data.materials,
+//       tags: data.tags,
+//       story: data.story || data.description,
+//       seo_keywords: data.seo_keywords || ''
+//     });
+
+//     validateLanguage(cached, language);
+
+//     return {
+//       ...cached,
+//       region: String(sourceProduct.region || '')
+//     };
+//   } catch (error) {
+//     console.warn(
+//       `Invalid cached ${language} translation for ${productId}:`,
+//       error.message
+//     );
+
+//     return null;
+//   }
+// }
+
+// export async function translateProduct(
+//   product,
+//   language = 'en'
+// ) {
+//   if (!SUPPORTED_LANGUAGES[language]) {
+//     throw new Error(`Unsupported language: ${language}`);
+//   }
+
+//   if (!product) return product;
+
+//   const original = {
+//     ...product,
+//     artisan_name: product.artisan_name,
+//     region: product.region,
+//     price: product.price,
+//     category: product.category
+//   };
+
+//   if (language === 'en') {
+//     return {
+//       ...original,
+//       localized_language: 'en'
+//     };
+//   }
+
+//   if (!isSupabaseConfigured() || !supabase) {
+//     throw new Error(
+//       'Supabase is not configured for translations.'
+//     );
+//   }
+
+//   if (!product.id) {
+//     throw new Error(
+//       'Product ID is required for translation caching.'
+//     );
+//   }
+
+//   const cached = await getCachedProductTranslation(
+//     product.id,
+//     language,
+//     product
+//   );
+
+//   if (cached) {
+//     return {
+//       ...original,
+//       ...cached,
+//       region: product.region,
+//       artisan_name: product.artisan_name,
+//       price: product.price,
+//       category: product.category,
+//       localized_language: language
+//     };
+//   }
+
+//   const translations = await generateAllTranslations(product);
+
+//   await saveProductTranslations(
+//     product.id,
+//     translations,
+//     product
+//   );
+
+//   return {
+//     ...original,
+//     ...translations[language],
+//     region: product.region,
+//     artisan_name: product.artisan_name,
+//     price: product.price,
+//     category: product.category,
+//     localized_language: language
+//   };
+// }
+
+
 import crypto from 'crypto';
 import { askGemini } from './gemini.js';
-import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import {
+  supabase,
+  isSupabaseConfigured
+} from '../config/supabase.js';
 
 export const SUPPORTED_LANGUAGES = {
   en: 'English',
@@ -14,12 +1357,20 @@ export const SUPPORTED_LANGUAGES = {
 
 const LANGUAGE_CODES = Object.keys(SUPPORTED_LANGUAGES);
 
+const SCRIPT_RANGES = {
+  kn: /[\u0C80-\u0CFF]/g,
+  hi: /[\u0900-\u097F]/g,
+  ta: /[\u0B80-\u0BFF]/g,
+  te: /[\u0C00-\u0C7F]/g,
+  ml: /[\u0D00-\u0D7F]/g
+};
+
 function cleanArray(value) {
   if (!Array.isArray(value)) return [];
 
   return [...new Set(
     value
-      .map((item) => String(item).trim())
+      .map(item => String(item ?? '').trim())
       .filter(Boolean)
   )];
 }
@@ -31,8 +1382,13 @@ export function normalizeProduct(product = {}) {
     region: String(product.region || ''),
     materials: cleanArray(product.materials),
     tags: cleanArray(product.tags),
-    story: String(product.story || product.description || ''),
-    seo_keywords: String(product.seo_keywords || product.seoKeywords || '')
+    category: String(product.category || ''),
+    story: String(
+      product.story || product.description || ''
+    ),
+    seo_keywords: String(
+      product.seo_keywords || product.seoKeywords || ''
+    )
   };
 }
 
@@ -46,18 +1402,25 @@ export function createProductSourceHash(product) {
       description: source.description,
       region: source.region,
       materials: source.materials,
-      tags: source.tags
+      tags: source.tags,
+      category: source.category,
+      story: source.story,
+      seo_keywords: source.seo_keywords
     }))
     .digest('hex');
 }
 
 function extractJSON(result) {
-  if (result && typeof result === 'object' && !Array.isArray(result)) {
+  if (
+    result &&
+    typeof result === 'object' &&
+    !Array.isArray(result)
+  ) {
     return result;
   }
 
   if (typeof result !== 'string') {
-    throw new Error('Gemini returned an empty or invalid response.');
+    throw new Error('Gemini returned an empty response.');
   }
 
   const cleaned = result
@@ -72,171 +1435,237 @@ function extractJSON(result) {
     const start = cleaned.indexOf('{');
     const end = cleaned.lastIndexOf('}');
 
-    if (start === -1 || end <= start) {
+    if (start < 0 || end <= start) {
       throw new Error('Gemini did not return valid JSON.');
     }
 
-    try {
-      return JSON.parse(cleaned.slice(start, end + 1));
-    } catch {
-      throw new Error('Gemini returned malformed JSON.');
-    }
+    return JSON.parse(cleaned.slice(start, end + 1));
   }
 }
 
 function normalizeTranslation(data = {}) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    throw new Error('Invalid translation object returned by Gemini.');
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    Array.isArray(data)
+  ) {
+    throw new Error('Invalid translation object.');
   }
 
-  const fields = [
-    'title',
-    'description',
-    'region',
-    'story',
-    'seo_keywords'
-  ];
-
-  for (const field of fields) {
-    if (typeof data[field] !== 'string') {
-      throw new Error(`Gemini returned an invalid ${field} field.`);
+  for (const field of ['title', 'description', 'story']) {
+    if (
+      typeof data[field] !== 'string' ||
+      !data[field].trim()
+    ) {
+      throw new Error(
+        `Translation field "${field}" is missing.`
+      );
     }
   }
 
-  if (!Array.isArray(data.materials) || !Array.isArray(data.tags)) {
-    throw new Error('Gemini returned invalid materials or tags.');
+  if (
+    !Array.isArray(data.materials) ||
+    !Array.isArray(data.tags)
+  ) {
+    throw new Error(
+      'Translation materials or tags are invalid.'
+    );
   }
 
   return {
     title: data.title.trim(),
     description: data.description.trim(),
-    region: data.region.trim(),
+    region: '',
     materials: cleanArray(data.materials),
     tags: cleanArray(data.tags),
     story: data.story.trim(),
-    seo_keywords: data.seo_keywords.trim()
+    seo_keywords: String(
+      data.seo_keywords || ''
+    ).trim()
+  };
+}
+
+function scriptRatio(value, language) {
+  const text = String(value || '');
+  const letters = text.match(/\p{L}/gu) || [];
+
+  if (!letters.length) return 0;
+
+  const script = text.match(SCRIPT_RANGES[language]) || [];
+
+  return script.length / letters.length;
+}
+
+function validateLanguage(translation, language) {
+  if (language === 'en') return true;
+
+  const fields = [
+    { name: 'title', value: translation.title, minimum: 0.65 },
+    { name: 'description', value: translation.description, minimum: 0.55 },
+    { name: 'story', value: translation.story, minimum: 0.55 },
+
+  ];
+
+  for (const field of fields) {
+    if (
+      field.value &&
+      scriptRatio(field.value, language) < field.minimum
+    ) {
+      throw new Error(
+        `${SUPPORTED_LANGUAGES[language]} translation field "${field.name}" contains too much text outside the target script.`
+      );
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Generate only the requested language.
+ */
+export async function generateProductTranslation(
+  product,
+  language
+) {
+  if (!SUPPORTED_LANGUAGES[language] || language === 'en') {
+    throw new Error('A supported non-English language is required.');
+  }
+
+  const source = normalizeProduct(product);
+
+  if (!source.title || !source.description) {
+    throw new Error(
+      'Product title and description are required.'
+    );
+  }
+
+  const prompt = `
+You are a professional translator for KalaSetu,
+an Indian traditional handicraft marketplace.
+
+Translate the following product into ${SUPPORTED_LANGUAGES[language]}.
+
+TARGET LANGUAGE CODE: ${language}
+
+SOURCE PRODUCT:
+${JSON.stringify(source, null, 2)}
+
+RULES:
+1. Translate only into ${SUPPORTED_LANGUAGES[language]}.
+2. Use the correct native writing system.
+3. Do not use Romanized Indian-language text.
+4. Translate naturally without summarizing.
+5. Preserve the exact meaning and facts.
+6. Do not invent materials, awards, certifications or locations.
+7. Keep artisan names and geographical identities unchanged.
+8. Translate materials and tags naturally.
+9. Preserve all supplied materials.
+10. Keep measurements and quantities unchanged.
+11. Do not translate prices.
+12. Do not leave full English sentences in the translated description.
+13. Preserve the meaning of the product category.
+14. SEO keywords may be an empty string.
+15. Return valid JSON only.
+
+Return exactly this structure:
+{
+  "title": "",
+  "description": "",
+  "materials": [],
+  "tags": [],
+  "story": "",
+  "seo_keywords": ""
+}
+`;
+
+  const raw = await askGemini(
+    prompt,
+    true,
+    'productSingle'
+  );
+
+  const translated = normalizeTranslation(
+    extractJSON(raw)
+  );
+
+  validateLanguage(translated, language);
+
+  return {
+    ...translated,
+    region: source.region
   };
 }
 
 /**
- * Generate all six language translations in one Gemini call.
+ * Legacy function retained for compatibility.
+ * Normal product requests do not call this function.
  */
 export async function generateAllTranslations(product) {
-  const source = normalizeProduct(product);
-
-  if (!source.title && !source.description) {
-    throw new Error('Product title or description is required.');
-  }
-
-  const prompt = `
-You are KalaSetu's professional multilingual translation engine.
-
-Translate this product information into all six requested languages.
-
-SOURCE:
-${JSON.stringify(source, null, 2)}
-
-LANGUAGES:
-en: English
-kn: Kannada
-hi: Hindi
-ta: Tamil
-te: Telugu
-ml: Malayalam
-
-STRICT RULES:
-1. Preserve the exact meaning and factual information.
-2. Do not invent product details, materials, awards or certifications.
-3. Translate naturally for Indian marketplace customers.
-4. Keep proper names and geographical identities accurate.
-5. Translate materials and tags naturally.
-6. Preserve all supplied materials.
-7. Tags may have a different number in each language.
-8. Do not force the original tag count.
-9. Empty source fields must remain empty.
-10. English must preserve the original source content.
-11. Return JSON only, without Markdown or explanations.
-12. Every language must contain every requested field.
-13. Do not create unsupported product claims.
-
-Return this exact structure:
-
-{
-  "en": {
-    "title": "",
-    "description": "",
-    "region": "",
-    "materials": [],
-    "tags": [],
-    "story": "",
-    "seo_keywords": ""
-  },
-  "kn": {
-    "title": "",
-    "description": "",
-    "region": "",
-    "materials": [],
-    "tags": [],
-    "story": "",
-    "seo_keywords": ""
-  },
-  "hi": {
-    "title": "",
-    "description": "",
-    "region": "",
-    "materials": [],
-    "tags": [],
-    "story": "",
-    "seo_keywords": ""
-  },
-  "ta": {
-    "title": "",
-    "description": "",
-    "region": "",
-    "materials": [],
-    "tags": [],
-    "story": "",
-    "seo_keywords": ""
-  },
-  "te": {
-    "title": "",
-    "description": "",
-    "region": "",
-    "materials": [],
-    "tags": [],
-    "story": "",
-    "seo_keywords": ""
-  },
-  "ml": {
-    "title": "",
-    "description": "",
-    "region": "",
-    "materials": [],
-    "tags": [],
-    "story": "",
-    "seo_keywords": ""
-  }
-}
-`;
-
-  const rawResult = await askGemini(prompt, true, 'product');
-  const result = extractJSON(rawResult);
-
   const translations = {};
 
-  for (const language of LANGUAGE_CODES) {
-    if (!result[language]) {
-      throw new Error(`Gemini did not return the ${language} translation.`);
-    }
+  translations.en = {
+    ...normalizeProduct(product)
+  };
 
-    translations[language] = normalizeTranslation(result[language]);
+  for (const language of LANGUAGE_CODES) {
+    if (language === 'en') continue;
+
+    translations[language] = await generateProductTranslation(
+      product,
+      language
+    );
   }
 
   return translations;
 }
 
 /**
- * Save translations in Supabase.
+ * Save one language translation.
+ */
+async function saveSingleProductTranslation(
+  productId,
+  language,
+  translation,
+  sourceProduct
+) {
+  if (!isSupabaseConfigured() || !supabase) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const normalized = normalizeTranslation(translation);
+  validateLanguage(normalized, language);
+
+  const row = {
+    product_id: productId,
+    language_code: language,
+    title: normalized.title,
+    description: normalized.description,
+    region: String(sourceProduct.region || ''),
+    materials: normalized.materials,
+    tags: normalized.tags,
+    story: normalized.story,
+    seo_keywords: normalized.seo_keywords,
+    source_hash: createProductSourceHash(sourceProduct),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabase
+    .from('product_translations')
+    .upsert(row, {
+      onConflict: 'product_id,language_code'
+    });
+
+  if (error) {
+    throw new Error(
+      `Could not save ${language} translation: ${error.message}`
+    );
+  }
+
+  return row;
+}
+
+/**
+ * Retained for existing route imports that save multiple languages.
  */
 export async function saveProductTranslations(
   productId,
@@ -253,15 +1682,21 @@ export async function saveProductTranslations(
 
   const sourceHash = createProductSourceHash(sourceProduct);
 
-  const rows = LANGUAGE_CODES.map((language) => {
-    const translated = normalizeTranslation(translations[language]);
+  const rows = LANGUAGE_CODES.map(language => {
+    const translated = language === 'en'
+      ? normalizeProduct(sourceProduct)
+      : normalizeTranslation(translations[language]);
+
+    if (language !== 'en') {
+      validateLanguage(translated, language);
+    }
 
     return {
       product_id: productId,
       language_code: language,
       title: translated.title,
       description: translated.description,
-      region: translated.region,
+      region: String(sourceProduct.region || ''),
       materials: translated.materials,
       tags: translated.tags,
       story: translated.story,
@@ -279,7 +1714,7 @@ export async function saveProductTranslations(
 
   if (error) {
     throw new Error(
-      `Could not save product translations: ${error.message}`
+      `Could not save translations: ${error.message}`
     );
   }
 
@@ -287,7 +1722,7 @@ export async function saveProductTranslations(
 }
 
 /**
- * Retrieve cached translations.
+ * Read one cached language translation.
  */
 export async function getCachedProductTranslation(
   productId,
@@ -323,33 +1758,73 @@ export async function getCachedProductTranslation(
     return null;
   }
 
-  return {
-    title: data.title,
-    description: data.description,
-    region: data.region,
-    materials: data.materials || [],
-    tags: data.tags || [],
-    story: data.story || '',
-    seo_keywords: data.seo_keywords || ''
-  };
+  try {
+    const cached = normalizeTranslation({
+      title: data.title,
+      description: data.description,
+      materials: data.materials,
+      tags: data.tags,
+      story: data.story || data.description,
+      seo_keywords: data.seo_keywords || ''
+    });
+
+    validateLanguage(cached, language);
+
+    return {
+      ...cached,
+      region: String(sourceProduct.region || '')
+    };
+  } catch (error) {
+    console.warn(
+      `Invalid cached ${language} translation for ${productId}:`,
+      error.message
+    );
+
+    return null;
+  }
 }
 
 /**
- * Translate one product and cache all six languages.
+ * Translate one product into only the requested language.
  */
-export async function translateProduct(product, language = 'en') {
+export async function translateProduct(
+  product,
+  language = 'en'
+) {
   if (!SUPPORTED_LANGUAGES[language]) {
-    throw new Error('Unsupported language.');
+    throw new Error(`Unsupported language: ${language}`);
   }
 
+  if (!product) return product;
+
+  const original = {
+    ...product,
+    artisan_name: product.artisan_name,
+    region: product.region,
+    price: product.price,
+    category: product.category
+  };
+
   if (language === 'en') {
-    return product;
+    return {
+      ...original,
+      localized_language: 'en'
+    };
+  }
+
+  if (!product.id) {
+    throw new Error(
+      'Product ID is required for translation caching.'
+    );
   }
 
   if (!isSupabaseConfigured() || !supabase) {
-    throw new Error('Supabase is not configured for translation.');
+    throw new Error(
+      'Supabase is not configured for translations.'
+    );
   }
 
+  // First check the requested language cache.
   const cached = await getCachedProductTranslation(
     product.id,
     language,
@@ -358,21 +1833,37 @@ export async function translateProduct(product, language = 'en') {
 
   if (cached) {
     return {
-      ...product,
-      ...cached
+      ...original,
+      ...cached,
+      region: product.region,
+      artisan_name: product.artisan_name,
+      price: product.price,
+      category: product.category,
+      localized_language: language
     };
   }
 
-  const translations = await generateAllTranslations(product);
+  // Generate only the requested language.
+  const translated = await generateProductTranslation(
+    product,
+    language
+  );
 
-  await saveProductTranslations(
+  // Cache only the requested language.
+  await saveSingleProductTranslation(
     product.id,
-    translations,
+    language,
+    translated,
     product
   );
 
   return {
-    ...product,
-    ...translations[language]
+    ...original,
+    ...translated,
+    region: product.region,
+    artisan_name: product.artisan_name,
+    price: product.price,
+    category: product.category,
+    localized_language: language
   };
 }

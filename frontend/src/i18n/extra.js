@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Extra UI strings: Add Craft page, header/footer, theme toggle, voice input, AI auto-fill.
- * These are deep-merged on top of en.js / kn.js / hi.js ... in i18n/index.js.
+ * These are deep-merged on top of en.js / kn.js / hi.js ... in i18n/index.jsx.
  * Any key missing in a language automatically falls back to English.
  *
- * Placeholders such as {price} are replaced with fill() from i18n/index.js.
+ * Placeholders such as {price} are replaced with fill() from i18n/index.jsx.
  */
 
 const en = {
@@ -166,7 +166,18 @@ const en = {
     defaultMaterials: 'Natural traditional materials',
     previewStory: 'Craft story and ancestral heritage description will appear live here as you speak or write in your chosen language...',
     priceLabel: 'Artisan Direct Price',
-    available: 'available'
+    descriptionPlaceholder: 'Your polished product description will appear here after AI generation. You can also write or edit it yourself.',
+    aiDetailsHint: 'Generate product details and descriptions in six languages.',
+    descriptionLabel: 'Product Description',
+    descriptionHelp: 'This is the description buyers will see on your product listing. Review and edit it before publishing.',
+    generating: 'Generating...',
+    generateWithAI: 'Generate with AI',
+    descriptionEditLabel: 'AI generated · Editable',
+    storyModeLabel: 'Text or voice',
+    available: 'available',
+    errCraftStory: 'Please enter your craft story using text or voice.',
+    errDescription: 'Please generate or enter a product description before publishing.',
+    errStock: 'Stock must be a whole number and cannot be negative.',
   }
 };
 
@@ -330,7 +341,18 @@ const kn = {
     defaultMaterials: 'ನೈಸರ್ಗಿಕ ಸಾಂಪ್ರದಾಯಿಕ ಸಾಮಗ್ರಿಗಳು',
     previewStory: 'ನೀವು ಮಾತನಾಡುತ್ತಿದ್ದಂತೆ ಅಥವಾ ಬರೆಯುತ್ತಿದ್ದಂತೆ ಕಲೆಯ ಕಥೆ ಮತ್ತು ಪರಂಪರೆಯ ವಿವರಣೆ ಇಲ್ಲಿ ಲೈವ್ ಆಗಿ ಕಾಣಿಸುತ್ತದೆ...',
     priceLabel: 'ಕುಶಲಕರ್ಮಿ ನೇರ ಬೆಲೆ',
-    available: 'ಲಭ್ಯವಿದೆ'
+    descriptionPlaceholder: 'AI ರಚಿಸಿದ ನಂತರ ನಿಮ್ಮ ಉತ್ಪನ್ನದ ವಿವರಣೆ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ. ನೀವೇ ಬರೆಯಬಹುದು ಅಥವಾ ಸಂಪಾದಿಸಬಹುದು.',
+    aiDetailsHint: 'ಆರು ಭಾಷೆಗಳಲ್ಲಿ ಉತ್ಪನ್ನದ ವಿವರಗಳು ಮತ್ತು ವಿವರಣೆಗಳನ್ನು ರಚಿಸಿ.',
+    descriptionLabel: 'ಉತ್ಪನ್ನದ ವಿವರಣೆ',
+    descriptionHelp: 'ಖರೀದಿದಾರರು ನಿಮ್ಮ ಉತ್ಪನ್ನದ ಪಟ್ಟಿಯಲ್ಲಿ ನೋಡುವ ವಿವರಣೆ ಇದು. ಪ್ರಕಟಿಸುವ ಮೊದಲು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಸಂಪಾದಿಸಿ.',
+    generating: 'ರಚಿಸಲಾಗುತ್ತಿದೆ...',
+    generateWithAI: 'AI ಮೂಲಕ ರಚಿಸಿ',
+    descriptionEditLabel: 'AI ರಚಿಸಿದ್ದು · ಸಂಪಾದಿಸಬಹುದು',
+    storyModeLabel: 'ಪಠ್ಯ ಅಥವಾ ಧ್ವನಿ',
+    available: 'ಲಭ್ಯವಿದೆ',
+    errCraftStory: 'ದಯವಿಟ್ಟು ಪಠ್ಯ ಅಥವಾ ಧ್ವನಿಯ ಮೂಲಕ ನಿಮ್ಮ ಕರಕುಶಲ ಕಥೆಯನ್ನು ನಮೂದಿಸಿ.',
+    errDescription: 'ಪ್ರಕಟಿಸುವ ಮೊದಲು ಉತ್ಪನ್ನದ ವಿವರಣೆಯನ್ನು ರಚಿಸಿ ಅಥವಾ ನಮೂದಿಸಿ.',
+    errStock: 'ಸ್ಟಾಕ್ ಪೂರ್ಣ ಸಂಖ್ಯೆಯಾಗಿರಬೇಕು ಮತ್ತು ಋಣಾತ್ಮಕವಾಗಿರಬಾರದು.',
   }
 };
 
@@ -494,7 +516,18 @@ const hi = {
     defaultMaterials: 'प्राकृतिक पारंपरिक सामग्री',
     previewStory: 'जैसे-जैसे आप बोलेंगे या लिखेंगे, शिल्प की कहानी और पैतृक विरासत का विवरण यहाँ लाइव दिखेगा...',
     priceLabel: 'कारीगर का सीधा मूल्य',
-    available: 'उपलब्ध'
+    descriptionPlaceholder: 'AI द्वारा तैयार किया गया उत्पाद विवरण यहाँ दिखाई देगा। आप इसे स्वयं भी लिख या संपादित कर सकते हैं।',
+    aiDetailsHint: 'छह भाषाओं में उत्पाद का विवरण और जानकारी तैयार करें।',
+    descriptionLabel: 'उत्पाद का विवरण',
+    descriptionHelp: 'यह वह विवरण है जिसे खरीदार आपकी उत्पाद सूची में देखेंगे। प्रकाशित करने से पहले इसकी समीक्षा और संपादन करें।',
+    generating: 'तैयार हो रहा है...',
+    generateWithAI: 'AI से तैयार करें',
+    descriptionEditLabel: 'AI द्वारा तैयार · संपादन योग्य',
+    storyModeLabel: 'टेक्स्ट या आवाज़',
+    available: 'उपलब्ध',
+    errCraftStory: 'कृपया टेक्स्ट या आवाज़ के माध्यम से अपने शिल्प की कहानी दर्ज करें।',
+    errDescription: 'प्रकाशित करने से पहले कृपया उत्पाद का विवरण तैयार करें या दर्ज करें।',
+    errStock: 'स्टॉक पूर्ण संख्या होनी चाहिए और ऋणात्मक नहीं हो सकती।',
   }
 };
 
@@ -658,7 +691,18 @@ const ta = {
     defaultMaterials: 'இயற்கை பாரம்பரியப் பொருட்கள்',
     previewStory: 'நீங்கள் பேசும்போது அல்லது எழுதும்போது கைவினைக் கதையும் பாரம்பரிய விளக்கமும் இங்கே நேரடியாகத் தோன்றும்...',
     priceLabel: 'கைவினைஞர் நேரடி விலை',
-    available: 'கிடைக்கிறது'
+    descriptionPlaceholder: 'AI உருவாக்கிய பொருள் விளக்கம் இங்கே தோன்றும். நீங்களும் எழுதலாம் அல்லது திருத்தலாம்.',
+    aiDetailsHint: 'ஆறு மொழிகளில் பொருள் விவரங்களையும் விளக்கங்களையும் உருவாக்குங்கள்.',
+    descriptionLabel: 'பொருள் விளக்கம்',
+    descriptionHelp: 'வாங்குபவர்கள் உங்கள் பொருள் பட்டியலில் காணும் விளக்கம் இது. வெளியிடுவதற்கு முன் சரிபார்த்து திருத்தவும்.',
+    generating: 'உருவாக்கப்படுகிறது...',
+    generateWithAI: 'AI மூலம் உருவாக்கு',
+    descriptionEditLabel: 'AI உருவாக்கியது · திருத்தலாம்',
+    storyModeLabel: 'உரை அல்லது குரல்',
+    available: 'கிடைக்கிறது',
+    errCraftStory: 'உங்கள் கைவினைக் கதையை உரை அல்லது குரல் மூலம் உள்ளிடவும்.',
+    errDescription: 'வெளியிடுவதற்கு முன் தயாரிப்பு விளக்கத்தை உருவாக்கவும் அல்லது உள்ளிடவும்.',
+    errStock: 'கையிருப்பு முழு எண்ணாக இருக்க வேண்டும்; எதிர்மறையாக இருக்கக்கூடாது.',
   }
 };
 
@@ -822,7 +866,18 @@ const te = {
     defaultMaterials: 'సహజ సంప్రదాయ పదార్థాలు',
     previewStory: 'మీరు మాట్లాడుతున్నప్పుడు లేదా రాస్తున్నప్పుడు కళ కథ, వారసత్వ వివరణ ఇక్కడ లైవ్‌గా కనిపిస్తుంది...',
     priceLabel: 'కళాకారుడి నేరు ధర',
-    available: 'అందుబాటులో ఉంది'
+    descriptionPlaceholder: 'AI రూపొందించిన ఉత్పత్తి వివరణ ఇక్కడ కనిపిస్తుంది. మీరు స్వయంగా కూడా రాయవచ్చు లేదా సవరించవచ్చు.',
+    aiDetailsHint: 'ఆరు భాషల్లో ఉత్పత్తి వివరాలు మరియు వివరణలను రూపొందించండి.',
+    descriptionLabel: 'ఉత్పత్తి వివరణ',
+    descriptionHelp: 'కొనుగోలుదారులు మీ ఉత్పత్తి జాబితాలో చూసే వివరణ ఇది. ప్రచురించే ముందు పరిశీలించి సవరించండి.',
+    generating: 'రూపొందిస్తోంది...',
+    generateWithAI: 'AIతో రూపొందించండి',
+    descriptionEditLabel: 'AI రూపొందించింది · సవరించవచ్చు',
+    storyModeLabel: 'వచనం లేదా వాయిస్',
+    available: 'అందుబాటులో ఉంది',
+    errCraftStory: 'దయచేసి మీ కళాకథను టెక్స్ట్ లేదా వాయిస్ ద్వారా నమోదు చేయండి.',
+    errDescription: 'ప్రచురించే ముందు ఉత్పత్తి వివరణను రూపొందించండి లేదా నమోదు చేయండి.',
+    errStock: 'స్టాక్ పూర్ణ సంఖ్యగా ఉండాలి మరియు ప్రతికూలంగా ఉండకూడదు.',
   }
 };
 
@@ -844,7 +899,7 @@ const ml = {
   },
   footer: {
     logoTagline: 'കല • സംസ്കാരം • ബന്ധം',
-    desc: 'ഇന്ത്യയിലെ പരമ്പരാഗത കരകൗശല വിദഗ്ധരെ ആഗോള ശേഖരകരുമായും ഉത്തരവാദിത്തമുള്ള വാങ്ങുന്നവരുമായും നേരിട്ട് ബന്ധിപ്പിക്കുന്ന AI അധിഷ്ഠിത വിപണി ബന്ധ, സ്മാർട്ട് കാറ്റലോഗ് പ്ലാറ്റ്ഫോം.',
+    desc: 'ഇന്ത്യയിലെ പരമ്പരാഗത കരകൗശല വിദഗ്ധരെ ആഗോള ശേഖരകരുമായും ഉത്തരവാദിത്തമുള്ള വാങ്ങുന്നവരുമായും നേരിട്ട് ബന്ധിപ്പിക്കുന്ന AI അധിഷ്� ിത വിപണി ബന്ധ, സ്മാർട്ട് കാറ്റലോഗ് പ്ലാറ്റ്ഫോം.',
     fairTrade: 'ഫെയർ ട്രേഡ് ഡയറക്ട്',
     voiceAi: 'ബഹുഭാഷാ വോയ്‌സ് AI',
     giTag: 'ജിഐ ടാഗ് സംരക്ഷണം',
@@ -986,9 +1041,23 @@ const ml = {
     defaultMaterials: 'പ്രകൃതിദത്ത പരമ്പരാഗത വസ്തുക്കൾ',
     previewStory: 'നിങ്ങൾ പറയുമ്പോഴോ എഴുതുമ്പോഴോ കരകൗശല കഥയും പൈതൃക വിവരണവും ഇവിടെ തത്സമയം കാണാം...',
     priceLabel: 'കരകൗശല വിദഗ്ധന്റെ നേരിട്ടുള്ള വില',
-    available: 'ലഭ്യമാണ്'
+    descriptionPlaceholder: 'AI തയ്യാറാക്കിയ ഉൽപ്പന്ന വിവരണം ഇവിടെ കാണാം. നിങ്ങൾക്ക് സ്വയം എഴുതുകയോ തിരുത്തുകയോ ചെയ്യാം.',
+    aiDetailsHint: 'ആറ് ഭാഷകളിൽ ഉൽപ്പന്ന വിവരങ്ങളും വിവരണങ്ങളും സൃഷ്ടിക്കുക.',
+    descriptionLabel: 'ഉൽപ്പന്ന വിവരണം',
+    descriptionHelp: 'വാങ്ങുന്നവർ നിങ്ങളുടെ ഉൽപ്പന്ന പട്ടികയിൽ കാണുന്ന വിവരണം ഇതാണ്. പ്രസിദ്ധീകരിക്കുന്നതിന് മുമ്പ് പരിശോധിച്ച് തിരുത്തുക.',
+    generating: 'സൃഷ്ടിക്കുന്നു...',
+    generateWithAI: 'AI ഉപയോഗിച്ച് സൃഷ്ടിക്കുക',
+    descriptionEditLabel: 'AI സൃഷ്ടിച്ചത് · തിരുത്താം',
+    storyModeLabel: 'ടെക്സ്റ്റ് അല്ലെങ്കിൽ ശബ്ദം',
+    available: 'ലഭ്യമാണ്',
+    errCraftStory: 'ദയവായി ടെക്സ്റ്റ് അല്ലെങ്കിൽ ശബ്ദം വഴി നിങ്ങളുടെ കരകൗശല കഥ നൽകുക.',
+    errDescription: 'പ്രസിദ്ധീകരിക്കുന്നതിന് മുമ്പ് ഉൽപ്പന്ന വിവരണം തയ്യാറാക്കുകയോ നൽകുകയോ ചെയ്യുക.',
+    errStock: 'സ്റ്റോക്ക് ഒരു പൂർണ്ണസംഖ്യയായിരിക്കണം; നെഗറ്റീവ് ആകരുത്.',
   }
 };
 
 export const extraTranslations = { en, kn, hi, ta, te, ml };
 export default extraTranslations;
+
+
+

@@ -1,4 +1,4 @@
-
+﻿
 import crypto from 'crypto';
 import { askGemini } from './gemini.js';
 import { supabase, isSupabaseConfigured } from '../config/supabase.js';
@@ -190,18 +190,24 @@ async function saveArtisanTranslations(artisan, translations, sourceHash) {
     updated_at: new Date().toISOString()
   }));
 
-  const { error } = await supabase
-    .from('artisan_translations')
-    .upsert(rows, {
-      onConflict: 'artisan_id,language_code'
-    });
+  try {
+    const { error } = await supabase
+      .from('artisan_translations')
+      .upsert(rows, {
+        onConflict: 'artisan_id,language_code'
+      });
 
-  if (error) {
-    console.error(
-      'Could not save artisan translations:',
+    if (error) {
+      console.warn(
+        'Artisan translations generated but cache save failed:',
+        error.message
+      );
+    }
+  } catch (error) {
+    console.warn(
+      'Artisan translations generated but cache save failed:',
       error.message
     );
-    throw new Error('Could not save artisan translations.');
   }
 }
 
@@ -212,23 +218,31 @@ async function getCachedArtisanTranslation(
 ) {
   if (!isSupabaseConfigured()) return null;
 
-  const { data, error } = await supabase
-    .from('artisan_translations')
-    .select('*')
-    .eq('artisan_id', artisanId)
-    .eq('language_code', language)
-    .eq('source_hash', sourceHash)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from('artisan_translations')
+      .select('*')
+      .eq('artisan_id', artisanId)
+      .eq('language_code', language)
+      .eq('source_hash', sourceHash)
+      .maybeSingle();
 
-  if (error) {
+    if (error) {
+      console.warn(
+        'Artisan translation cache lookup failed:',
+        error.message
+      );
+      return null;
+    }
+
+    return data;
+  } catch (error) {
     console.warn(
       'Artisan translation cache lookup failed:',
       error.message
     );
     return null;
   }
-
-  return data;
 }
 
 export async function translateArtisan(artisan, language = 'en') {
@@ -295,3 +309,4 @@ export async function translateArtisan(artisan, language = 'en') {
     language_code: selectedLanguage
   };
 }
+

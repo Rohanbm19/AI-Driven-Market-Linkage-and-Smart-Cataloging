@@ -1,7 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../theme/ThemeContext.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 /**
  * Sun / moon switch. Reads its labels from the active language
@@ -34,3 +34,4 @@ export default function ThemeToggle() {
     </button>
   );
 }
+

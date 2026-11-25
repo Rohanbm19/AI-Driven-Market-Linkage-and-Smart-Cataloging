@@ -1,7 +1,7 @@
-
+﻿
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api.js';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import {
   MessageSquare,
   CheckCircle,
@@ -43,7 +43,7 @@ export default function Enquiries() {
         console.error('Enquiries fetch error:', err);
 
         if (active) {
-          setError(err?.message || 'Unable to load enquiries.');
+          setError(text.loadError || err?.message || 'Unable to load enquiries.');
         }
       } finally {
         if (active) setLoading(false);
@@ -102,7 +102,7 @@ export default function Enquiries() {
 
       window.alert(text.replySent || 'Reply sent successfully.');
     } catch (err) {
-      window.alert(err?.message || 'Unable to send reply.');
+      window.alert(text.sendError || err?.message || 'Unable to send reply.');
     } finally {
       setSendingId(null);
     }
@@ -123,7 +123,7 @@ export default function Enquiries() {
       'Interior Architect': text.interiorArchitect
     };
 
-    return buyerTypes[buyerType] || buyerType || 'Buyer';
+    return buyerTypes[buyerType] || buyerType || text.buyer || 'Buyer';
   };
 
   return (
@@ -152,7 +152,7 @@ export default function Enquiries() {
 
           <div>
             <strong>{enquiries.length}</strong>
-            <span>{text.all || 'Total Enquiries'}</span>
+            <span>{text.totalEnquiries || 'Total Enquiries'}</span>
           </div>
         </div>
 
@@ -183,7 +183,7 @@ export default function Enquiries() {
       <div className="enquiries-toolbar">
         <div>
           <h2>{text.title || 'Enquiries'}</h2>
-          <p>Review and respond to buyer requests.</p>
+          <p>{text.toolbarDesc || 'Review and respond to buyer requests.'}</p>
         </div>
 
         <div className="enquiries-filters">
@@ -206,7 +206,7 @@ export default function Enquiries() {
       {loading && (
         <div className="enquiries-state">
           <RefreshCw size={22} className="animate-spin" />
-          <p>Loading enquiries...</p>
+          <p>{text.loading || 'Loading enquiries...'}</p>
         </div>
       )}
 
@@ -222,11 +222,11 @@ export default function Enquiries() {
       {!loading && !error && filtered.length === 0 && (
         <div className="enquiries-state">
           <MessageSquare size={32} />
-          <h3>No enquiries found</h3>
+          <h3>{text.noEnquiries || 'No enquiries found'}</h3>
           <p>
             {filter === 'all'
-              ? 'Buyer enquiries will appear here when customers contact you.'
-              : `There are no ${filter} enquiries at the moment.`}
+              ? (text.noEnquiriesDesc || 'Buyer enquiries will appear here when customers contact you.')
+              : (text.noFilteredEnquiries || `There are no ${filter} enquiries at the moment.`)}
           </p>
         </div>
       )}
@@ -248,7 +248,7 @@ export default function Enquiries() {
                   </div>
 
                   <div>
-                    <h3>{enq.buyer_name || 'Buyer'}</h3>
+                    <h3>{enq.buyer_name || text.buyer || 'Buyer'}</h3>
 
                     <span className="enquiry-buyer-type">
                       {getBuyerType(enq.buyer_type)}
@@ -303,34 +303,34 @@ export default function Enquiries() {
 
                   <div>
                     <span>{text.product || 'Product'}</span>
-                    <strong>{enq.product_title || 'Product enquiry'}</strong>
+                    <strong>{enq.product_title || text.productEnquiry || 'Product enquiry'}</strong>
                   </div>
                 </div>
 
                 <div className="enquiry-quantity">
                   <span>{text.requested || 'Requested quantity'}</span>
-                  <strong>{enq.quantity || 'Not specified'}</strong>
+                  <strong>{enq.quantity || text.notSpecified || 'Not specified'}</strong>
                 </div>
               </div>
 
               {/* BUYER MESSAGE */}
               <div className="enquiry-message">
-                <span>Buyer Message</span>
-                <p>{enq.message || 'No message provided.'}</p>
+                <span>{text.buyerMessage || 'Buyer Message'}</span>
+                <p>{enq.message || text.noMessage || 'No message provided.'}</p>
               </div>
 
               {/* REPLY SECTION */}
               {activeReplyId === enq.id ? (
                 <div className="enquiry-reply">
                   <div className="enquiry-reply-heading">
-                    <h4>Reply to buyer</h4>
+                    <h4>{text.replyToBuyer || 'Reply to buyer'}</h4>
 
                     <button
                       type="button"
                       className="enquiry-cancel"
                       onClick={() => setActiveReplyId(null)}
                     >
-                      Cancel
+                      {text.cancel || 'Cancel'}
                     </button>
                   </div>
 
@@ -395,7 +395,7 @@ export default function Enquiries() {
                       )}
 
                       {sendingId === enq.id
-                        ? 'Sending...'
+                        ? (text.sending || 'Sending...')
                         : text.send || 'Send Reply'}
                     </button>
                   </div>
@@ -414,7 +414,7 @@ export default function Enquiries() {
                   ) : (
                     <span className="enquiry-replied-label">
                       <CheckCircle size={15} />
-                      Reply sent
+                      {text.replySentLabel || 'Reply sent'}
                     </span>
                   )}
                 </div>
@@ -426,3 +426,8 @@ export default function Enquiries() {
     </div>
   );
 }
+
+
+
+
+

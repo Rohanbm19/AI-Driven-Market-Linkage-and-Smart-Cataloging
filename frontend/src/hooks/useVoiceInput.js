@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 export const VOICE_LANGUAGES = [
   { code: 'en', bcp47: 'en-IN', name: 'English (India)', native: 'English' },
-  { code: 'kn', bcp47: 'kn-IN', name: 'ಕನ್ನಡ (Kannada)', native: 'ಕನ್ನಡ' },
-  { code: 'hi', bcp47: 'hi-IN', name: 'हिन्दी (Hindi)', native: 'हिन्दी' },
-  { code: 'ta', bcp47: 'ta-IN', name: 'தமிழ் (Tamil)', native: 'தமிழ்' },
-  { code: 'te', bcp47: 'te-IN', name: 'తెలుగు (Telugu)', native: 'తెలుగు' },
-  { code: 'ml', bcp47: 'ml-IN', name: 'മലയാളം (Malayalam)', native: 'മലയാളം' }
+  { code: 'kn', bcp47: 'kn-IN', name: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'hi', bcp47: 'hi-IN', name: 'Hindi', native: 'हिन्दी' },
+  { code: 'ta', bcp47: 'ta-IN', name: 'Tamil', native: 'தமிழ்' },
+  { code: 'te', bcp47: 'te-IN', name: 'Telugu', native: 'తెలుగు' },
+  { code: 'ml', bcp47: 'ml-IN', name: 'Malayalam', native: 'മലയാളം' }
 ];
 
 export const langMap = {
@@ -192,3 +192,4 @@ export function useVoiceInput({ onResult, currentLang = 'en' } = {}) {
     resetTranscript: () => setTranscript('')
   };
 }
+

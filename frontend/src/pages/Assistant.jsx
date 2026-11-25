@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Send, Bot, User, Mic, Sparkles } from 'lucide-react';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { useVoiceInput } from '../hooks/useVoiceInput.js';
 import { api } from '../services/api.js';
 
@@ -66,3 +66,4 @@ export default function Assistant() {
     </div>
   </div>;
 }
+

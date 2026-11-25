@@ -1,35 +1,35 @@
-
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Mail,
-  MessageSquare,
-  Phone,
-  UserRound,
-  Package,
-  Clock3,
-  CheckCircle2,
-  XCircle,
-  Search,
-  CalendarDays,
-  MapPin,
-  ArrowUpRight,
-  Inbox,
-  RefreshCw,
-  ShieldCheck
+  Mail, MessageSquare, Phone, UserRound, Package, Clock3,
+  CheckCircle2, XCircle, Search, CalendarDays, ArrowUpRight,
+  Inbox, RefreshCw, ShieldCheck
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../services/api.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function BuyerProfile() {
   const { id, email, fullName, phone, createdAt } = useAuth();
+  const { t, lang } = useLanguage();
+  const text = t.buyerProfile || {};
 
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+
+  const localeMap = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    kn: 'kn-IN',
+    ta: 'ta-IN',
+    te: 'te-IN',
+    ml: 'ml-IN'
+  };
+  const locale = localeMap[lang] || 'en-IN';
 
   const loadEnquiries = async () => {
     if (!id) {
@@ -45,7 +45,7 @@ export default function BuyerProfile() {
       setEnquiries(Array.isArray(data) ? data : []);
     } catch (loadError) {
       console.error('Unable to load buyer enquiries:', loadError);
-      setError('We could not load your enquiry history. Please try again.');
+      setError(text.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -57,33 +57,28 @@ export default function BuyerProfile() {
 
   const getStatus = (status) => {
     const value = String(status || 'pending').toLowerCase();
-
     if (value === 'approved') return 'approved';
     if (value === 'rejected') return 'rejected';
-
     return 'pending';
+  };
+
+  const statusLabels = {
+    pending: text.pending,
+    approved: text.approved,
+    rejected: text.rejected
   };
 
   const stats = useMemo(() => ({
     total: enquiries.length,
-    pending: enquiries.filter(
-      item => getStatus(item.status) === 'pending'
-    ).length,
-    approved: enquiries.filter(
-      item => getStatus(item.status) === 'approved'
-    ).length,
-    rejected: enquiries.filter(
-      item => getStatus(item.status) === 'rejected'
-    ).length
+    pending: enquiries.filter(item => getStatus(item.status) === 'pending').length,
+    approved: enquiries.filter(item => getStatus(item.status) === 'approved').length,
+    rejected: enquiries.filter(item => getStatus(item.status) === 'rejected').length
   }), [enquiries]);
 
   const filteredEnquiries = useMemo(() => {
     return enquiries.filter((item) => {
       const status = getStatus(item.status);
-
-      const matchesFilter =
-        activeFilter === 'all' || status === activeFilter;
-
+      const matchesFilter = activeFilter === 'all' || status === activeFilter;
       const searchText = search.toLowerCase();
 
       const matchesSearch = [
@@ -100,15 +95,12 @@ export default function BuyerProfile() {
   }, [enquiries, activeFilter, search]);
 
   const formatDate = (date) => {
-    if (!date) return 'Date unavailable';
+    if (!date) return text.dateUnavailable;
 
     const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) return text.dateUnavailable;
 
-    if (Number.isNaN(parsed.getTime())) {
-      return 'Date unavailable';
-    }
-
-    return parsed.toLocaleString('en-IN', {
+    return parsed.toLocaleString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -118,7 +110,7 @@ export default function BuyerProfile() {
   };
 
   const getInitials = (name) => {
-    return String(name || 'Buyer')
+    return String(name || text.buyer)
       .trim()
       .split(/\s+/)
       .slice(0, 2)
@@ -127,38 +119,32 @@ export default function BuyerProfile() {
   };
 
   const filters = [
-    { label: 'All Enquiries', value: 'all', count: stats.total },
-    { label: 'Pending', value: 'pending', count: stats.pending },
-    { label: 'Approved', value: 'approved', count: stats.approved },
-    { label: 'Rejected', value: 'rejected', count: stats.rejected }
+    { label: text.all, value: 'all', count: stats.total },
+    { label: text.pending, value: 'pending', count: stats.pending },
+    { label: text.approved, value: 'approved', count: stats.approved },
+    { label: text.rejected, value: 'rejected', count: stats.rejected }
   ];
 
   return (
     <main className="buyer-dashboard">
-
-      {/* PROFILE HERO */}
       <section className="buyer-dashboard-hero">
         <div className="buyer-hero-content">
-          <div className="buyer-avatar">
-            {getInitials(fullName)}
-          </div>
+          <div className="buyer-avatar">{getInitials(fullName)}</div>
 
           <div className="buyer-hero-info">
             <span className="buyer-eyebrow">
               <ShieldCheck size={14} />
-              KALASETU MEMBER
+              {text.eyebrow}
             </span>
 
-            <h1>Welcome back, {fullName || 'Buyer'}</h1>
+            <h1>{text.welcome}, {fullName || text.buyer}</h1>
 
-            <p>
-              Manage your account and keep track of your artisan enquiries.
-            </p>
+            <p>{text.heroDesc}</p>
 
             <div className="buyer-hero-meta">
               <span>
                 <Mail size={15} />
-                {email || 'Email not provided'}
+                {email || text.emailMissing}
               </span>
 
               {phone && (
@@ -174,69 +160,61 @@ export default function BuyerProfile() {
         <div className="buyer-member-date">
           <CalendarDays size={17} />
           <div>
-            <small>MEMBER SINCE</small>
+            <small>{text.memberSince}</small>
             <strong>
               {createdAt
-                ? new Date(createdAt).toLocaleDateString('en-IN', {
+                ? new Date(createdAt).toLocaleDateString(locale, {
                     month: 'short',
                     year: 'numeric'
                   })
-                : 'Recently joined'}
+                : text.recentlyJoined}
             </strong>
           </div>
         </div>
       </section>
 
-      {/* ACCOUNT DETAILS */}
       <section className="buyer-account-section">
         <div className="buyer-section-heading">
           <div>
-            <span className="buyer-section-label">YOUR ACCOUNT</span>
-            <h2>Personal Information</h2>
-            <p>Your registered KalaSetu account details.</p>
+            <span className="buyer-section-label">{text.account}</span>
+            <h2>{text.personal}</h2>
+            <p>{text.accountDesc}</p>
           </div>
         </div>
 
         <div className="buyer-account-grid">
           <div className="buyer-account-item">
-            <div className="buyer-account-icon">
-              <UserRound size={19} />
-            </div>
+            <div className="buyer-account-icon"><UserRound size={19} /></div>
             <div>
-              <small>Full Name</small>
-              <strong>{fullName || 'Not provided'}</strong>
+              <small>{text.fullName}</small>
+              <strong>{fullName || text.notProvided}</strong>
             </div>
           </div>
 
           <div className="buyer-account-item">
-            <div className="buyer-account-icon">
-              <Mail size={19} />
-            </div>
+            <div className="buyer-account-icon"><Mail size={19} /></div>
             <div>
-              <small>Email Address</small>
-              <strong>{email || 'Not provided'}</strong>
+              <small>{text.email}</small>
+              <strong>{email || text.notProvided}</strong>
             </div>
           </div>
 
           <div className="buyer-account-item">
-            <div className="buyer-account-icon">
-              <Phone size={19} />
-            </div>
+            <div className="buyer-account-icon"><Phone size={19} /></div>
             <div>
-              <small>Phone Number</small>
-              <strong>{phone || 'Not provided'}</strong>
+              <small>{text.phone}</small>
+              <strong>{phone || text.notProvided}</strong>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ENQUIRY STATISTICS */}
       <section className="buyer-stats-section">
         <div className="buyer-section-heading">
           <div>
-            <span className="buyer-section-label">ACTIVITY OVERVIEW</span>
-            <h2>Your Enquiry Activity</h2>
-            <p>Track the progress of your product enquiries.</p>
+            <span className="buyer-section-label">{text.activity}</span>
+            <h2>{text.activityTitle}</h2>
+            <p>{text.activityDesc}</p>
           </div>
 
           <button
@@ -245,75 +223,70 @@ export default function BuyerProfile() {
             onClick={loadEnquiries}
             disabled={loading}
           >
-            <RefreshCw
-              size={16}
-              className={loading ? 'buyer-spin' : ''}
-            />
-            Refresh
+            <RefreshCw size={16} className={loading ? 'buyer-spin' : ''} />
+            {text.refresh}
           </button>
         </div>
 
         <div className="buyer-stats-grid">
           <div className="buyer-stat-card total">
             <div className="buyer-stat-top">
-              <span>Total Enquiries</span>
+              <span>{text.total}</span>
               <Package size={20} />
             </div>
             <strong>{stats.total}</strong>
-            <small>All your product enquiries</small>
+            <small>{text.allProducts}</small>
           </div>
 
           <div className="buyer-stat-card pending">
             <div className="buyer-stat-top">
-              <span>Pending</span>
+              <span>{text.pending}</span>
               <Clock3 size={20} />
             </div>
             <strong>{stats.pending}</strong>
-            <small>Awaiting artisan response</small>
+            <small>{text.awaiting}</small>
           </div>
 
           <div className="buyer-stat-card approved">
             <div className="buyer-stat-top">
-              <span>Approved</span>
+              <span>{text.approved}</span>
               <CheckCircle2 size={20} />
             </div>
             <strong>{stats.approved}</strong>
-            <small>Accepted by artisans</small>
+            <small>{text.accepted}</small>
           </div>
 
           <div className="buyer-stat-card rejected">
             <div className="buyer-stat-top">
-              <span>Rejected</span>
+              <span>{text.rejected}</span>
               <XCircle size={20} />
             </div>
             <strong>{stats.rejected}</strong>
-            <small>Not accepted</small>
+            <small>{text.notAccepted}</small>
           </div>
         </div>
       </section>
 
-      {/* ENQUIRY HISTORY */}
       <section className="buyer-history-section">
         <div className="buyer-section-heading">
           <div>
-            <span className="buyer-section-label">YOUR MARKETPLACE ACTIVITY</span>
-            <h2>Product Enquiries</h2>
-            <p>View your requests and responses from artisans.</p>
+            <span className="buyer-section-label">{text.marketplace}</span>
+            <h2>{text.products}</h2>
+            <p>{text.historyDesc}</p>
           </div>
 
           <Link to="/" className="buyer-explore-link">
-            Explore Marketplace
+            {text.explore}
             <ArrowUpRight size={17} />
           </Link>
         </div>
 
-        {/* SEARCH */}
         <div className="buyer-enquiry-toolbar">
           <div className="buyer-search-box">
             <Search size={18} />
             <input
               type="search"
-              placeholder="Search product or enquiry..."
+              placeholder={text.search}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -336,55 +309,47 @@ export default function BuyerProfile() {
           </div>
         </div>
 
-        {/* LOADING */}
         {loading && (
           <div className="buyer-state-card">
             <RefreshCw size={28} className="buyer-spin" />
-            <h3>Loading your enquiries</h3>
-            <p>Please wait while we retrieve your activity.</p>
+            <h3>{text.loading}</h3>
+            <p>{text.wait}</p>
           </div>
         )}
 
-        {/* ERROR */}
         {!loading && error && (
           <div className="buyer-state-card buyer-error-state">
             <XCircle size={30} />
-            <h3>Unable to load enquiries</h3>
+            <h3>{text.loadError}</h3>
             <p>{error}</p>
             <button
               type="button"
               className="buyer-primary-btn"
               onClick={loadEnquiries}
             >
-              Try Again
+              {text.retry}
             </button>
           </div>
         )}
 
-        {/* EMPTY */}
         {!loading && !error && enquiries.length === 0 && (
           <div className="buyer-state-card">
-            <div className="buyer-empty-icon">
-              <Inbox size={34} />
-            </div>
-            <h3>No enquiries yet</h3>
-            <p>
-              Your product enquiries will appear here once you contact an artisan.
-            </p>
+            <div className="buyer-empty-icon"><Inbox size={34} /></div>
+            <h3>{text.empty}</h3>
+            <p>{text.emptyDesc}</p>
             <Link to="/" className="buyer-primary-btn">
-              Explore Products
+              {text.exploreProducts}
               <ArrowUpRight size={16} />
             </Link>
           </div>
         )}
 
-        {/* NO FILTER RESULTS */}
         {!loading && !error && enquiries.length > 0 &&
           filteredEnquiries.length === 0 && (
             <div className="buyer-state-card">
               <Search size={30} />
-              <h3>No matching enquiries</h3>
-              <p>Try another search term or change your status filter.</p>
+              <h3>{text.noMatch}</h3>
+              <p>{text.noMatchDesc}</p>
               <button
                 type="button"
                 className="buyer-reset-btn"
@@ -393,32 +358,24 @@ export default function BuyerProfile() {
                   setActiveFilter('all');
                 }}
               >
-                Clear Filters
+                {text.clear}
               </button>
             </div>
           )}
 
-        {/* ENQUIRY CARDS */}
         {!loading && !error && filteredEnquiries.length > 0 && (
           <div className="buyer-enquiry-list">
             {filteredEnquiries.map((enquiry) => {
               const status = getStatus(enquiry.status);
 
               return (
-                <article
-                  className="buyer-enquiry-card"
-                  key={enquiry.id}
-                >
+                <article className="buyer-enquiry-card" key={enquiry.id}>
                   <div className="buyer-enquiry-card-top">
-                    <div className="buyer-product-icon">
-                      <Package size={23} />
-                    </div>
+                    <div className="buyer-product-icon"><Package size={23} /></div>
 
                     <div className="buyer-product-info">
-                      <span>PRODUCT ENQUIRY</span>
-                      <h3>
-                        {enquiry.product_title || 'Untitled Product'}
-                      </h3>
+                      <span>{text.productEnquiry}</span>
+                      <h3>{enquiry.product_title || text.untitled}</h3>
                       <small>
                         <CalendarDays size={14} />
                         {formatDate(enquiry.created_at)}
@@ -429,18 +386,18 @@ export default function BuyerProfile() {
                       {status === 'approved' && <CheckCircle2 size={14} />}
                       {status === 'pending' && <Clock3 size={14} />}
                       {status === 'rejected' && <XCircle size={14} />}
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {statusLabels[status]}
                     </span>
                   </div>
 
                   <div className="buyer-enquiry-details">
                     <div className="buyer-detail-block">
-                      <small>Requested Quantity</small>
-                      <strong>{enquiry.quantity || 'Not specified'}</strong>
+                      <small>{text.quantity}</small>
+                      <strong>{enquiry.quantity || text.unspecified}</strong>
                     </div>
 
                     <div className="buyer-detail-block">
-                      <small>Enquiry ID</small>
+                      <small>{text.enquiryId}</small>
                       <strong>{enquiry.id}</strong>
                     </div>
                   </div>
@@ -448,9 +405,9 @@ export default function BuyerProfile() {
                   <div className="buyer-message-block">
                     <span>
                       <MessageSquare size={15} />
-                      Your Message
+                      {text.message}
                     </span>
-                    <p>{enquiry.message || 'No message provided.'}</p>
+                    <p>{enquiry.message || text.noMessage}</p>
                   </div>
 
                   {enquiry.reply && (
@@ -458,9 +415,9 @@ export default function BuyerProfile() {
                       <div className="buyer-reply-heading">
                         <span>
                           <CheckCircle2 size={16} />
-                          Artisan Response
+                          {text.response}
                         </span>
-                        <small>Reply received</small>
+                        <small>{text.replyReceived}</small>
                       </div>
                       <p>{enquiry.reply}</p>
                     </div>
@@ -469,21 +426,21 @@ export default function BuyerProfile() {
                   {!enquiry.reply && status === 'pending' && (
                     <div className="buyer-pending-note">
                       <Clock3 size={15} />
-                      Waiting for the artisan to respond to your enquiry.
+                      {text.waiting}
                     </div>
                   )}
 
                   {!enquiry.reply && status === 'approved' && (
                     <div className="buyer-pending-note">
                       <CheckCircle2 size={15} />
-                      Your enquiry has been approved. The artisan has not added a reply yet.
+                      {text.approvedNote}
                     </div>
                   )}
 
                   {!enquiry.reply && status === 'rejected' && (
                     <div className="buyer-pending-note">
                       <XCircle size={15} />
-                      The artisan has rejected this enquiry.
+                      {text.rejectedNote}
                     </div>
                   )}
                 </article>

@@ -1,0 +1,126 @@
+[1mdiff --git a/frontend/src/i18n/extra.js b/frontend/src/i18n/extra.js[m
+[1mindex 7526508..6382a23 100644[m
+[1m--- a/frontend/src/i18n/extra.js[m
+[1m+++ b/frontend/src/i18n/extra.js[m
+[36m@@ -1,9 +1,9 @@[m
+[31m-/**[m
+[32m+[m[32m﻿/**[m
+  * Extra UI strings: Add Craft page, header/footer, theme toggle, voice input, AI auto-fill.[m
+[31m- * These are deep-merged on top of en.js / kn.js / hi.js ... in i18n/index.js.[m
+[32m+[m[32m * These are deep-merged on top of en.js / kn.js / hi.js ... in i18n/index.jsx.[m
+  * Any key missing in a language automatically falls back to English.[m
+  *[m
+[31m- * Placeholders such as {price} are replaced with fill() from i18n/index.js.[m
+[32m+[m[32m * Placeholders such as {price} are replaced with fill() from i18n/index.jsx.[m
+  */[m
+ [m
+ const en = {[m
+[36m@@ -23,7 +23,7 @@[m [mconst en = {[m
+     switchToLight: 'Switch to light mode'[m
+   },[m
+   footer: {[m
+[31m-    logoTagline: 'Crafts • Culture • Connect',[m
+[32m+[m[32m    logoTagline: 'Crafts â€¢ Culture â€¢ Connect',[m
+     desc: 'AI-Driven Market Linkage & Smart Cataloging platform directly connecting Indian traditional master artisans with global collectors and conscious buyers.',[m
+     fairTrade: 'Fair Trade Direct',[m
+     voiceAi: 'Multilingual Voice AI',[m
+[36m@@ -48,18 +48,18 @@[m [mconst en = {[m
+   },[m
+   autofill: {[m
+     title: 'Start with just your story',[m
+[31m-    hint: 'Write or speak your craft story below. AI fills in the category, title, place, materials, tags and a fair price — you can edit anything.',[m
+[32m+[m[32m    hint: 'Write or speak your craft story below. AI fills in the category, title, place, materials, tags and a fair price â€” you can edit anything.',[m
+     toggle: 'Auto-fill as I type',[m
+     button: 'Auto-fill from my story',[m
+     refill: 'Re-fill all with AI',[m
+[31m-    working: 'Reading your story…',[m
+[32m+[m[32m    working: 'Reading your storyâ€¦',[m
+     aiChip: 'AI',[m
+     suggestionChip: 'Suggestion',[m
+     suggestionNote: 'Suggested locally from your story.',[m
+     done: 'AI filled {n} fields from your story. Edit anything you like.',[m
+     suggestions: 'Local suggestions filled {n} fields from your story. Review them before using.',[m
+     nothing: 'Add a few more details to your story (what, where, material, time) so AI can fill the form.',[m
+[31m-    estimateNote: 'Hours, material cost and price are AI estimates — please check and edit them.',[m
+[32m+[m[32m    estimateNote: 'Hours, material cost and price are AI estimates â€” please check and edit them.',[m
+     writeFirst: 'Please write or speak your craft story first.'[m
+   },[m
+   addCraft: {[m
+[36m@@ -82,20 +82,20 @@[m [mconst en = {[m
+     materialsPlaceholder: 'e.g. Natural Alluvial Clay, Pure Mulberry Silk, Virgin Brass, Vegetable Dyes',[m
+     materialsHint: 'Comma-separated materials used in creation.',[m
+     storyLabel: 'Craft Story & Heritage Description',[m
+[31m-    storyPlaceholder: 'Speak or type in any language — what you made, where, from what material, and how long it took...',[m
+[32m+[m[32m    storyPlaceholder: 'Speak or type in any language â€” what you made, where, from what material, and how long it took...',[m
+     storyHint: 'Artisans can speak freely in their native tongue. AI preserves and translates this for global collectors.',[m
+     calcTitle: 'Fair Trade Artisan Wage & Cost Calculation',[m
+     calcBadge: 'Prevents Artisan Undervaluation',[m
+[31m-    materialCost: 'Material Cost (₹)',[m
+[32m+[m[32m    materialCost: 'Material Cost (â‚¹)',[m
+     laborHours: 'Labor Hours (hrs)',[m
+[31m-    wage: 'Artisan Wage (₹/hr)',[m
+[31m-    packaging: 'Packaging (₹)',[m
+[32m+[m[32m    wage: 'Artisan Wage (â‚¹/hr)',[m
+[32m+[m[32m    packaging: 'Packaging (â‚¹)',[m
+     totalCost: 'Total Production Cost:',[m
+[31m-    breakdown: '(₹{mat} materials + ₹{wage} wages + ₹{pkg} packaging)',[m
+[32m+[m[32m    breakdown: '(â‚¹{mat} materials + â‚¹{wage} wages + â‚¹{pkg} packaging)',[m
+     fairPrice: 'Suggested Fair Price:',[m
+     profit: '(+30% Artisan Profit)',[m
+[31m-    applyFair: 'Apply Fair Price (₹{price})',[m
+[31m-    sellingPrice: 'Selling Price (₹)',[m
+[32m+[m[32m    applyFair: 'Apply Fair Price (â‚¹{price})',[m
+[32m+[m[32m    sellingPrice: 'Selling Price (â‚¹)',[m
+     sellingPricePlaceholder: 'e.g. 1850',[m
+     stock: 'Available Stock (Units)',[m
+     tags: 'Tags / Search Keywords (comma separated)',[m
+[36m@@ -123,7 +123,7 @@[m [mconst en = {[m
+     acceptEnhanced: 'Accept Enhanced Image',[m
+     enhancedAccepted: 'Enhanced Image Accepted',[m
+     keepOriginal: 'Keep Original Image',[m
+[31m-    tryAgain: 'Try Again — Upload New Photo',[m
+[32m+[m[32m    tryAgain: 'Try Again â€” Upload New Photo',[m
+     needFile: 'Choose an image file before enhancing it.',[m
+     enhanceFailed: 'Image enhancement failed. Please try again.',[m
+     uploadFailed: 'The original image could not be uploaded.',[m
+[36m@@ -152,7 +152,7 @@[m [mconst en = {[m
+     errTitle: 'Please enter a Product / Craft Title.',[m
+     errCategory: 'Please enter a Craft Category.',[m
+     errRegion: 'Please enter the Artisan Region / Village.',[m
+[31m-    errPrice: 'Please enter a valid price in ₹.',[m
+[32m+[m[32m    errPrice: 'Please enter a valid price in â‚¹.',[m
+     errStory: 'Please provide a Craft Story or description.',[m
+     errSave: 'Failed to save craft. Please check the inputs.',[m
+     errSaveGeneric: 'Error occurred while saving to database.',[m
+[36m@@ -172,823 +172,824 @@[m [mconst en = {[m
+ [m
+ const kn = {[m
+   common: {[m
+[31m-    selectLanguage: 'ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ',[m
+[31m-    changeLanguageTitle: 'ಅಪ್ಲಿಕೇಶನ್ ಮತ್ತು ಧ್ವನಿ ಭಾಷೆ ಬದಲಿಸಿ',[m
+[31m-    mainNav: 'ಮುಖ್ಯ ಮೆನು',[m
+[31m-    myStudioTitle: 'ನನ್ನ ಕುಶಲಕರ್ಮಿ ಸ್ಟುಡಿಯೋ',[m
+[31m-    signIn: 'ಲಾಗಿನ್',[m
+[31m-    openMenu: 'ಮೆನು ತೆರೆಯಿರಿ',[m
+[31m-    closeMenu: 'ಮೆನು ಮುಚ್ಚಿ'[m
+[32m+[m[32m    selectLanguage: 'à²­à²¾à²·à³†à²¯à²¨à³à²¨à³ à²†à²¯à³à²•à³†à²®à²¾à²¡à²¿',[m
+[32m+[m[32m    changeLanguageTitle: 'à²…à²ªà³à²²à²¿à²•à³‡à²¶à²¨à³ à²®à²¤à³à²¤à³ à²§à³à²µà²¨à²¿ à²­à²¾à²·à³† à²¬à²¦à²²à²¿à²¸à²¿',[m
+[32m+[m[32m    mainNav: 'à²®à³à²–à³à²¯ à²®à³†à²¨à³',[m
+[32m+[m[32m    myStudioTitle: 'à²¨à²¨à³à²¨ à²•à³à²¶à²²à²•à²°à³à²®à²¿ à²¸à³à²Ÿà³à²¡à²¿à²¯à³‹',[m
+[32m+[m[32m    signIn: 'à²²à²¾à²—à²¿à²¨à³',[m
+[32m+[m[32m    openMenu: 'à²®à³†à²¨à³ à²¤à³†à²°à³†à²¯à²¿à²°à²¿',[m
+[32m+[m[32m    closeMenu: 'à²®à³†à²¨à³ à²®à³à²šà³à²šà²¿'[m
+   },[m
+   theme: {[m
+[31m-    light: 'ಬೆಳಕು',[m
+[31m-    dark: 'ಕತ್ತಲು',[m
+[31m-    switchToDark: 'ಡಾರ್ಕ್ ಮೋಡ್‌ಗೆ ಬದಲಿಸಿ',[m
+[31m-    switchToLight: 'ಲೈಟ್ ಮೋಡ್‌ಗೆ ಬದಲಿಸಿ'[m
+[32m+[m[32m    light: 'à²¬à³†à²³à²•à³',[m
+[32m+[m[32m    dark: 'à²•à²¤à³à²¤à²²à³',[m
+[32m+[m[32m    switchToDark: 'à²¡à²¾à²°à³à²•à³ à²®à³‹à²¡à³â€Œà²—à³† à²¬à²¦à²²à²¿à²¸à²¿',[m
+[32m+[m[32m    switchToLight: 'à²²à³ˆà²Ÿà³ à²®à³‹à²¡à³â€Œà²—à³† à²¬à²¦à²²à²¿à²¸à²¿'[m
+   },[m
+   footer: {[m
+[31m-    logoTagline: 'ಕಲೆ • ಸಂಸ್ಕೃತಿ • ಸಂಪರ್ಕ',[m
+[31m-    desc: 'ಭಾರತದ ಸಾಂಪ್ರದಾಯಿಕ ಕುಶಲಕರ್ಮಿ�

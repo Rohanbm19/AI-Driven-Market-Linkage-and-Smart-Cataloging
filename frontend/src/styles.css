@@ -7409,3 +7409,30 @@ html[data-theme="dark"] .footer-badge {
     transition-duration: .01ms !important;
   }
 }
+
+/* Edit/Add Craft Listing heading theme */
+.page-title {
+  color: #000000 !important;
+}
+
+html[data-theme="dark"] .page-title {
+  color: #ffffff !important;
+}
+
+
+/* Add/Edit Craft header theme fix */
+html[data-theme="dark"] .catalog-header-bar {
+  background: #1f1f1f !important;
+  border-radius: 12px;
+}
+
+html[data-theme="dark"] .catalog-header-bar .page-title,
+html[data-theme="dark"] .catalog-header-bar .page-subtitle {
+  color: #ffffff !important;
+}
+
+html:not([data-theme="dark"]) .catalog-header-bar .page-title,
+html:not([data-theme="dark"]) .catalog-header-bar .page-subtitle {
+  color: #000000 !important;
+}
+

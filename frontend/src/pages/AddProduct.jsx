@@ -25,7 +25,7 @@ import {
   IMAGE_BACKGROUND_PRESETS,
   validateImageFile
 } from '../services/imageEnhancer.js';
-import { useLanguage, fill } from '../i18n/index.js';
+import { useLanguage, fill } from '../i18n/index.jsx';
 import {
   analyzeStory,
   detectCategoryKey,
@@ -738,18 +738,18 @@ export default function AddProduct() {
     }
 
     if (!craftStory.trim()) {
-      setFormErr({ raw: 'Please enter the artisan craft story using text or voice.' });
+      setFormErr({ raw: a.errCraftStory });
       return;
     }
 
     if (!description.trim()) {
-      setFormErr({ raw: 'Please generate or enter a product description before publishing.' });
+      setFormErr({ raw: a.errDescription });
       return;
     }
 
     if (!Number.isInteger(Number(stock)) || Number(stock) < 0) {
       setFormErr({
-        raw: 'Stock must be a whole number and cannot be negative.'
+        raw: a.errStock
       });
       return;
     }
@@ -1271,7 +1271,7 @@ export default function AddProduct() {
                   <label className="form-label" htmlFor="craft-story">
                     {a.storyLabel || 'Tell us your craft story'} <span aria-hidden="true">*</span>
                   </label>
-                  <span className="craft-description-edit-label">Text or voice</span>
+                  <span className="craft-description-edit-label">{a.storyModeLabel}</span>
                 </div>
 
                 <VoiceInputField
@@ -1305,7 +1305,7 @@ export default function AddProduct() {
                     <div>
                       <strong>{af.title}</strong>
                       <span>
-                        Generate product details and six language translations
+                        {a.aiDetailsHint}
                       </span>
                     </div>
                   </div>
@@ -1349,10 +1349,10 @@ export default function AddProduct() {
 
                       <span>
                         {loadingAi
-                          ? 'Generating...'
+                          ? a.generating
                           : Object.values(aiFilled).some(Boolean)
                             ? af.refill
-                            : 'Generate with AI'}
+                            : a.generateWithAI}
                       </span>
                     </button>
                   </div>
@@ -1363,9 +1363,9 @@ export default function AddProduct() {
               <div className="form-group craft-description-group">
                 <div className="craft-description-heading">
                   <label className="form-label" htmlFor="product-description">
-                    Product Description <span aria-hidden="true">*</span>
+                    {a.descriptionLabel} <span aria-hidden="true">*</span>
                   </label>
-                  <span className="craft-description-edit-label">AI generated · Editable</span>
+                  <span className="craft-description-edit-label">{a.descriptionEditLabel}</span>
                 </div>
 
                 <textarea
@@ -1377,7 +1377,7 @@ export default function AddProduct() {
                   onChange={(event) => {
                     editField('description', setDescription)(event.target.value);
                   }}
-                  placeholder="Your polished product description will appear here after AI generation. You can also write or edit it yourself."
+                  placeholder={a.descriptionPlaceholder}
                   required
                   maxLength={3000}
                   aria-describedby="product-description-help product-description-count"
@@ -1385,7 +1385,7 @@ export default function AddProduct() {
 
                 <div className="craft-description-footer">
                   <small id="product-description-help" className="form-hint">
-                    This is the description buyers will see on your product listing. Review and edit it before publishing.
+                    {a.descriptionHelp}
                   </small>
                   <small id="product-description-count" className="craft-description-count">
                     {description.length}/3000
@@ -2085,3 +2085,6 @@ export default function AddProduct() {
     </>
   );
 }
+
+
+

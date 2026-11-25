@@ -1,4 +1,4 @@
-
+﻿
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +14,7 @@ import {
 import LanguageSwitcher from './LanguageSwitcher.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
 import Logo from './Logo.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { loginTranslations } from '../i18n/loginTranslations.js';
 
 import { useAuth } from '../context/AuthContext.jsx';
@@ -28,7 +28,7 @@ export default function Header() {
   const headerRef = useRef(null);
   const menuToggleRef = useRef(null);
   const profilePath = isArtisan ? '/artisan-profile' : '/buyer/profile';
-  const profileLabel = isArtisan ? 'My Studio' : 'My Profile';
+  const profileLabel = isArtisan ? (t?.nav?.profile || 'My Studio') : (t?.nav?.profile || 'My Profile');
   const handleSignOut = async () => {
     try { await signOut(); setMobileMenuOpen(false); navigate('/'); }
     catch (error) { window.alert(error.message || 'Unable to sign out. Please try again.'); }
@@ -164,15 +164,14 @@ export default function Header() {
                 </Link>
               </li>
             )}
-
-            {isArtisan && <li><Link to="/image-enhancer" className="mobile-nav-link" onClick={closeMobile}>Image Enhancer</Link></li>}
-            {isArtisan && <li><Link to="/enquiries" className="mobile-nav-link" onClick={closeMobile}>Buyer Enquiries</Link></li>}
-            {isAuthenticated && <li><button type="button" className="mobile-nav-link" onClick={handleSignOut}><LogOut size={18} /><span>Sign Out</span></button></li>}
+{isAuthenticated && <li><button type="button" className="mobile-nav-link" onClick={handleSignOut}><LogOut size={18} /><span>{t?.nav?.logout || 'Sign Out'}</span></button></li>}
           </ul>
         </div>
       )}
     </header>
   );
 }
+
+
 
 

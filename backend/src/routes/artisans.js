@@ -1,6 +1,7 @@
-import { protectArtisanWrites } from '../middleware/auth.js';
+﻿import { protectArtisanWrites } from '../middleware/auth.js';
 import express from 'express';
 import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import { translateArtisan } from '../services/artisanTranslationService.js';
 
 const router = express.Router();
 router.use(protectArtisanWrites);
@@ -36,10 +37,14 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/artisans/:id - Get single artisan
+// GET /api/artisans/:id - Get single artisan with AI localization
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+  const language = String(req.query.lang || 'en').toLowerCase();
+
   try {
+    let artisan = null;
+
     if (isSupabaseConfigured()) {
       const { data, error } = await req.db
         .from('artisans')
@@ -47,20 +52,35 @@ router.get('/:id', async (req, res) => {
         .eq('id', id)
         .maybeSingle();
 
-      if (!error && data) {
-        return res.json(data);
+      if (error) {
+        console.error('Artisan lookup error:', error.message);
+      } else {
+        artisan = data;
       }
     }
 
-    const found = localArtisansStore.find((a) => a.id === id);
-    if (found) return res.json(found);
+    if (!artisan) {
+      artisan = localArtisansStore.find((a) => a.id === id)
+        || localArtisansStore[0];
+    }
 
-    return res.json(localArtisansStore[0]);
+    const localized = await translateArtisan(artisan, language);
+
+    return res.json({
+      success: true,
+      data: {
+        ...localized,
+        original_profile: artisan
+      }
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Artisan translation error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Unable to load artisan profile.'
+    });
   }
 });
-
 // PUT /api/artisans/:id - Update artisan profile
 router.put('/:id', async (req, res) => {
   if (req.params.id !== req.user.id) return res.status(403).json({ error: 'You can only update your own studio.' });
@@ -76,3 +96,4 @@ router.post('/', async (req, res) => {
   return res.status(201).json({ success: true, data, savedInSupabase: true });
 });
 export default router;
+

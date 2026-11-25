@@ -1,4 +1,4 @@
-
+﻿
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowUpRight,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 import { api } from '../services/api.js';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 function formatNumber(value, lang = 'en') {
   return new Intl.NumberFormat(`${lang}-IN`, {
@@ -367,7 +367,7 @@ export default function MarketInsights() {
                       ).toLowerCase()
                     ] ||
                       demandForecast.prediction?.demand_class ||
-                      '—'}
+                      'â€”'}
                   </strong>
                 </p>
 
@@ -378,7 +378,7 @@ export default function MarketInsights() {
                     lang
                   )}{' '}
                   {text.views || 'Views'}
-                  {' · '}
+                  {' Â· '}
                   {formatNumber(
                     demandForecast.liveInputs?.buyerEnquiries30d,
                     lang
@@ -641,3 +641,4 @@ export default function MarketInsights() {
     </div>
   );
 }
+

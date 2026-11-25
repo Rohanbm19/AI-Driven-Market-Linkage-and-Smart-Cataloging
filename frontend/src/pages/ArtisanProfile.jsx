@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck, MapPin, Calendar, Star, ShoppingBag,
@@ -13,13 +13,14 @@ import ProductCard from '../components/ProductCard.jsx';
 import Badge from '../components/Badge.jsx';
 import VoiceTextInput from '../components/VoiceTextInput.jsx';
 import { detectLanguage } from '../utils/detectLanguage.js';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ArtisanProfile() {
   const { id: userId, fullName, studioName } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const pf = t?.profile || {};
+  const st = pf.studio || {};
 
   const [artisan, setArtisan] = useState({
     id: userId,
@@ -62,8 +63,8 @@ export default function ArtisanProfile() {
 
         const [loadedArtisan, allProducts, artisanEnquiries] =
           await Promise.all([
-            api.getArtisanProfile(userId),
-            api.getProducts(),
+            api.getArtisanProfile(userId, lang),
+            api.getProducts(lang),
             api.getEnquiries()
           ]);
 
@@ -83,12 +84,15 @@ export default function ArtisanProfile() {
         };
 
         setArtisan(profile);
-        setName(profile.name || '');
-        setCraft(profile.craft || '');
-        setRegion(profile.region || '');
-        setExperience(profile.experience || '');
-        setAvatar(profile.avatar || '');
-        setBio(profile.bio || '');
+
+        const originalProfile = profile.original_profile || profile;
+
+        setName(originalProfile.name || '');
+        setCraft(originalProfile.craft || '');
+        setRegion(originalProfile.region || '');
+        setExperience(originalProfile.experience || '');
+        setAvatar(originalProfile.avatar || '');
+        setBio(originalProfile.bio || '');
 
         setProducts(
           (allProducts || []).filter(
@@ -103,7 +107,7 @@ export default function ArtisanProfile() {
         console.error('Profile loading error:', error);
 
         if (isMounted) {
-          setSaveError(error.message || 'Unable to load your studio.');
+          setSaveError(error.message || st.loadError);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -114,13 +118,13 @@ export default function ArtisanProfile() {
       loadData();
     } else {
       setLoading(false);
-      setSaveError('Please sign in to view your artisan profile.');
+      setSaveError(st.signIn);
     }
 
     return () => {
       isMounted = false;
     };
-  }, [userId, studioName, fullName]);
+  }, [userId, studioName, fullName, lang]);
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -147,8 +151,8 @@ export default function ArtisanProfile() {
 
         setSaveSuccess(
           result.savedInSupabase
-            ? 'Profile updated and saved to Supabase!'
-            : 'Profile updated and saved locally.'
+            ? st.savedCloud
+            : st.savedLocal
         );
 
         confetti({
@@ -157,11 +161,11 @@ export default function ArtisanProfile() {
           origin: { y: 0.6 }
         });
       } else {
-        setSaveError('Failed to save profile changes. Please try again.');
+        setSaveError(st.saveError);
       }
     } catch (error) {
       console.error('Error saving profile:', error);
-      setSaveError(error.message || 'An error occurred while saving.');
+      setSaveError(error.message || st.saveGenericError);
     } finally {
       setSaving(false);
     }
@@ -171,7 +175,7 @@ export default function ArtisanProfile() {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!window.confirm('Are you sure you want to delete this craft item?')) {
+    if (!window.confirm(st.confirmDeleteCraft)) {
       return;
     }
 
@@ -182,7 +186,7 @@ export default function ArtisanProfile() {
         previous.filter(product => product.id !== productId)
       );
     } catch (error) {
-      window.alert('Could not delete product: ' + error.message);
+      window.alert(st.deleteError + error.message);
     }
   };
 
@@ -190,7 +194,7 @@ export default function ArtisanProfile() {
   const handleEnquiryStatus = async (enquiry, newStatus) => {
     const action = newStatus === 'approved' ? 'approve' : 'reject';
 
-    if (!window.confirm(`Are you sure you want to ${action} this enquiry?`)) {
+    if (!window.confirm(newStatus === "approved" ? st.confirmApprove : st.confirmReject)) {
       return;
     }
 
@@ -214,7 +218,7 @@ export default function ArtisanProfile() {
     } catch (error) {
       console.error('Enquiry status update failed:', error);
       setEnquiryError(
-        error.message || `Unable to ${action} this enquiry.`
+        error.message || (newStatus === "approved" ? st.approveError : st.rejectError)
       );
     } finally {
       setUpdatingEnquiryId(null);
@@ -226,7 +230,7 @@ export default function ArtisanProfile() {
     const reply = (replyDrafts[enquiry.id] || '').trim();
 
     if (!reply) {
-      window.alert('Please enter a reply.');
+      window.alert(st.replyRequired);
       return;
     }
 
@@ -253,7 +257,7 @@ export default function ArtisanProfile() {
       }));
     } catch (error) {
       console.error('Reply failed:', error);
-      window.alert(error.message || 'Unable to send reply.');
+      window.alert(error.message || st.replyError);
     } finally {
       setReplyingId(null);
     }
@@ -286,11 +290,11 @@ export default function ArtisanProfile() {
   const getStatusLabel = (status) => {
     switch (status || 'pending') {
       case 'approved':
-        return 'Approved';
+        return st.approved || 'Approved';
       case 'rejected':
-        return 'Rejected';
+        return st.rejected || 'Rejected';
       default:
-        return 'Pending';
+        return st.pending || 'Pending';
     }
   };
 
@@ -299,7 +303,7 @@ export default function ArtisanProfile() {
       <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
         <div className="spinner" style={{ margin: '0 auto 1rem' }} />
         <p style={{ color: 'var(--text-muted)' }}>
-          Loading artisan profile...
+          {st.loadingProfile || pf.loadingProfile || 'Loading artisan profile...'}
         </p>
       </div>
     );
@@ -313,7 +317,7 @@ export default function ArtisanProfile() {
           <Check size={18} />
           <span>{saveSuccess}</span>
           <button type="button" onClick={() => setSaveSuccess('')}>
-            ✕
+            âœ•
           </button>
         </div>
       )}
@@ -380,13 +384,13 @@ export default function ArtisanProfile() {
                 <div className="artisan-profile-meta">
                   <span>
                     <MapPin size={16} />
-                    {artisan.region || 'Location not added'}
+                    {artisan.region || st.locationMissing || 'Location not added'}
                   </span>
 
                   <span>
                     <Calendar size={16} />
-                    {artisan.experience || 'Experience not added'}{' '}
-                    {pf.heritagePractice || 'Heritage Practice'}
+                    {artisan.experience || st.experienceMissing || 'Experience not added'}{' '}
+                    {st.heritagePractice || pf.heritagePractice || 'Heritage Practice'}
                   </span>
 
                   <span>
@@ -404,67 +408,67 @@ export default function ArtisanProfile() {
                 <h3>
                   {pf.ancestralStory || 'Artisan Story & Ancestral Tradition'}
                 </h3>
-                <span>Language: {detectedBioLang.toUpperCase()}</span>
+                <span>{st.language || "Language"}: {detectedBioLang.toUpperCase()}</span>
               </div>
 
-              <p>{artisan.bio || 'No artisan story added yet.'}</p>
+              <p>{artisan.bio || st.noStory || 'No artisan story added yet.'}</p>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSaveProfile} className="artisan-profile-form">
             <div className="artisan-profile-form-grid">
               <div className="form-group">
-                <label className="form-label">Artisan Name *</label>
+                <label className="form-label">{pf.artisanName || "Artisan Name"} *</label>
                 <input
                   type="text"
                   className="form-input"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="Artisan Name"
+                  placeholder={pf.artisanName || "Artisan Name"}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Craft & Specialization *</label>
+                <label className="form-label">{pf.craftSpecialization || "Craft & Specialization"} *</label>
                 <input
                   type="text"
                   className="form-input"
                   value={craft}
                   onChange={e => setCraft(e.target.value)}
-                  placeholder="e.g. Terracotta, Silk Weaving"
+                  placeholder={st.craftPlaceholder || "e.g. Terracotta, Silk Weaving"}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Region / Village / State *</label>
+                <label className="form-label">{pf.regionVillage || "Region / Village / State"} *</label>
                 <input
                   type="text"
                   className="form-input"
                   value={region}
                   onChange={e => setRegion(e.target.value)}
-                  placeholder="e.g. Karnataka, India"
+                  placeholder={st.regionPlaceholder || "e.g. Karnataka, India"}
                   required
                 />
               </div>
 
               <div className="form-group">
                 <label className="form-label">
-                  Heritage Practice / Experience
+                  {pf.experienceYears || "Heritage Practice / Experience"}
                 </label>
                 <input
                   type="text"
                   className="form-input"
                   value={experience}
                   onChange={e => setExperience(e.target.value)}
-                  placeholder="e.g. 28 years"
+                  placeholder={st.experiencePlaceholder || "e.g. 28 years"}
                 />
               </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Profile Image URL</label>
+              <label className="form-label">{st.imageUrl || pf.profileImageUrl || "Profile Image URL"}</label>
               <input
                 type="url"
                 className="form-input"
@@ -477,8 +481,8 @@ export default function ArtisanProfile() {
             <div className="artisan-profile-voice">
               <VoiceTextInput
                 id="artisan-story"
-                label="Artisan Heritage Story & Biography"
-                placeholder="Speak or type your ancestral story, training, techniques and personal journey..."
+                label={st.storyLabel || "Artisan Heritage Story & Biography"}
+                placeholder={st.storyPlaceholder || "Speak or type your ancestral story, training, techniques and personal journey..."}
                 value={bio}
                 onChange={setBio}
                 rows={5}
@@ -494,11 +498,11 @@ export default function ArtisanProfile() {
                 className="btn btn-primary"
               >
                 {saving ? (
-                  'Saving Profile...'
+                  (st.saving || "Saving Profile...")
                 ) : (
                   <>
                     <Save size={16} />
-                    Save Profile Changes
+                    {st.saveChanges || "Save Profile Changes"}
                   </>
                 )}
               </button>
@@ -509,7 +513,7 @@ export default function ArtisanProfile() {
                 className="btn btn-secondary"
                 disabled={saving}
               >
-                Cancel
+                {st.cancel || "Cancel"}
               </button>
             </div>
           </form>
@@ -521,26 +525,26 @@ export default function ArtisanProfile() {
         <div className="artisan-products-header">
           <div>
             <h2>
-              Masterpieces from {artisan.name || 'Your'}'s Studio ({products.length})
+              {(st.studioTitle || "Masterpieces from {name}'s Studio").replace('{name}', artisan.name || 'Your')} ({products.length})
             </h2>
             <p>
-              Your handmade creations listed on the KalaSetu marketplace.
+              {st.studioDesc || "Your handmade creations listed on the KalaSetu marketplace."}
             </p>
           </div>
 
           <Link to="/add-product" className="btn btn-primary btn-sm">
             <PlusCircle size={16} />
-            Add New Craft
+            {st.addCraft || pf.addNewCraft || "Add New Craft"}
           </Link>
         </div>
 
         {products.length === 0 ? (
           <div className="card artisan-products-empty">
             <ShoppingBag size={40} />
-            <h3>No crafts listed yet</h3>
-            <p>List your first craft to start receiving buyer enquiries.</p>
+            <h3>{st.noCrafts || pf.noCraftsListed || "No crafts listed yet"}</h3>
+            <p>{st.noCraftsDesc || "List your first craft to start receiving buyer enquiries."}</p>
             <Link to="/add-product" className="btn btn-primary">
-              List Your First Craft
+              {st.listFirst || pf.listFirstCraft || "List Your First Craft"}
             </Link>
           </div>
         ) : (
@@ -555,7 +559,7 @@ export default function ArtisanProfile() {
                     className="btn btn-secondary btn-sm"
                   >
                     <Edit3 size={13} />
-                    Edit
+                    {st.edit || pf.editCraft || "Edit"}
                   </Link>
 
                   <button
@@ -564,7 +568,7 @@ export default function ArtisanProfile() {
                     className="btn btn-sm artisan-product-delete"
                   >
                     <Trash2 size={13} />
-                    Delete
+                    {st.delete || pf.deleteCraft || "Delete"}
                   </button>
                 </div>
               </div>
@@ -579,10 +583,10 @@ export default function ArtisanProfile() {
           <div>
             <h2>
               <MessageSquare size={22} />
-              Buyer Enquiries
+              {st.buyerEnquiries || "Buyer Enquiries"}
             </h2>
             <p>
-              Review, approve or reject enquiries received for your crafts.
+              {st.enquiryDesc || "Review, approve or reject enquiries received for your crafts."}
             </p>
           </div>
         </div>
@@ -590,22 +594,22 @@ export default function ArtisanProfile() {
         {/* ENQUIRY COUNTS */}
         <div className="artisan-enquiry-stats">
           <div className="artisan-enquiry-stat">
-            <span>Total Enquiries</span>
+            <span>{st.totalEnquiries || "Total Enquiries"}</span>
             <strong>{enquiries.length}</strong>
           </div>
 
           <div className="artisan-enquiry-stat">
-            <span>Pending</span>
+            <span>{st.pending || "Pending"}</span>
             <strong>{pendingCount}</strong>
           </div>
 
           <div className="artisan-enquiry-stat">
-            <span>Approved</span>
+            <span>{st.approved || "Approved"}</span>
             <strong>{approvedCount}</strong>
           </div>
 
           <div className="artisan-enquiry-stat">
-            <span>Rejected</span>
+            <span>{st.rejected || "Rejected"}</span>
             <strong>{rejectedCount}</strong>
           </div>
         </div>
@@ -620,10 +624,10 @@ export default function ArtisanProfile() {
         {/* FILTERS */}
         <div className="artisan-enquiry-filters">
           {[
-            ['all', `All (${enquiries.length})`],
-            ['pending', `Pending (${pendingCount})`],
-            ['approved', `Approved (${approvedCount})`],
-            ['rejected', `Rejected (${rejectedCount})`]
+            ['all', (st.all || 'All') + ' (' + enquiries.length + ')'],
+            ['pending', (st.pending || 'Pending') + ' (' + pendingCount + ')'],
+            ['approved', (st.approved || 'Approved') + ' (' + approvedCount + ')'],
+            ['rejected', (st.rejected || 'Rejected') + ' (' + rejectedCount + ')']
           ].map(([filter, label]) => (
             <button
               key={filter}
@@ -641,13 +645,13 @@ export default function ArtisanProfile() {
             <MessageSquare size={38} />
             <h3>
               {enquiries.length === 0
-                ? 'No buyer enquiries yet'
-                : 'No enquiries in this category'}
+                ? (st.noEnquiries || 'No buyer enquiries yet')
+                : (st.noCategory || 'No enquiries in this category')}
             </h3>
             <p>
               {enquiries.length === 0
-                ? 'When buyers contact you about your products, their enquiries will appear here.'
-                : 'Try selecting another enquiry filter.'}
+                ? (st.noEnquiriesDesc || 'When buyers contact you about your products, their enquiries will appear here.')
+                : (st.tryFilter || 'Try selecting another enquiry filter.')}
             </p>
           </div>
         ) : (
@@ -665,20 +669,20 @@ export default function ArtisanProfile() {
                       </div>
 
                       <div>
-                        <h3>{enquiry.buyer_name || 'Buyer'}</h3>
+                        <h3>{enquiry.buyer_name || st.buyer || 'Buyer'}</h3>
                         <span>
                           {enquiry.created_at
                             ? new Date(enquiry.created_at).toLocaleString('en-IN')
-                            : 'Date unavailable'}
+                            : (st.dateUnavailable || 'Date unavailable')}
                         </span>
                       </div>
                     </div>
 
                     <span className={`artisan-enquiry-status ${status}`}>
                       {status === 'approved' ? (
-                        <><CheckCircle2 size={13} /> Approved</>
+                        <><CheckCircle2 size={13} /> {st.approveStatus}</>
                       ) : status === 'rejected' ? (
-                        <><XCircle size={13} /> Rejected</>
+                        <><XCircle size={13} /> {st.rejectStatus}</>
                       ) : (
                         <><Clock size={13} /> {getStatusLabel(status)}</>
                       )}
@@ -688,36 +692,36 @@ export default function ArtisanProfile() {
                   <div className="artisan-enquiry-product">
                     <Package size={17} />
                     <span>
-                      Product: <strong>{enquiry.product_title}</strong>
+                      {st.product || "Product"}: <strong>{enquiry.product_title}</strong>
                     </span>
                   </div>
 
                   <div className="artisan-enquiry-contact-grid">
                     <div>
                       <Mail size={16} />
-                      <span>{enquiry.buyer_email || 'Not provided'}</span>
+                      <span>{enquiry.buyer_email || (st.notProvided || 'Not provided')}</span>
                     </div>
 
                     <div>
                       <Phone size={16} />
-                      <span>{enquiry.phone || 'Not provided'}</span>
+                      <span>{enquiry.phone || (st.notProvided || 'Not provided')}</span>
                     </div>
 
                     <div>
                       <MapPinned size={16} />
                       <span>
-                        {enquiry.buyer_location || 'Location not provided'}
+                        {enquiry.buyer_location || st.locationNotProvided || 'Location not provided'}
                       </span>
                     </div>
 
                     <div>
                       <ShoppingBag size={16} />
-                      <span>Quantity: {enquiry.quantity || '1'}</span>
+                      <span>{st.quantity || "Quantity"}: {enquiry.quantity || '1'}</span>
                     </div>
                   </div>
 
                   <div className="artisan-enquiry-message">
-                    <strong>Buyer's Message</strong>
+                    <strong>{st.buyerMessage || "Buyer's Message"}</strong>
                     <p>{enquiry.message}</p>
                   </div>
 
@@ -731,7 +735,7 @@ export default function ArtisanProfile() {
                         onClick={() => handleEnquiryStatus(enquiry, 'approved')}
                       >
                         <CheckCircle2 size={15} />
-                        {isUpdating ? 'Updating...' : 'Approve Enquiry'}
+                        {isUpdating ? (st.updating || 'Updating...') : (st.approve || 'Approve Enquiry')}
                       </button>
                     )}
 
@@ -743,7 +747,7 @@ export default function ArtisanProfile() {
                         onClick={() => handleEnquiryStatus(enquiry, 'rejected')}
                       >
                         <XCircle size={15} />
-                        {isUpdating ? 'Updating...' : 'Reject Enquiry'}
+                        {isUpdating ? (st.updating || 'Updating...') : (st.reject || 'Reject Enquiry')}
                       </button>
                     )}
                   </div>
@@ -752,19 +756,19 @@ export default function ArtisanProfile() {
                     <div className="artisan-enquiry-existing-reply">
                       <div>
                         <CheckCircle2 size={17} />
-                        <strong>Your Reply</strong>
+                        <strong>{st.yourReply || "Your Reply"}</strong>
                       </div>
                       <p>{enquiry.reply}</p>
                     </div>
                   )}
 
                   <div className="artisan-enquiry-reply-form">
-                    <label className="form-label">Reply to Buyer</label>
+                    <label className="form-label">{st.replyToBuyer || "Reply to Buyer"}</label>
 
                     <textarea
                       className="form-textarea"
                       rows={3}
-                      placeholder="Write your response about availability, pricing, delivery or customization..."
+                      placeholder={st.replyPlaceholder || "Write your response about availability, pricing, delivery or customization..."}
                       value={replyDrafts[enquiry.id] || ''}
                       onChange={e =>
                         setReplyDrafts(previous => ({
@@ -782,8 +786,8 @@ export default function ArtisanProfile() {
                     >
                       <Send size={15} />
                       {replyingId === enquiry.id
-                        ? 'Sending Reply...'
-                        : 'Send Reply'}
+                        ? (st.sending || 'Sending Reply...')
+                        : (st.sendReply || 'Send Reply')}
                     </button>
                   </div>
                 </article>
@@ -795,3 +799,8 @@ export default function ArtisanProfile() {
     </div>
   );
 }
+
+
+
+
+

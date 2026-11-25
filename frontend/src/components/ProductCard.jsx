@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, MapPin } from 'lucide-react';
 import Badge from './Badge.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { getLocalizedProduct } from '../i18n/productTranslations.js';
 
 export default function ProductCard({ product }) {
@@ -114,7 +114,7 @@ export default function ProductCard({ product }) {
 
             {/* Product Price */}
             <span className="product-price">
-              ₹{Number(price || 0).toLocaleString('en-IN')}
+              {'\u20B9'}{Number(price || 0).toLocaleString('en-IN')}
             </span>
           </div>
 
@@ -131,3 +131,4 @@ export default function ProductCard({ product }) {
     </div>
   );
 }
+

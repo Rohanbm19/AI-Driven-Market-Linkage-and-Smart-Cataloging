@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient.js';
 import Logo from '../components/Logo.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { loginTranslations } from '../i18n/loginTranslations.js';
 
 const allowedArtisanRedirects = [
@@ -340,3 +340,4 @@ export default function Login({ role: requestedRole }) {
     </div>
   );
 }
+

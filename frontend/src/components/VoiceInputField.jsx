@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Mic, MicOff, AlertCircle, Sparkles } from 'lucide-react';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { useVoiceInput, VOICE_LANGUAGES } from '../hooks/useVoiceInput.js';
 
 /**
@@ -42,7 +42,7 @@ export default function VoiceInputField({
 
     if (type === 'number') {
       // Clean spoken string to extract digits
-      // Support Indian spoken number forms or digits: e.g. "1500", "₹ 2000"
+      // Support Indian spoken number forms or digits: e.g. "1500", "â‚¹ 2000"
       const cleaned = spoken.replace(/[^0-9.]/g, '');
       if (cleaned) {
         onChange?.(cleaned);
@@ -195,4 +195,5 @@ export default function VoiceInputField({
     </div>
   );
 }
+
 

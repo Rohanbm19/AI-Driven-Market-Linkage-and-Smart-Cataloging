@@ -17,14 +17,14 @@ import confetti from 'canvas-confetti';
 import { api } from '../services/api.js';
 import Badge from '../components/Badge.jsx';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { id: userId, isArtisan, fullName, email } = useAuth();
   const navigate = useNavigate();
-  const { lang } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -174,7 +174,7 @@ export default function ProductDetail() {
     return (
       <div className="product-detail-loading">
         <div className="spinner" />
-        <p>Loading product details...</p>
+        <p>{t.productDetail.loading}</p>
       </div>
     );
   }
@@ -182,13 +182,13 @@ export default function ProductDetail() {
   if (loadError || !product) {
     return (
       <div className="empty-market-state">
-        <p className="empty-title">Product not found</p>
+        <p className="empty-title">{t.productDetail.notFound}</p>
         <p className="empty-subtitle">
           {loadError || 'This product is unavailable or has been removed.'}
         </p>
         <Link to="/" className="btn btn-primary">
           <ArrowLeft size={16} />
-          Back to Marketplace
+          {t.productDetail.back}
         </Link>
       </div>
     );
@@ -217,7 +217,7 @@ export default function ProductDetail() {
       <div className="product-detail-header">
         <Link to="/" className="product-back-link">
           <ArrowLeft size={17} />
-          Back to Marketplace
+          {t.productDetail.back}
         </Link>
 
         {isOwner && (
@@ -227,7 +227,7 @@ export default function ProductDetail() {
               className="product-edit-button"
             >
               <Edit3 size={15} />
-              Edit Listing
+              {t.productDetail.edit}
             </Link>
 
             <button
@@ -250,8 +250,8 @@ export default function ProductDetail() {
               <BeforeAfterSlider
                 beforeImage={product.original_image_url || product.image_url}
                 afterImage={product.enhanced_image_url}
-                beforeLabel="Original Photo"
-                afterLabel="Enhanced Photo"
+                beforeLabel={t.productDetail.original}
+                afterLabel={t.productDetail.enhanced}
               />
             ) : (
               <img
@@ -277,10 +277,10 @@ export default function ProductDetail() {
                 onClick={() => setShowSlider(!showSlider)}
               >
                 <Wand2 size={16} />
-                {showSlider ? 'Show Product Image' : 'Compare Image Enhancement'}
+                {showSlider ? t.productDetail.showImage : t.productDetail.compareImage}
               </button>
 
-              <span>Authentic Handcrafted Product</span>
+              
             </div>
           )}
         </section>
@@ -294,7 +294,7 @@ export default function ProductDetail() {
             ))}
 
             {product.fair_trade && (
-              <Badge type="verified">Fair Trade Certified</Badge>
+              <Badge type="verified">{t.productDetail.fairTradeLabel}</Badge>
             )}
           </div>
 
@@ -302,7 +302,7 @@ export default function ProductDetail() {
 
           <div className="product-artisan">
             <div className="product-artisan-details">
-              <span className="product-artisan-label">Crafted by</span>
+              <span className="product-artisan-label">{t.productDetail.craftedBy}</span>
               <Link to="/artisan-profile">
                 {product.artisan_name || 'Master Artisan'}
               </Link>
@@ -316,10 +316,10 @@ export default function ProductDetail() {
 
           <div className="product-price-section">
             <div>
-              <span className="product-price-label">Direct Artisan Price</span>
+              <span className="product-price-label">{t.productDetail.price}</span>
               <div className="product-price">₹{formattedPrice}</div>
               <span className="product-price-note">
-                Directly sourced from the artisan
+                {t.productDetail.priceNote}
               </span>
             </div>
 
@@ -330,7 +330,7 @@ export default function ProductDetail() {
           </div>
 
           <div className="product-description">
-            <h2>About this Craft</h2>
+            <h2>{t.productDetail.about}</h2>
             <p>{product.description || 'No description available.'}</p>
           </div>
 
@@ -338,10 +338,10 @@ export default function ProductDetail() {
             <div className="product-materials">
               <h3>
                 <Layers size={17} />
-                Materials Used
+                {t.productDetail.materials}
               </h3>
 
-              <div className="product-material-list">
+              <div className="product-material-list" style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 {parsedMaterials.map((material, index) => (
                   <span key={`${material}-${index}`}>{material}</span>
                 ))}
@@ -358,10 +358,9 @@ export default function ProductDetail() {
                 </div>
 
                 <div>
-                  <h2>Contact Artisan</h2>
+                  <h2>{t.productDetail.contact}</h2>
                   <p>
-                    Share your contact details and requirements directly
-                    with the artisan.
+                    {t.productDetail.contactSubtitle}
                   </p>
                 </div>
               </div>
@@ -386,7 +385,7 @@ export default function ProductDetail() {
                     <input
                       type="text"
                       required
-                      placeholder="Your Full Name"
+                      placeholder="{t.productDetail.fullName}"
                       className="form-input"
                       value={buyerName}
                       onChange={e => setBuyerName(e.target.value)}
@@ -395,7 +394,7 @@ export default function ProductDetail() {
                     <input
                       type="email"
                       required
-                      placeholder="Your Email Address"
+                      placeholder="{t.productDetail.email}"
                       className="form-input"
                       value={buyerEmail}
                       onChange={e => setBuyerEmail(e.target.value)}
@@ -406,7 +405,7 @@ export default function ProductDetail() {
                     <input
                       type="tel"
                       required
-                      placeholder="Phone Number"
+                      placeholder="{t.productDetail.phone}"
                       className="form-input"
                       value={buyerPhone}
                       onChange={e => setBuyerPhone(e.target.value)}
@@ -415,7 +414,7 @@ export default function ProductDetail() {
                     <input
                       type="text"
                       required
-                      placeholder="City, State"
+                      placeholder="{t.productDetail.location}"
                       className="form-input"
                       value={buyerLocation}
                       onChange={e => setBuyerLocation(e.target.value)}
@@ -423,7 +422,7 @@ export default function ProductDetail() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Quantity Required</label>
+                    <label className="form-label">{t.productDetail.quantity}</label>
                     <input
                       type="number"
                       min="1"
@@ -435,7 +434,7 @@ export default function ProductDetail() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Your Message</label>
+                    <label className="form-label">{t.productDetail.message}</label>
                     <textarea
                       rows={4}
                       required
@@ -452,7 +451,7 @@ export default function ProductDetail() {
                     className="btn btn-primary product-enquiry-submit"
                   >
                     <Send size={16} />
-                    {enquirySubmitting ? 'Sending...' : 'Send Enquiry'}
+                    {enquirySubmitting ? t.productDetail.sending : t.productDetail.send}
                   </button>
                 </form>
               )}
@@ -461,7 +460,7 @@ export default function ProductDetail() {
 
           {isOwner && (
             <div className="product-enquiry-card">
-              <p>You are viewing your own product listing.</p>
+              <p>{t.productDetail.ownProduct}</p>
             </div>
           )}
         </section>
@@ -469,3 +468,4 @@ export default function ProductDetail() {
     </main>
   );
 }
+

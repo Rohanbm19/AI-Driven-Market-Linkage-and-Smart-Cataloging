@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Search,
@@ -10,7 +10,7 @@ import {
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
 import { api } from '../services/api.js';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 import { useVoiceInput } from '../hooks/useVoiceInput.js';
 
 // 14 TRADITIONAL CRAFT IMAGE CARDS
@@ -354,7 +354,7 @@ export default function Marketplace() {
                 title={market.clearSearch}
                 aria-label={market.clearSearch}
               >
-                ×
+                Ã—
               </button>
             )}
 
@@ -551,3 +551,4 @@ export default function Marketplace() {
     </div>
   );
 }
+

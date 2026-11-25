@@ -3,6 +3,12 @@ import { GoogleGenAI, Type } from '@google/genai';
 
 let client;
 
+// Keep Gemini requests under the free-tier requests-per-minute limit.
+const MIN_REQUEST_INTERVAL_MS = 5000;
+
+let requestQueue = Promise.resolve();
+let lastGeminiRequestAt = 0;
+
 function getGeminiClient() {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is missing from backend/.env');
@@ -17,7 +23,6 @@ function getGeminiClient() {
   return client;
 }
 
-// Common field definitions
 const stringField = {
   type: Type.STRING
 };
@@ -29,7 +34,7 @@ const stringArrayField = {
   }
 };
 
-// CATALOG RESPONSE SCHEMA
+// Catalog schema
 const catalogFields = {
   type: Type.OBJECT,
   properties: {
@@ -77,7 +82,7 @@ const catalogResponseSchema = {
   ]
 };
 
-// ARTISAN TRANSLATION RESPONSE SCHEMA
+// Artisan schema
 const artisanFields = {
   type: Type.OBJECT,
   properties: {
@@ -110,7 +115,7 @@ const artisanResponseSchema = {
   required: ['kn', 'hi', 'ta', 'te', 'ml']
 };
 
-// PRODUCT TRANSLATION RESPONSE SCHEMA
+// Product schema
 const productFields = {
   type: Type.OBJECT,
   properties: {
@@ -133,6 +138,7 @@ const productFields = {
   ]
 };
 
+// All-language product schema
 const productResponseSchema = {
   type: Type.OBJECT,
   properties: {
@@ -146,7 +152,27 @@ const productResponseSchema = {
   required: ['en', 'kn', 'hi', 'ta', 'te', 'ml']
 };
 
-// RESPONSE SCHEMA SELECTOR
+// Single-language product schema
+const singleProductResponseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    title: stringField,
+    description: stringField,
+    materials: stringArrayField,
+    tags: stringArrayField,
+    story: stringField,
+    seo_keywords: stringField
+  },
+  required: [
+    'title',
+    'description',
+    'materials',
+    'tags',
+    'story',
+    'seo_keywords'
+  ]
+};
+
 function getResponseSchema(schemaType) {
   switch (schemaType) {
     case 'catalog':
@@ -158,12 +184,16 @@ function getResponseSchema(schemaType) {
     case 'product':
       return productResponseSchema;
 
+    case 'productSingle':
+      return singleProductResponseSchema;
+
     default:
-      throw new Error(`Unknown Gemini response schema: ${schemaType}`);
+      throw new Error(
+        `Unknown Gemini response schema: ${schemaType}`
+      );
   }
 }
 
-// JSON PARSER
 function parseGeminiJSON(text) {
   if (!text || typeof text !== 'string') {
     throw new Error('Gemini returned an empty response.');
@@ -188,9 +218,37 @@ function parseGeminiJSON(text) {
   }
 }
 
-// RETRY HELPERS
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Queue requests so they do not hit Gemini simultaneously.
+function generateContentQueued(ai, request) {
+  const queuedRequest = requestQueue.then(async () => {
+    const elapsed = Date.now() - lastGeminiRequestAt;
+
+    const wait = Math.max(
+      0,
+      MIN_REQUEST_INTERVAL_MS - elapsed
+    );
+
+    if (wait > 0) {
+      console.log(
+        `Gemini request queued. Waiting ${Math.ceil(wait / 1000)} seconds...`
+      );
+
+      await sleep(wait);
+    }
+
+    lastGeminiRequestAt = Date.now();
+
+    return ai.models.generateContent(request);
+  });
+
+  // Keep the queue usable even if an individual request fails.
+  requestQueue = queuedRequest.catch(() => {});
+
+  return queuedRequest;
 }
 
 function getErrorStatus(error) {
@@ -204,12 +262,32 @@ function getErrorStatus(error) {
 }
 
 function isRetryableError(error) {
-  const status = getErrorStatus(error);
-
-  return [429, 500, 502, 503, 504].includes(status);
+  return [429, 500, 502, 503, 504].includes(
+    getErrorStatus(error)
+  );
 }
 
-// MAIN GEMINI FUNCTION
+// Read retryDelay suggested by Google's API when available.
+function getServerRetryDelay(error) {
+  const message = String(error?.message || error || '');
+
+  const patterns = [
+    /"retryDelay"\s*:\s*"([\d.]+)s"/i,
+    /retry\s+in\s+([\d.]+)\s*s/i,
+    /retryDelay["']?\s*[:=]\s*["']?([\d.]+)\s*s/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = message.match(pattern);
+
+    if (match) {
+      return Math.ceil(Number(match[1]) * 1000);
+    }
+  }
+
+  return 0;
+}
+
 export async function askGemini(
   prompt,
   json = false,
@@ -241,7 +319,7 @@ export async function askGemini(
         `Gemini request: model=${model}, schema=${json ? schemaType : 'text'}, attempt=${attempt}/${maxAttempts}`
       );
 
-      const response = await ai.models.generateContent({
+      const response = await generateContentQueued(ai, {
         model,
         contents: prompt,
         config
@@ -274,8 +352,13 @@ export async function askGemini(
         );
       }
 
+      const exponentialDelay =
+        2000 * Math.pow(2, attempt - 1);
+
+      const serverDelay = getServerRetryDelay(error);
+
       const delay =
-        1500 * Math.pow(2, attempt - 1) +
+        Math.max(exponentialDelay, serverDelay) +
         Math.floor(Math.random() * 500);
 
       console.log(
@@ -286,5 +369,7 @@ export async function askGemini(
     }
   }
 
-  throw new Error('Gemini request failed after all retry attempts.');
+  throw new Error(
+    'Gemini request failed after all retry attempts.'
+  );
 }

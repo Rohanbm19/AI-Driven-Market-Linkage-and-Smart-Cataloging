@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
-import { useLanguage } from '../i18n/index.js';
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function LanguageSwitcher({ variant = 'header', label }) {
   const { lang, setLang, languages, t } = useLanguage();
@@ -65,3 +65,4 @@ export default function LanguageSwitcher({ variant = 'header', label }) {
     </div>
   );
 }
+
